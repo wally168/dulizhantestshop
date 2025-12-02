@@ -7,6 +7,7 @@ import { BarChart3, ArrowLeft, Save, Loader2 } from 'lucide-react'
 interface AnalyticsSettings {
   analyticsHeadHtml: string
   analyticsBodyHtml: string
+  analyticsGoogleHtml: string
 }
 
 export default function AnalyticsPage() {
@@ -14,7 +15,8 @@ export default function AnalyticsPage() {
   const [saving, setSaving] = useState(false)
   const [settings, setSettings] = useState<AnalyticsSettings>({
     analyticsHeadHtml: '',
-    analyticsBodyHtml: ''
+    analyticsBodyHtml: '',
+    analyticsGoogleHtml: ''
   })
 
   useEffect(() => {
@@ -26,7 +28,8 @@ export default function AnalyticsPage() {
           const data = await res.json()
           setSettings({
             analyticsHeadHtml: data.analyticsHeadHtml || '',
-            analyticsBodyHtml: data.analyticsBodyHtml || ''
+            analyticsBodyHtml: data.analyticsBodyHtml || '',
+            analyticsGoogleHtml: data.analyticsGoogleHtml || ''
           })
         }
       } catch (e) {
@@ -47,7 +50,8 @@ export default function AnalyticsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           analyticsHeadHtml: settings.analyticsHeadHtml,
-          analyticsBodyHtml: settings.analyticsBodyHtml
+          analyticsBodyHtml: settings.analyticsBodyHtml,
+          analyticsGoogleHtml: settings.analyticsGoogleHtml
         })
       })
       if (res.ok) {
@@ -103,6 +107,17 @@ export default function AnalyticsPage() {
                     placeholder="粘贴百度统计、Google Analytics 等代码片段"
                   />
                   <p className="text-xs text-gray-500 mt-1">支持完整标签片段，保存后自动全站生效。</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Google 统计代码</label>
+                  <textarea
+                    rows={6}
+                    value={settings.analyticsGoogleHtml}
+                    onChange={(e) => setSettings(s => ({ ...s, analyticsGoogleHtml: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="粘贴 Google Analytics/Tag Manager 代码片段"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">建议与 HEAD 注入同时使用，以便尽早加载。</p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">BODY 底部注入</label>

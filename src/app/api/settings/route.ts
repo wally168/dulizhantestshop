@@ -24,7 +24,8 @@ const defaultSettings = {
   privacyPolicy: 'We value your privacy. This policy explains what data we collect, how we use it, and your rights. We collect basic information needed to operate our services, never sell personal data, and provide ways to access, correct, or delete your information.',
   termsOfService: 'By using our site, you agree to our terms. This includes acceptable use, product information, pricing, shipping, returns, disclaimers, and limitations of liability. Please review carefully and contact us with any questions.',
   analyticsHeadHtml: '',
-  analyticsBodyHtml: ''
+  analyticsBodyHtml: '',
+  analyticsGoogleHtml: ''
 }
 
 // GET - 获取所有设置

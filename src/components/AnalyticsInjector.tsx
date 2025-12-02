@@ -48,8 +48,12 @@ export default function AnalyticsInjector() {
     injected.current = true
     const headHtml = (settings as any).analyticsHeadHtml as string | undefined
     const bodyHtml = (settings as any).analyticsBodyHtml as string | undefined
+    const googleHtml = (settings as any).analyticsGoogleHtml as string | undefined
     if (typeof headHtml === 'string' && headHtml.trim() && typeof document !== 'undefined') {
       injectHtml(document.head, headHtml)
+    }
+    if (typeof googleHtml === 'string' && googleHtml.trim() && typeof document !== 'undefined') {
+      injectHtml(document.head, googleHtml)
     }
     if (typeof bodyHtml === 'string' && bodyHtml.trim() && typeof document !== 'undefined') {
       injectHtml(document.body, bodyHtml)
