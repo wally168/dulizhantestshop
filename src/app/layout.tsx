@@ -5,7 +5,7 @@ import "./globals.css";
 import { SettingsProvider } from "@/lib/settings";
 import AppShell from "@/components/AppShell";
 import { headers } from "next/headers";
-import AnalyticsInjector from "@/components/AnalyticsInjector";
+import Script from "next/script";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -64,15 +64,47 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode; }>) {
   const settings = await getSettings();
   const initialNavItems = await getNavigation();
+  function extractScripts(html: string): Array<{ src?: string; content?: string; attrs: Record<string, string> }> {
+    if (!html || typeof html !== 'string') return []
+    const scripts: Array<{ src?: string; content?: string; attrs: Record<string, string> }> = []
+    const regexp = /<script([^>]*)>([\s\S]*?)<\/script>/gi
+    let match: RegExpExecArray | null
+    while ((match = regexp.exec(html))) {
+      const attrStr = match[1] || ''
+      const content = match[2] || ''
+      const attrs: Record<string, string> = {}
+      attrStr.replace(/(\w+)(\s*=\s*"([^"]*)"|\s*=\s*'([^']*)'|\s*=\s*([^\s"'>]+))?/g, (_m, k, _v, q1, q2, q3) => {
+        const val = q1 ?? q2 ?? q3 ?? ''
+        attrs[k] = val
+        return ''
+      })
+      const src = attrs.src
+      scripts.push({ src, content, attrs })
+    }
+    if (scripts.length === 0 && html.trim()) {
+      scripts.push({ content: html, attrs: {} })
+    }
+    return scripts
+  }
+
+  const headScripts = extractScripts((settings as any).analyticsHeadHtml || '')
+  const googleScripts = extractScripts((settings as any).analyticsGoogleHtml || '')
   return (
     <html lang="en">
+      {/* SSR 注入到 <head>，确保源码检测可见 */}
+      {headScripts.concat(googleScripts).map((s, idx) => (
+        s.src ? (
+          <Script key={`a-head-${idx}`} src={s.src} strategy="beforeInteractive" />
+        ) : (
+          <Script key={`a-head-inline-${idx}`} id={`a-head-inline-${idx}`} strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: s.content || '' }} />
+        )
+      ))}
       <body suppressHydrationWarning className={`${inter.variable} font-sans antialiased bg-white text-gray-900`}>
         <SettingsProvider initialSettings={settings}>
           <AppShell initialNavItems={initialNavItems}>
             {children}
           </AppShell>
           <div dangerouslySetInnerHTML={{ __html: (settings as any).analyticsBodyHtml || '' }} />
-          <AnalyticsInjector />
         </SettingsProvider>
       </body>
     </html>
