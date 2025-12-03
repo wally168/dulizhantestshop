@@ -75,6 +75,7 @@ export async function PUT(request: NextRequest) {
           feature2Description: data.feature2Description.trim(),
           feature3Title: data.feature3Title.trim(),
           feature3Description: data.feature3Description.trim(),
+          carouselEnabled: data.carouselEnabled !== undefined ? data.carouselEnabled : homeContent.carouselEnabled,
         }
       })
     } else {
@@ -91,6 +92,7 @@ export async function PUT(request: NextRequest) {
           feature2Description: data.feature2Description.trim(),
           feature3Title: data.feature3Title.trim(),
           feature3Description: data.feature3Description.trim(),
+          carouselEnabled: data.carouselEnabled !== undefined ? data.carouselEnabled : true,
         }
       })
     }

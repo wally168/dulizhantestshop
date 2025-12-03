@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { ArrowRight, Shield, Truck, Star, Sparkles, Zap, Heart, Package } from 'lucide-react'
 import Layout from '@/components/Layout'
+import Carousel from '@/components/Carousel'
 import { useSettings } from '@/lib/settings'
 import { useState, useEffect } from 'react'
 
@@ -28,12 +29,23 @@ interface HomeContent {
   feature2Description: string
   feature3Title: string
   feature3Description: string
+  carouselEnabled?: boolean
+}
+
+interface CarouselItem {
+  id: string
+  title?: string | null
+  description?: string | null
+  imageUrl: string
+  link?: string | null
+  active: boolean
 }
 
 export default function Home() {
   const { settings } = useSettings()
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([])
   const [homeContent, setHomeContent] = useState<HomeContent | null>(null)
+  const [carouselItems, setCarouselItems] = useState<CarouselItem[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -42,10 +54,11 @@ export default function Home() {
 
   const fetchData = async () => {
     try {
-      // 并行获取产品和首页内容
-      const [productsResponse, contentResponse] = await Promise.all([
+      // 并行获取产品、首页内容和轮播图
+      const [productsResponse, contentResponse, carouselResponse] = await Promise.all([
         fetch('/api/products?featured=true&limit=3'),
-        fetch('/api/home-content')
+        fetch('/api/home-content'),
+        fetch('/api/carousel')
       ])
 
       if (productsResponse.ok) {
@@ -57,6 +70,12 @@ export default function Home() {
         const contentData = await contentResponse.json()
         setHomeContent(contentData)
       }
+
+      if (carouselResponse.ok) {
+        const carouselData = await carouselResponse.json()
+        // Only show active items on frontend
+        setCarouselItems(carouselData.filter((item: CarouselItem) => item.active))
+      }
     } catch (error) {
       console.error('Failed to fetch data:', error)
     } finally {
@@ -66,6 +85,13 @@ export default function Home() {
 
   return (
     <Layout>
+      {/* Carousel Section */}
+      {(!loading && homeContent?.carouselEnabled !== false && carouselItems.length > 0) && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
+          <Carousel items={carouselItems} />
+        </div>
+      )}
+
       {/* Featured Products Section */}
       <section className="relative overflow-hidden py-20 lg:py-32">
         {/* Background gradient */}

@@ -17,7 +17,8 @@ import {
   Home,
   HelpCircle,
   X,
-  Tag
+  Tag,
+  Images
 } from 'lucide-react'
 import { useSettings } from '@/lib/settings'
 
@@ -177,6 +178,13 @@ export default function AdminDashboard() {
             description="编辑首页文字内容"
             href="/admin/home-content"
             color="bg-indigo-500"
+          />
+          <QuickActionCard
+            icon={<Images className="h-6 w-6" />}
+            title="轮播图管理"
+            description="管理首页轮播图片"
+            href="/admin/carousel"
+            color="bg-cyan-500"
           />
           <QuickActionCard
             icon={<MessageSquare className="h-6 w-6" />}
