@@ -57,6 +57,7 @@ export default function CarouselAdmin() {
     active: true
   })
   const [uploading, setUploading] = useState(false)
+  const [uploadError, setUploadError] = useState<string | null>(null)
 
   useEffect(() => {
     fetchData()
@@ -242,6 +243,20 @@ export default function CarouselAdmin() {
     if (!file) return
 
     setUploading(true)
+    setUploadError(null)
+
+    // 客户端大小与类型校验（与服务端保持一致：仅图片，最大 5MB）
+    const isImage = (file.type || '').startsWith('image/')
+    if (!isImage) {
+      setUploading(false)
+      setUploadError('仅支持图片文件')
+      return
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setUploading(false)
+      setUploadError('文件过大，最大 5MB')
+      return
+    }
     const formData = new FormData()
     formData.append('file', file)
 
@@ -253,10 +268,22 @@ export default function CarouselAdmin() {
       
       if (res.ok) {
         const data = await res.json()
-        setFormData(prev => ({ ...prev, imageUrl: data.url }))
+        if (data?.url) {
+          setFormData(prev => ({ ...prev, imageUrl: data.url }))
+        } else {
+          setUploadError('上传成功但未返回图片地址')
+        }
+      } else {
+        let message = '上传失败'
+        try {
+          const err = await res.json()
+          message = err?.error || message
+        } catch {}
+        setUploadError(message)
       }
     } catch (error) {
       console.error('Upload failed:', error)
+      setUploadError('上传失败，请稍后重试')
     } finally {
       setUploading(false)
     }
@@ -341,7 +368,7 @@ export default function CarouselAdmin() {
             <h1 className="text-2xl font-bold text-gray-900">轮播图列表</h1>
             <p className="text-gray-500 mt-1">管理首页顶部轮播图片</p>
             <p className="text-sm text-blue-600 mt-2 bg-blue-50 inline-block px-3 py-1.5 rounded-lg border border-blue-100">
-              💡 建议尺寸：宽度 1920px（或 1200px 以上），高度 500-600px。保持统一宽高比可获得最佳展示效果。
+              💡 建议尺寸：宽度 1920px（或 1200px 以上），高度 500-600px；单张最大 5MB。保持统一宽高比可获得最佳展示效果。
             </p>
           </div>
           <div className="flex items-center gap-4">
@@ -534,6 +561,7 @@ export default function CarouselAdmin() {
                       className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                     />
                     {uploading && <p className="text-xs text-blue-500 mt-1">上传中...</p>}
+                    {uploadError && <p className="text-xs text-red-600 mt-1">{uploadError}</p>}
                   </div>
                 </div>
                 {/* URL fallback */}

@@ -64,7 +64,7 @@ export default function Carousel({ items, interval = 5000 }: { items: CarouselIt
           />
           
           {/* Overlay Content */}
-          {(item.title || item.description || (item.link && (item.title || item.description))) ? (
+          {(item.title || item.description || item.link) ? (
             <div className="absolute inset-0 bg-black/20 flex items-center justify-center text-center p-4">
               <div className="max-w-4xl mx-auto text-white">
                 {item.title && (
@@ -89,16 +89,7 @@ export default function Carousel({ items, interval = 5000 }: { items: CarouselIt
                 )}
               </div>
             </div>
-          ) : (
-             item.link && (
-               <Link 
-                 href={getValidUrl(item.link)} 
-                 target={item.newTab ? "_blank" : undefined}
-                 rel={item.newTab ? "noopener noreferrer" : undefined}
-                 className="absolute inset-0" 
-               />
-             )
-          )}
+          ) : null}
         </div>
       ))}
 
