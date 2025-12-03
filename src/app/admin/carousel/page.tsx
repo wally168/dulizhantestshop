@@ -12,9 +12,12 @@ import {
   X, 
   CheckSquare, 
   Square,
-  Loader2
+  Loader2,
+  ArrowLeft
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+
+import Link from 'next/link'
 
 interface CarouselItem {
   id: string
@@ -278,13 +281,37 @@ export default function CarouselAdmin() {
   if (loading) return <div className="p-8 flex justify-center"><Loader2 className="animate-spin h-8 w-8 text-blue-600" /></div>
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50">
+      {/* 顶部导航 */}
+      <nav className="sticky top-0 z-40 bg-white/95 backdrop-blur-md shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center">
+              <Link href="/admin" className="text-gray-600 hover:text-blue-600 mr-4">
+                <ArrowLeft className="h-6 w-6" />
+              </Link>
+              <ImageIcon className="h-8 w-8 text-blue-600" />
+              <span className="ml-2 text-xl font-semibold text-gray-900">轮播图管理</span>
+            </div>
+            <Link
+              href="/admin"
+              className="text-gray-600 hover:text-blue-600 transition-colors"
+            >
+              返回控制台
+            </Link>
+          </div>
+        </div>
+      </nav>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">轮播图管理</h1>
-            <p className="text-gray-500">管理首页顶部轮播图片</p>
+            <h1 className="text-2xl font-bold text-gray-900">轮播图列表</h1>
+            <p className="text-gray-500 mt-1">管理首页顶部轮播图片</p>
+            <p className="text-sm text-blue-600 mt-2 bg-blue-50 inline-block px-3 py-1.5 rounded-lg border border-blue-100">
+              💡 建议尺寸：宽度 1920px（或 1200px 以上），高度 500-600px。保持统一宽高比可获得最佳展示效果。
+            </p>
           </div>
           <div className="flex items-center gap-4">
             <div className="flex items-center bg-white px-4 py-2 rounded-lg border shadow-sm">
