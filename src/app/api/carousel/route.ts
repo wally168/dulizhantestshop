@@ -33,6 +33,8 @@ export async function POST(request: NextRequest) {
         description: data.description,
         imageUrl: data.imageUrl,
         link: data.link,
+        btnText: data.btnText,
+        newTab: data.newTab ?? false,
         order: newOrder,
         active: data.active ?? true,
       },

@@ -76,6 +76,7 @@ export async function PUT(request: NextRequest) {
           feature3Title: data.feature3Title.trim(),
           feature3Description: data.feature3Description.trim(),
           carouselEnabled: data.carouselEnabled !== undefined ? data.carouselEnabled : homeContent.carouselEnabled,
+          carouselInterval: data.carouselInterval !== undefined ? parseInt(data.carouselInterval) : homeContent.carouselInterval,
         }
       })
     } else {
@@ -93,6 +94,7 @@ export async function PUT(request: NextRequest) {
           feature3Title: data.feature3Title.trim(),
           feature3Description: data.feature3Description.trim(),
           carouselEnabled: data.carouselEnabled !== undefined ? data.carouselEnabled : true,
+          carouselInterval: data.carouselInterval !== undefined ? parseInt(data.carouselInterval) : 5000,
         }
       })
     }

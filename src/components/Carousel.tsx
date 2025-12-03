@@ -10,9 +10,11 @@ interface CarouselItem {
   description?: string | null
   imageUrl: string
   link?: string | null
+  btnText?: string | null
+  newTab?: boolean | null
 }
 
-export default function Carousel({ items }: { items: CarouselItem[] }) {
+export default function Carousel({ items, interval = 5000 }: { items: CarouselItem[], interval?: number }) {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isPaused, setIsPaused] = useState(false)
 
@@ -26,9 +28,18 @@ export default function Carousel({ items }: { items: CarouselItem[] }) {
 
   useEffect(() => {
     if (isPaused || items.length <= 1) return
-    const timer = setInterval(nextSlide, 5000)
+    const timer = setInterval(nextSlide, interval)
     return () => clearInterval(timer)
-  }, [isPaused, items.length, nextSlide])
+  }, [isPaused, items.length, nextSlide, interval])
+
+  // Helper to format URL
+  const getValidUrl = (url: string) => {
+    if (!url) return '#'
+    if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('/')) {
+      return url
+    }
+    return `https://${url}`
+  }
 
   if (!items.length) return null
 
@@ -68,16 +79,25 @@ export default function Carousel({ items }: { items: CarouselItem[] }) {
                 )}
                 {item.link && (
                   <Link
-                    href={item.link}
+                    href={getValidUrl(item.link)}
+                    target={item.newTab ? "_blank" : undefined}
+                    rel={item.newTab ? "noopener noreferrer" : undefined}
                     className="inline-block bg-white text-black px-8 py-3 rounded-full font-semibold hover:bg-gray-100 transition-colors"
                   >
-                    Learn More
+                    {item.btnText || 'Learn More'}
                   </Link>
                 )}
               </div>
             </div>
           ) : (
-             item.link && <Link href={item.link} className="absolute inset-0" />
+             item.link && (
+               <Link 
+                 href={getValidUrl(item.link)} 
+                 target={item.newTab ? "_blank" : undefined}
+                 rel={item.newTab ? "noopener noreferrer" : undefined}
+                 className="absolute inset-0" 
+               />
+             )
           )}
         </div>
       ))}

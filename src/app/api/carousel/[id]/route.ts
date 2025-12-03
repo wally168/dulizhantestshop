@@ -13,6 +13,8 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         description: data.description,
         imageUrl: data.imageUrl,
         link: data.link,
+        btnText: data.btnText,
+        newTab: data.newTab,
         active: data.active,
         // order is usually handled by reorder endpoint, but can be here too if needed
       },

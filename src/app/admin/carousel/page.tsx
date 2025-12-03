@@ -25,12 +25,15 @@ interface CarouselItem {
   description?: string
   imageUrl: string
   link?: string
+  btnText?: string
+  newTab?: boolean
   order: number
   active: boolean
 }
 
 interface HomeContent {
   carouselEnabled: boolean
+  carouselInterval?: number
 }
 
 export default function CarouselAdmin() {
@@ -38,6 +41,7 @@ export default function CarouselAdmin() {
   const [items, setItems] = useState<CarouselItem[]>([])
   const [loading, setLoading] = useState(true)
   const [sectionEnabled, setSectionEnabled] = useState(true)
+  const [carouselInterval, setCarouselInterval] = useState(5000)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingItem, setEditingItem] = useState<CarouselItem | null>(null)
@@ -48,6 +52,8 @@ export default function CarouselAdmin() {
     description: '',
     imageUrl: '',
     link: '',
+    btnText: 'Learn More',
+    newTab: false,
     active: true
   })
   const [uploading, setUploading] = useState(false)
@@ -71,11 +77,32 @@ export default function CarouselAdmin() {
       if (contentRes.ok) {
         const data = await contentRes.json()
         setSectionEnabled(data.carouselEnabled ?? true)
+        setCarouselInterval(data.carouselInterval ?? 5000)
       }
     } catch (error) {
       console.error('Failed to fetch data:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleSaveInterval = async (newInterval: number) => {
+    setCarouselInterval(newInterval)
+    try {
+      const contentRes = await fetch('/api/home-content')
+      if (!contentRes.ok) return
+      const contentData = await contentRes.json()
+      
+      await fetch('/api/home-content', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...contentData,
+          carouselInterval: newInterval
+        })
+      })
+    } catch (error) {
+      console.error('Failed to update interval:', error)
     }
   }
 
@@ -243,6 +270,8 @@ export default function CarouselAdmin() {
         description: item.description || '',
         imageUrl: item.imageUrl,
         link: item.link || '',
+        btnText: item.btnText || 'Learn More',
+        newTab: item.newTab ?? false,
         active: item.active
       })
     } else {
@@ -252,6 +281,8 @@ export default function CarouselAdmin() {
         description: '',
         imageUrl: '',
         link: '',
+        btnText: 'Learn More',
+        newTab: false,
         active: true
       })
     }
@@ -314,6 +345,17 @@ export default function CarouselAdmin() {
             </p>
           </div>
           <div className="flex items-center gap-4">
+            <div className="flex items-center bg-white px-4 py-2 rounded-lg border shadow-sm">
+              <span className="text-sm font-medium text-gray-700 mr-3">轮播间隔(ms)</span>
+              <input
+                type="number"
+                min="1000"
+                step="500"
+                value={carouselInterval}
+                onChange={(e) => handleSaveInterval(parseInt(e.target.value))}
+                className="w-20 text-sm border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
             <div className="flex items-center bg-white px-4 py-2 rounded-lg border shadow-sm">
               <span className="text-sm font-medium text-gray-700 mr-3">版块状态</span>
               <button
@@ -533,22 +575,50 @@ export default function CarouselAdmin() {
                   type="text"
                   value={formData.link}
                   onChange={e => setFormData({...formData, link: e.target.value})}
+                  placeholder="例如: www.amazon.com"
                   className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
                 />
               </div>
 
-              {/* Active Status */}
-              <div className="flex items-center">
+              {/* Button Text */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">按钮文字</label>
                 <input
-                  type="checkbox"
-                  id="active"
-                  checked={formData.active}
-                  onChange={e => setFormData({...formData, active: e.target.checked})}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  type="text"
+                  value={formData.btnText}
+                  onChange={e => setFormData({...formData, btnText: e.target.value})}
+                  placeholder="例如: Learn More, Shop Now"
+                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
                 />
-                <label htmlFor="active" className="ml-2 block text-sm text-gray-900">
-                  启用此轮播图
-                </label>
+              </div>
+
+              {/* Options */}
+              <div className="space-y-3">
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="newTab"
+                    checked={formData.newTab}
+                    onChange={e => setFormData({...formData, newTab: e.target.checked})}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                  <label htmlFor="newTab" className="ml-2 block text-sm text-gray-900">
+                    在新标签页打开链接
+                  </label>
+                </div>
+
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="active"
+                    checked={formData.active}
+                    onChange={e => setFormData({...formData, active: e.target.checked})}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                  <label htmlFor="active" className="ml-2 block text-sm text-gray-900">
+                    启用此轮播图
+                  </label>
+                </div>
               </div>
 
               <div className="pt-4 flex justify-end space-x-3">

@@ -30,6 +30,7 @@ interface HomeContent {
   feature3Title: string
   feature3Description: string
   carouselEnabled?: boolean
+  carouselInterval?: number
 }
 
 interface CarouselItem {
@@ -38,6 +39,8 @@ interface CarouselItem {
   description?: string | null
   imageUrl: string
   link?: string | null
+  btnText?: string | null
+  newTab?: boolean | null
   active: boolean
 }
 
@@ -88,7 +91,7 @@ export default function Home() {
       {/* Carousel Section */}
       {(!loading && homeContent?.carouselEnabled !== false && carouselItems.length > 0) && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
-          <Carousel items={carouselItems} />
+          <Carousel items={carouselItems} interval={homeContent?.carouselInterval || 5000} />
         </div>
       )}
 

@@ -7,16 +7,16 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  // 使用 Prisma Accelerate 连接（高并发与全局边缘优化）
-  url       = env("PRISMA_DATABASE_URL")
-  // 迁移与维护时使用直连数据库，避免代理/连接池（兼容 Vercel Prisma Postgres 默认变量名）
-  directUrl = env("POSTGRES_URL")
+  provider  = "sqlite"
+  url       = "file:./dev.db"
 }
 
 // datasource db {
-//   provider  = "sqlite"
-//   url       = "file:./dev.db"
+//   provider  = "postgresql"
+//   // 使用 Prisma Accelerate 连接（高并发与全局边缘优化）
+//   url       = env("PRISMA_DATABASE_URL")
+//   // 迁移与维护时使用直连数据库，避免代理/连接池（兼容 Vercel Prisma Postgres 默认变量名）
+//   directUrl = env("POSTGRES_URL")
 // }
 
 model Category {
@@ -131,6 +131,7 @@ model HomeContent {
   feature3Description   String   @default("Optimized delivery network ensures your orders arrive quickly and in perfect condition.")
   
   carouselEnabled       Boolean  @default(true)
+  carouselInterval      Int      @default(5000)
   
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
@@ -142,6 +143,8 @@ model CarouselItem {
   description String?
   imageUrl    String
   link        String?
+  btnText     String?  @default("Learn More")
+  newTab      Boolean  @default(false)
   order       Int      @default(0)
   active      Boolean  @default(true)
   createdAt   DateTime @default(now())
