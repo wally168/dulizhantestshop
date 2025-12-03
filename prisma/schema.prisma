@@ -7,16 +7,16 @@ generator client {
 }
 
 datasource db {
-  provider  = "sqlite"
-  url       = "file:./dev.db"
+  provider  = "postgresql"
+  // 使用 Prisma Accelerate 连接（高并发与全局边缘优化）
+  url       = env("PRISMA_DATABASE_URL")
+  // 迁移与维护时使用直连数据库，避免代理/连接池（兼容 Vercel Prisma Postgres 默认变量名）
+  directUrl = env("POSTGRES_URL")
 }
 
 // datasource db {
-//   provider  = "postgresql"
-//   // 使用 Prisma Accelerate 连接（高并发与全局边缘优化）
-//   url       = env("PRISMA_DATABASE_URL")
-//   // 迁移与维护时使用直连数据库，避免代理/连接池（兼容 Vercel Prisma Postgres 默认变量名）
-//   directUrl = env("POSTGRES_URL")
+//   provider  = "sqlite"
+//   url       = "file:./dev.db"
 // }
 
 model Category {
