@@ -152,6 +152,12 @@ export default function SeoSettingsPage() {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">优先级</label>
                 <input value={data.sitemapPriority || '0.7'} onChange={(e) => set('sitemapPriority', e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                <p className="text-xs text-gray-500 mt-1">
+                  优先级用于向搜索引擎提示页面的重要程度，范围 0.0–1.0。
+                  数值越高代表越重要，但搜索引擎仅作参考并不保证排序。
+                  一般推荐：主页 0.8–1.0、列表页 0.6–0.8、详情页 0.5–0.8。
+                  本系统默认值为 0.7。
+                </p>
               </div>
               <div className="flex items-center gap-4">
                 <label className="flex items-center gap-2 text-sm text-gray-700">
@@ -225,6 +231,10 @@ export default function SeoSettingsPage() {
                   <input type="checkbox" checked={(data.robotsDisallowSearch || 'true') === 'true'} onChange={(e) => setBool('robotsDisallowSearch', e.target.checked)} />
                   禁止抓取搜索页 (/search)
                 </label>
+                <p className="text-xs text-gray-500 mt-2">
+                  说明：以上为电商站点常用的推荐设置，默认已选中。
+                  允许抓取全部表示开放站点内容，其它选项用于避免搜索引擎收录后台、接口与交易流程页面。
+                </p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">自定义规则（每行一条）</label>
@@ -267,4 +277,3 @@ export default function SeoSettingsPage() {
     </div>
   )
 }
-
