@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import ProductImageGallery from './ProductImageGallery'
 import { formatPrice } from '@/lib/utils'
 import AddToCartButton from './AddToCartButton'
@@ -68,12 +68,16 @@ import AddToCartButton from './AddToCartButton'
   variantOptionLinks?: Record<string, Record<string, string>> | null
   showBuyOnAmazon?: boolean
   showAddToCart?: boolean
-  reviews?: Array<{ id: string; name: string; country: string; title: string; content: string; rating: number; images: string[] }>
+  reviews?: Array<{ id: string; name: string; country: string; title: string; content: string; rating: number; images: string[]; createdAt?: string | Date }>
 }) {
    const [selectedImageIndex, setSelectedImageIndex] = useState<number>(0)
    const [selection, setSelection] = useState<Record<string, string>>({})
-   const [failedThumb, setFailedThumb] = useState<Record<string, boolean>>({})
-   const [lastClickedGroup, setLastClickedGroup] = useState<string | null>(null)
+  const [failedThumb, setFailedThumb] = useState<Record<string, boolean>>({})
+  const [lastClickedGroup, setLastClickedGroup] = useState<string | null>(null)
+  const [previewUrls, setPreviewUrls] = useState<string[] | null>(null)
+  const [previewIndex, setPreviewIndex] = useState<number>(0)
+  const [sortBy, setSortBy] = useState<'time' | 'rating'>('time')
+  const [onlyWithImages, setOnlyWithImages] = useState<boolean>(false)
  
    const safeImages = useMemo(() => {
      const arr = Array.isArray(images) && images.length > 0 ? images : [mainImage]
@@ -106,6 +110,36 @@ import AddToCartButton from './AddToCartButton'
     if (!url || typeof url !== 'string') return null
     return url.startsWith('http') ? url : (url.startsWith('/') ? url : `/${url}`)
   }
+
+  const normalizeUrl = (u: string): string => {
+    return u.startsWith('http') ? u : (u.startsWith('/') ? u : `/${u}`)
+  }
+
+  const sortedReviews = useMemo(() => {
+    let arr = Array.isArray(reviews) ? [...reviews] : []
+    if (onlyWithImages) arr = arr.filter(r => Array.isArray(r.images) && r.images.length > 0)
+    if (sortBy === 'rating') {
+      arr.sort((a, b) => b.rating - a.rating)
+    } else {
+      arr.sort((a, b) => {
+        const ad = a.createdAt ? new Date(a.createdAt).getTime() : 0
+        const bd = b.createdAt ? new Date(b.createdAt).getTime() : 0
+        return bd - ad
+      })
+    }
+    return arr
+  }, [reviews, sortBy, onlyWithImages])
+
+  useEffect(() => {
+    if (!previewUrls) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setPreviewUrls(null)
+      else if (e.key === 'ArrowRight') setPreviewIndex(i => Math.min(i + 1, (previewUrls?.length ?? 1) - 1))
+      else if (e.key === 'ArrowLeft') setPreviewIndex(i => Math.max(i - 1, 0))
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [previewUrls])
 
   // 计算当前购买链接：
   // 1) 优先匹配“组合链接”（当所有分组均已选择）
@@ -140,6 +174,7 @@ import AddToCartButton from './AddToCartButton'
   })()
 
   return (
+    <>
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
       {/* 左侧：图片 */}
       <div>
@@ -265,33 +300,73 @@ import AddToCartButton from './AddToCartButton'
           />
         </div>
 
-        {Array.isArray(reviews) && reviews.length > 0 && (
-          <div className="mt-10">
-            <h2 className="text-lg font-semibold text-gray-900">Customer Reviews</h2>
-            <div className="mt-4 space-y-6">
-              {reviews.map((r) => (
-                <div key={r.id} className="border rounded-lg p-4">
-                  <div className="flex items-center gap-2">
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <span key={i} className={i < r.rating ? 'text-yellow-500' : 'text-gray-300'}>★</span>
-                    ))}
-                    <span className="text-sm text-gray-700">{r.title}</span>
-                  </div>
-                  <div className="text-sm text-gray-600 mt-1">{r.name} {r.country ? `(${r.country})` : ''}</div>
-                  <div className="text-sm text-gray-700 mt-2">{r.content}</div>
-                  {Array.isArray(r.images) && r.images.length > 0 && (
-                    <div className="mt-2 grid grid-cols-3 gap-2">
-                      {r.images.map((img, idx) => (
-                        <img key={idx} src={img.startsWith('http') ? img : (img.startsWith('/') ? img : `/${img}`)} alt="" className="w-full h-24 object-cover rounded" />
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
     </div>
+    {Array.isArray(sortedReviews) && sortedReviews.length > 0 && (
+      <div className="mt-10">
+        <h2 className="text-lg font-semibold text-gray-900">Customer Reviews</h2>
+        <div className="mt-2 flex items-center gap-3">
+          <label className="flex items-center gap-2 text-sm text-gray-700">
+            <input type="checkbox" checked={onlyWithImages} onChange={(e) => setOnlyWithImages(e.target.checked)} />
+            只看有图
+          </label>
+          <div className="flex items-center gap-2 text-sm text-gray-700">
+            <span>排序</span>
+            <select value={sortBy} onChange={(e) => setSortBy(e.target.value as 'time' | 'rating')} className="border rounded px-2 py-1">
+              <option value="time">最新</option>
+              <option value="rating">评分最高</option>
+            </select>
+          </div>
+        </div>
+        <div className="mt-4 divide-y divide-gray-200">
+          {sortedReviews.map((r) => (
+            <div key={r.id} className="py-4">
+              <div className="flex items-center gap-2">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <span key={i} className={i < r.rating ? 'text-yellow-500' : 'text-gray-300'}>★</span>
+                ))}
+                <span className="text-sm text-gray-700">{r.title}</span>
+              </div>
+              <div className="text-sm text-gray-600 mt-1">{r.name} {r.country ? `(${r.country})` : ''}</div>
+              <div className="text-sm text-gray-700 mt-2">{r.content}</div>
+              {Array.isArray(r.images) && r.images.length > 0 && (
+                <div className="mt-2 grid grid-cols-3 gap-2">
+                  {r.images.map((img, idx) => {
+                    const u = normalizeUrl(img)
+                    return (
+                      <img
+                        key={idx}
+                        src={u}
+                        alt=""
+                        className="w-full h-24 object-cover rounded cursor-zoom-in"
+                        onClick={() => { setPreviewUrls(r.images.map(normalizeUrl)); setPreviewIndex(idx) }}
+                      />
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    )}
+    {previewUrls && (
+      <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center" onClick={() => setPreviewUrls(null)}>
+        <button type="button" className="absolute top-3 right-3 bg-black/60 text-white rounded px-3 py-1 text-sm" onClick={(e) => { e.stopPropagation(); setPreviewUrls(null) }}>关闭</button>
+        {previewUrls.length > 1 && (
+          <>
+            <button type="button" className="absolute left-3 top-1/2 -translate-y-1/2 bg-black/60 text-white rounded-full w-9 h-9 flex items-center justify-center text-lg" onClick={(e) => { e.stopPropagation(); setPreviewIndex(i => Math.max(i - 1, 0)) }} disabled={previewIndex <= 0}>‹</button>
+            <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 bg-black/60 text-white rounded-full w-9 h-9 flex items-center justify-center text-lg" onClick={(e) => { e.stopPropagation(); setPreviewIndex(i => Math.min(i + 1, previewUrls.length - 1)) }} disabled={previewIndex >= previewUrls.length - 1}>›</button>
+          </>
+        )}
+        <img
+          src={previewUrls[previewIndex]}
+          alt=""
+          className="max-h-[85vh] max-w-[90vw] object-contain rounded shadow-lg"
+          onClick={(e) => e.stopPropagation()}
+        />
+      </div>
+    )}
+    </>
   )
 }

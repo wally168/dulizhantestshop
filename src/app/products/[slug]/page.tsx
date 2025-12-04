@@ -94,7 +94,7 @@ export default async function ProductDetail({ params }: { params: Promise<{ slug
         where: { productId: product.id, isVisible: true },
         orderBy: { createdAt: 'desc' },
       })
-      return list.map((r: ProductReview) => ({
+      return list.map(r => ({
         id: r.id,
         name: r.name || '',
         country: r.country || '',
@@ -102,6 +102,7 @@ export default async function ProductDetail({ params }: { params: Promise<{ slug
         content: r.content,
         rating: r.rating,
         images: parseJson<string[]>(r.images, []),
+        createdAt: r.createdAt,
       }))
     } catch { return [] }
   })()
