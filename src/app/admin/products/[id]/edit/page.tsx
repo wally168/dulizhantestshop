@@ -181,7 +181,8 @@ export default function EditProduct() {
     title: '',
     content: '',
     rating: 5,
-    images: ['']
+    images: [''],
+    createdAt: ''
   })
 
   // 预览大图子组件，确保作用域正确
@@ -369,6 +370,14 @@ export default function EditProduct() {
             content: String(r.content || ''),
             rating: Number(r.rating || 5),
             images: Array.isArray(r.images) ? r.images : [],
+            createdAt: (() => {
+              try {
+                if (!r.createdAt) return ''
+                const d = new Date(r.createdAt)
+                const pad = (n: number) => String(n).padStart(2, '0')
+                return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+              } catch { return '' }
+            })()
           })) : []
           setReviews(normalized)
         }
@@ -433,6 +442,7 @@ export default function EditProduct() {
         content: newReview.content,
         rating: newReview.rating,
         images: (newReview.images || []).filter((u) => u && u.trim() !== ''),
+        createdAt: newReview.createdAt ? new Date(newReview.createdAt).toISOString() : undefined,
       }
       const res = await fetch(`/api/products/${productId}/reviews`, {
         method: 'POST',
@@ -442,7 +452,7 @@ export default function EditProduct() {
       if (res.ok) {
         const created = await res.json()
         setReviews([created, ...reviews])
-        setNewReview({ id: '', productId, isVisible: true, country: '', name: '', title: '', content: '', rating: 5, images: [''] })
+        setNewReview({ id: '', productId, isVisible: true, country: '', name: '', title: '', content: '', rating: 5, images: [''], createdAt: '' })
       } else {
         const err = await res.json().catch(() => ({}))
         alert(err.error || '添加失败')
@@ -468,6 +478,7 @@ export default function EditProduct() {
         content: editingReview.content,
         rating: editingReview.rating,
         images: (editingReview.images || []).filter((u) => u && u.trim() !== ''),
+        createdAt: editingReview.createdAt ? new Date(editingReview.createdAt).toISOString() : undefined,
       }
       const res = await fetch(`/api/reviews/${editingReview.id}`, {
         method: 'PUT',
@@ -1347,6 +1358,10 @@ export default function EditProduct() {
                 {editingReview ? (
                   <div className="border rounded-lg p-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">发言时间</label>
+                        <input type="datetime-local" value={editingReview.createdAt || ''} onChange={(e) => setEditingReview({ ...editingReview!, createdAt: e.target.value })} className="w-full px-3 py-2 border rounded-lg" />
+                      </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">国家/地区</label>
                         <input type="text" value={editingReview.country} onChange={(e) => setEditingReview({ ...editingReview!, country: e.target.value })} className="w-full px-3 py-2 border rounded-lg" />
@@ -1406,6 +1421,10 @@ export default function EditProduct() {
                 ) : (
                   <div className="border rounded-lg p-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">发言时间</label>
+                        <input type="datetime-local" value={newReview.createdAt || ''} onChange={(e) => setNewReview({ ...newReview, createdAt: e.target.value })} className="w-full px-3 py-2 border rounded-lg" />
+                      </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">国家/地区</label>
                         <input type="text" value={newReview.country} onChange={(e) => setNewReview({ ...newReview, country: e.target.value })} className="w-full px-3 py-2 border rounded-lg" />

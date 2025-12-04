@@ -38,6 +38,29 @@ export async function GET(request: NextRequest) {
 
     const products = await db.product.findMany(queryOptions)
 
+    // 聚合可见评论的评分与数量
+    const ids = products.map((p: any) => p.id)
+    let aggMap: Record<string, { avgRating: number; reviewCount: number }> = {}
+    if (ids.length > 0) {
+      try {
+        const groups = await (db as any).productReview.groupBy({
+          by: ['productId'],
+          where: { productId: { in: ids }, isVisible: true },
+          _avg: { rating: true },
+          _count: { _all: true },
+        })
+        aggMap = Object.fromEntries(groups.map((g: any) => [
+          g.productId,
+          {
+            avgRating: typeof g._avg?.rating === 'number' ? Math.round(g._avg.rating * 10) / 10 : 0,
+            reviewCount: typeof g._count?._all === 'number' ? g._count._all : 0,
+          }
+        ]))
+      } catch (e) {
+        console.error('Aggregate reviews failed:', e)
+      }
+    }
+
     // 映射数据库字段到前端期望的字段
     const normalized = products.map((p: any) => ({
       ...p,
@@ -49,6 +72,8 @@ export async function GET(request: NextRequest) {
       variantImageMap: (() => { try { return p.variantImageMap ? JSON.parse(p.variantImageMap) : null } catch { return null } })(),
       variantOptionImages: (() => { try { return p.variantOptionImages ? JSON.parse(p.variantOptionImages) : null } catch { return null } })(),
       variantOptionLinks: (() => { try { return p.variantOptionLinks ? JSON.parse(p.variantOptionLinks) : null } catch { return null } })(),
+      avgRating: (aggMap[p.id]?.avgRating ?? 0),
+      reviewCount: (aggMap[p.id]?.reviewCount ?? 0),
     }))
 
     return NextResponse.json(normalized)

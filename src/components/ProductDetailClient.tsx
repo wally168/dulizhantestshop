@@ -130,6 +130,14 @@ import AddToCartButton from './AddToCartButton'
     return arr
   }, [reviews, sortBy, onlyWithImages])
 
+  const formatReviewDate = (dt?: string | Date) => {
+    if (!dt) return ''
+    try {
+      const d = new Date(dt)
+      return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+    } catch { return '' }
+  }
+
   useEffect(() => {
     if (!previewUrls) return
     const onKey = (e: KeyboardEvent) => {
@@ -308,13 +316,13 @@ import AddToCartButton from './AddToCartButton'
         <div className="mt-2 flex items-center gap-3">
           <label className="flex items-center gap-2 text-sm text-gray-700">
             <input type="checkbox" checked={onlyWithImages} onChange={(e) => setOnlyWithImages(e.target.checked)} />
-            只看有图
+            Only reviews with images
           </label>
           <div className="flex items-center gap-2 text-sm text-gray-700">
-            <span>排序</span>
+            <span>Sort</span>
             <select value={sortBy} onChange={(e) => setSortBy(e.target.value as 'time' | 'rating')} className="border rounded px-2 py-1">
-              <option value="time">最新</option>
-              <option value="rating">评分最高</option>
+              <option value="time">Newest</option>
+              <option value="rating">Highest Rating</option>
             </select>
           </div>
         </div>
@@ -327,7 +335,7 @@ import AddToCartButton from './AddToCartButton'
                 ))}
                 <span className="text-sm text-gray-700">{r.title}</span>
               </div>
-              <div className="text-sm text-gray-600 mt-1">{r.name} {r.country ? `(${r.country})` : ''}</div>
+              <div className="text-sm text-gray-600 mt-1">{r.name} {r.country ? `(${r.country})` : ''} {r.createdAt ? `• ${formatReviewDate(r.createdAt)}` : ''}</div>
               <div className="text-sm text-gray-700 mt-2">{r.content}</div>
               {Array.isArray(r.images) && r.images.length > 0 && (
                 <div className="mt-2 grid grid-cols-3 gap-2">
@@ -338,7 +346,7 @@ import AddToCartButton from './AddToCartButton'
                         key={idx}
                         src={u}
                         alt=""
-                        className="w-full h-24 object-cover rounded cursor-zoom-in"
+                        className="w-full h-36 object-contain bg-gray-100 rounded cursor-zoom-in"
                         onClick={() => { setPreviewUrls(r.images.map(normalizeUrl)); setPreviewIndex(idx) }}
                       />
                     )
@@ -352,7 +360,7 @@ import AddToCartButton from './AddToCartButton'
     )}
     {previewUrls && (
       <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center" onClick={() => setPreviewUrls(null)}>
-        <button type="button" className="absolute top-3 right-3 bg-black/60 text-white rounded px-3 py-1 text-sm" onClick={(e) => { e.stopPropagation(); setPreviewUrls(null) }}>关闭</button>
+        <button type="button" className="absolute top-3 right-3 bg-black/60 text-white rounded px-3 py-1 text-sm" onClick={(e) => { e.stopPropagation(); setPreviewUrls(null) }}>Close</button>
         {previewUrls.length > 1 && (
           <>
             <button type="button" className="absolute left-3 top-1/2 -translate-y-1/2 bg-black/60 text-white rounded-full w-9 h-9 flex items-center justify-center text-lg" onClick={(e) => { e.stopPropagation(); setPreviewIndex(i => Math.max(i - 1, 0)) }} disabled={previewIndex <= 0}>‹</button>
@@ -364,6 +372,17 @@ import AddToCartButton from './AddToCartButton'
           alt=""
           className="max-h-[85vh] max-w-[90vw] object-contain rounded shadow-lg"
           onClick={(e) => e.stopPropagation()}
+          onTouchStart={(e) => (e.touches?.[0] ? (window.__previewTouchStartX = e.touches[0].clientX) : null)}
+          onTouchEnd={(e) => {
+            const startX = (window as any).__previewTouchStartX
+            const endX = e.changedTouches?.[0]?.clientX
+            if (typeof startX === 'number' && typeof endX === 'number') {
+              const dx = endX - startX
+              const TH = 40
+              if (dx > TH) setPreviewIndex(i => Math.max(i - 1, 0))
+              else if (dx < -TH) setPreviewIndex(i => Math.min(i + 1, previewUrls.length - 1))
+            }
+          }}
         />
       </div>
     )}

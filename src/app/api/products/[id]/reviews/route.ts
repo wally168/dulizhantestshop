@@ -50,7 +50,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
   try {
     const { id } = await context.params
     const body = await request.json()
-    const {
+  const {
       isVisible,
       country,
       name,
@@ -58,6 +58,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
       content,
       rating,
       images,
+      createdAt,
     } = body
 
     if (typeof content !== 'string' || content.trim() === '') {
@@ -80,6 +81,13 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
             if (typeof images === 'string') return images
             return null
           } catch { return null }
+        })(),
+        createdAt: (() => {
+          try {
+            if (!createdAt) return undefined as unknown as Date
+            const d = new Date(createdAt)
+            return isNaN(d.getTime()) ? undefined as unknown as Date : d
+          } catch { return undefined as unknown as Date }
         })(),
       },
     })

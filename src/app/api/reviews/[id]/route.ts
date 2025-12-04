@@ -18,7 +18,7 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
   try {
     const { id } = await context.params
     const body = await request.json()
-    const {
+  const {
       isVisible,
       country,
       name,
@@ -26,6 +26,7 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
       content,
       rating,
       images,
+      createdAt,
     } = body
 
     const data: any = {}
@@ -39,6 +40,12 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
       try {
         data.images = Array.isArray(images) ? JSON.stringify(images) : (typeof images === 'string' ? images : null)
       } catch { data.images = null }
+    }
+    if (typeof createdAt !== 'undefined') {
+      try {
+        const d = new Date(createdAt)
+        if (!isNaN(d.getTime())) data.createdAt = d
+      } catch {}
     }
 
     if (Object.keys(data).length === 0) {

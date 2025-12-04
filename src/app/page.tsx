@@ -15,6 +15,8 @@ interface Product {
   price: number
   originalPrice?: number
   featured: boolean
+  avgRating?: number
+  reviewCount?: number
 }
 
 interface HomeContent {
@@ -211,6 +213,17 @@ function ProductCard({ product }: { product: Product }) {
           <h3 className="text-xl font-semibold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">
             {product.title}
           </h3>
+          {(product.reviewCount ?? 0) > 0 && (
+            <div className="mb-2 flex items-center gap-2 text-sm">
+              <span className="text-gray-900 font-medium">{(product.avgRating ?? 0).toFixed(1)}</span>
+              <span className="flex items-center">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Star key={i} className={`h-4 w-4 ${i < Math.round(product.avgRating ?? 0) ? 'text-yellow-500' : 'text-gray-300'}`} />
+                ))}
+              </span>
+              <span className="text-gray-600">({product.reviewCount})</span>
+            </div>
+          )}
           <div className="flex items-center space-x-2">
             <span className="text-2xl font-bold text-gray-900">
               ¥{product.price}
