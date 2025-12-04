@@ -14,7 +14,8 @@ import {
   Star,
   Package,
   Home,
-  Loader2
+  Loader2,
+  Trash2
 } from 'lucide-react'
 
 interface Product {
@@ -64,6 +65,20 @@ interface VariantGroup { name: string; options: string[] }
 
 // 新增：分类类型
 interface Category { id: string; name: string; slug: string }
+
+interface Review {
+  id: string
+  productId: string
+  isVisible: boolean
+  country: string
+  name: string
+  title: string
+  content: string
+  rating: number
+  images: string[]
+  createdAt?: string
+  updatedAt?: string
+}
 
 // 链接校验（仅校验为有效 http/https URL，不自动改写）
 function isValidAmazonUrl(url: string): boolean {
@@ -153,6 +168,21 @@ export default function EditProduct() {
   const [dragIndex, setDragIndex] = useState<number | null>(null)
   const [hasChanges, setHasChanges] = useState(false)
   useUnsavedChangesPrompt(hasChanges)
+
+  const [reviews, setReviews] = useState<Review[]>([])
+  const [loadingReviews, setLoadingReviews] = useState(true)
+  const [editingReview, setEditingReview] = useState<Review | null>(null)
+  const [newReview, setNewReview] = useState<Review>({
+    id: '',
+    productId: productId,
+    isVisible: true,
+    country: '',
+    name: '',
+    title: '',
+    content: '',
+    rating: 5,
+    images: ['']
+  })
 
   // 预览大图子组件，确保作用域正确
   const PreviewOverlay = ({ image, onClose }: { image: string | null; onClose: () => void }) => {
@@ -320,6 +350,154 @@ export default function EditProduct() {
       router.push('/admin/products')
     } finally {
       setFetching(false)
+    }
+  }
+
+  useEffect(() => {
+    const loadReviews = async () => {
+      try {
+        const res = await fetch(`/api/products/${productId}/reviews?visibleOnly=0`, { cache: 'no-store' })
+        if (res.ok) {
+          const data = await res.json()
+          const normalized = Array.isArray(data) ? data.map((r: any) => ({
+            id: String(r.id),
+            productId: String(r.productId),
+            isVisible: Boolean(r.isVisible),
+            country: String(r.country || ''),
+            name: String(r.name || ''),
+            title: String(r.title || ''),
+            content: String(r.content || ''),
+            rating: Number(r.rating || 5),
+            images: Array.isArray(r.images) ? r.images : [],
+          })) : []
+          setReviews(normalized)
+        }
+      } catch (e) {
+        console.error('加载评论失败:', e)
+      } finally {
+        setLoadingReviews(false)
+      }
+    }
+    loadReviews()
+  }, [productId])
+
+  const addReviewImageField = (isEdit: boolean) => {
+    if (isEdit && editingReview) {
+      setEditingReview({ ...editingReview, images: [...(editingReview.images || []), ''] })
+    } else {
+      setNewReview(prev => ({ ...prev, images: [...(prev.images || []), ''] }))
+    }
+  }
+
+  const removeReviewImageField = (index: number, isEdit: boolean) => {
+    if (isEdit && editingReview) {
+      setEditingReview({ ...editingReview, images: (editingReview.images || []).filter((_, i) => i !== index) })
+    } else {
+      setNewReview(prev => ({ ...prev, images: (prev.images || []).filter((_, i) => i !== index) }))
+    }
+  }
+
+  const updateReviewImageField = (index: number, value: string, isEdit: boolean) => {
+    if (isEdit && editingReview) {
+      setEditingReview({ ...editingReview, images: (editingReview.images || []).map((img, i) => i === index ? value : img) })
+    } else {
+      setNewReview(prev => ({ ...prev, images: (prev.images || []).map((img, i) => i === index ? value : img) }))
+    }
+  }
+
+  const uploadReviewImage = async (index: number, file: File, isEdit: boolean) => {
+    try {
+      const fd = new FormData()
+      fd.append('file', file)
+      const res = await fetch('/api/upload', { method: 'POST', body: fd })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const data = await res.json()
+      const url = data?.url
+      if (typeof url === 'string' && url.length > 0) {
+        const finalUrl = url.startsWith('http') ? url : `${window.location.origin}${url}`
+        updateReviewImageField(index, finalUrl, isEdit)
+      }
+    } catch (e) {
+      console.error('上传失败:', e)
+      alert('上传失败，请稍后重试')
+    }
+  }
+
+  const saveNewReview = async () => {
+    try {
+      const payload = {
+        isVisible: newReview.isVisible,
+        country: newReview.country,
+        name: newReview.name,
+        title: newReview.title,
+        content: newReview.content,
+        rating: newReview.rating,
+        images: (newReview.images || []).filter((u) => u && u.trim() !== ''),
+      }
+      const res = await fetch(`/api/products/${productId}/reviews`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+      if (res.ok) {
+        const created = await res.json()
+        setReviews([created, ...reviews])
+        setNewReview({ id: '', productId, isVisible: true, country: '', name: '', title: '', content: '', rating: 5, images: [''] })
+      } else {
+        const err = await res.json().catch(() => ({}))
+        alert(err.error || '添加失败')
+      }
+    } catch (e) {
+      console.error('添加评论失败:', e)
+      alert('添加失败')
+    }
+  }
+
+  const startEditReview = (r: Review) => {
+    setEditingReview({ ...r, images: (r.images || []).length > 0 ? r.images : [''] })
+  }
+
+  const saveEditReview = async () => {
+    if (!editingReview) return
+    try {
+      const payload = {
+        isVisible: editingReview.isVisible,
+        country: editingReview.country,
+        name: editingReview.name,
+        title: editingReview.title,
+        content: editingReview.content,
+        rating: editingReview.rating,
+        images: (editingReview.images || []).filter((u) => u && u.trim() !== ''),
+      }
+      const res = await fetch(`/api/reviews/${editingReview.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+      if (res.ok) {
+        const updated = await res.json()
+        setReviews(reviews.map(r => r.id === updated.id ? updated : r))
+        setEditingReview(null)
+      } else {
+        const err = await res.json().catch(() => ({}))
+        alert(err.error || '更新失败')
+      }
+    } catch (e) {
+      console.error('更新评论失败:', e)
+      alert('更新失败')
+    }
+  }
+
+  const deleteReview = async (id: string) => {
+    if (!confirm('确定删除该评论？')) return
+    try {
+      const res = await fetch(`/api/reviews/${id}`, { method: 'DELETE' })
+      if (res.ok) {
+        setReviews(reviews.filter(r => r.id !== id))
+      }
+    } catch (e) {
+      console.error('删除评论失败:', e)
+      alert('删除失败')
     }
   }
 
@@ -1148,6 +1326,185 @@ export default function EditProduct() {
                 <strong>支持的HTML标签：</strong> &lt;p&gt;, &lt;br&gt;, &lt;strong&gt;, &lt;em&gt;, &lt;ul&gt;, &lt;ol&gt;, &lt;li&gt;, &lt;img&gt;, &lt;a&gt;, &lt;h1-h6&gt;
               </div>
             </div>
+          </div>
+
+          <div className="bg-white p-6 rounded-xl shadow-sm border">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-gray-900">产品评论</h2>
+              <button
+                type="button"
+                onClick={() => setEditingReview(null)}
+                className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center"
+              >
+                <Plus className="h-4 w-4 mr-1" /> 添加评论
+              </button>
+            </div>
+
+            {loadingReviews ? (
+              <div className="text-gray-600 flex items-center"><Loader2 className="h-4 w-4 animate-spin mr-2" /> 加载中…</div>
+            ) : (
+              <div className="space-y-6">
+                {editingReview ? (
+                  <div className="border rounded-lg p-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">国家/地区</label>
+                        <input type="text" value={editingReview.country} onChange={(e) => setEditingReview({ ...editingReview!, country: e.target.value })} className="w-full px-3 py-2 border rounded-lg" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">姓名</label>
+                        <input type="text" value={editingReview.name} onChange={(e) => setEditingReview({ ...editingReview!, name: e.target.value })} className="w-full px-3 py-2 border rounded-lg" />
+                      </div>
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">标题</label>
+                        <input type="text" value={editingReview.title} onChange={(e) => setEditingReview({ ...editingReview!, title: e.target.value })} className="w-full px-3 py-2 border rounded-lg" />
+                      </div>
+                      <div className="md:col-span-2">
+                        <label className="block text sm font-medium text-gray-700 mb-2">内容</label>
+                        <textarea rows={4} value={editingReview.content} onChange={(e) => setEditingReview({ ...editingReview!, content: e.target.value })} className="w-full px-3 py-2 border rounded-lg" />
+                      </div>
+                    </div>
+                    <div className="mt-4 flex items-center gap-4">
+                      <label className="flex items-center">
+                        <input type="checkbox" checked={editingReview.isVisible} onChange={(e) => setEditingReview({ ...editingReview!, isVisible: e.target.checked })} />
+                        <span className="ml-2 text-sm text-gray-700">显示在前台</span>
+                      </label>
+                      <div className="flex items-center">
+                        {Array.from({ length: 5 }).map((_, i) => (
+                          <button key={i} type="button" onClick={() => setEditingReview({ ...editingReview!, rating: i + 1 })} className={"mr-1 " + (i < editingReview.rating ? 'text-yellow-500' : 'text-gray-300')}>
+                            <Star className="h-5 w-5" />
+                          </button>
+                        ))}
+                        <span className="ml-2 text-sm text-gray-700">{editingReview.rating} 星</span>
+                      </div>
+                    </div>
+                    <div className="mt-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium text-gray-700">图片</span>
+                        <button type="button" onClick={() => addReviewImageField(true)} className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center"><Plus className="h-4 w-4 mr-1" /> 添加图片</button>
+                      </div>
+                      <div className="space-y-3">
+                        {(editingReview.images || []).map((img, idx) => (
+                          <div key={idx} className="flex items-center gap-3">
+                            <input type="url" value={img} onChange={(e) => updateReviewImageField(idx, e.target.value, true)} className="flex-1 px-3 py-2 border rounded-lg" placeholder="图片URL" />
+                            <label className="inline-flex items-center px-3 py-2 text-sm bg-gray-100 border rounded-lg cursor-pointer hover:bg-gray-200">
+                              <Upload className="h-4 w-4 mr-2" /> 本地上传
+                              <input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadReviewImage(idx, f, true) }} />
+                            </label>
+                            {(editingReview.images || []).length > 1 && (
+                              <button type="button" onClick={() => removeReviewImageField(idx, true)} className="text-red-600 hover:text-red-700"><X className="h-5 w-5" /></button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="mt-4 flex items-center justify-end gap-3">
+                      <button type="button" onClick={() => setEditingReview(null)} className="px-4 py-2 border rounded-lg">取消</button>
+                      <button type="button" onClick={saveEditReview} className="px-4 py-2 bg-blue-600 text-white rounded-lg">保存</button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="border rounded-lg p-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">国家/地区</label>
+                        <input type="text" value={newReview.country} onChange={(e) => setNewReview({ ...newReview, country: e.target.value })} className="w-full px-3 py-2 border rounded-lg" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">姓名</label>
+                        <input type="text" value={newReview.name} onChange={(e) => setNewReview({ ...newReview, name: e.target.value })} className="w-full px-3 py-2 border rounded-lg" />
+                      </div>
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">标题</label>
+                        <input type="text" value={newReview.title} onChange={(e) => setNewReview({ ...newReview, title: e.target.value })} className="w-full px-3 py-2 border rounded-lg" />
+                      </div>
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">内容</label>
+                        <textarea rows={4} value={newReview.content} onChange={(e) => setNewReview({ ...newReview, content: e.target.value })} className="w-full px-3 py-2 border rounded-lg" />
+                      </div>
+                    </div>
+                    <div className="mt-4 flex items-center gap-4">
+                      <label className="flex items-center">
+                        <input type="checkbox" checked={newReview.isVisible} onChange={(e) => setNewReview({ ...newReview, isVisible: e.target.checked })} />
+                        <span className="ml-2 text-sm text-gray-700">显示在前台</span>
+                      </label>
+                      <div className="flex items-center">
+                        {Array.from({ length: 5 }).map((_, i) => (
+                          <button key={i} type="button" onClick={() => setNewReview({ ...newReview, rating: i + 1 })} className={"mr-1 " + (i < newReview.rating ? 'text-yellow-500' : 'text-gray-300')}>
+                            <Star className="h-5 w-5" />
+                          </button>
+                        ))}
+                        <span className="ml-2 text-sm text-gray-700">{newReview.rating} 星</span>
+                      </div>
+                    </div>
+                    <div className="mt-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium text-gray-700">图片</span>
+                        <button type="button" onClick={() => addReviewImageField(false)} className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center"><Plus className="h-4 w-4 mr-1" /> 添加图片</button>
+                      </div>
+                      <div className="space-y-3">
+                        {(newReview.images || []).map((img, idx) => (
+                          <div key={idx} className="flex items-center gap-3">
+                            <input type="url" value={img} onChange={(e) => updateReviewImageField(idx, e.target.value, false)} className="flex-1 px-3 py-2 border rounded-lg" placeholder="图片URL" />
+                            <label className="inline-flex items-center px-3 py-2 text-sm bg-gray-100 border rounded-lg cursor-pointer hover:bg-gray-200">
+                              <Upload className="h-4 w-4 mr-2" /> 本地上传
+                              <input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadReviewImage(idx, f, false) }} />
+                            </label>
+                            {(newReview.images || []).length > 1 && (
+                              <button type="button" onClick={() => removeReviewImageField(idx, false)} className="text-red-600 hover:text-red-700"><X className="h-5 w-5" /></button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="mt-4 flex items-center justify-end">
+                      <button type="button" onClick={saveNewReview} className="px-4 py-2 bg-blue-600 text-white rounded-lg">添加评论</button>
+                    </div>
+                  </div>
+                )}
+
+                <div className="mt-6">
+                  <h3 className="text-md font-semibold text-gray-900 mb-2">已有评论</h3>
+                  {reviews.length === 0 ? (
+                    <p className="text-sm text-gray-600">暂无评论</p>
+                  ) : (
+                    <div className="space-y-3">
+                      {reviews.map(r => (
+                        <div key={r.id} className="border rounded-lg p-4 flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              {Array.from({ length: 5 }).map((_, i) => (
+                                <Star key={i} className={"h-4 w-4 " + (i < r.rating ? 'text-yellow-500' : 'text-gray-300')} />
+                              ))}
+                              <span className="text-sm text-gray-700">{r.title}</span>
+                            </div>
+                            <div className="text-sm text-gray-600 mt-1">{r.name} {r.country ? `(${r.country})` : ''}</div>
+                            <div className="text-sm text-gray-700 mt-2">{r.content}</div>
+                            {Array.isArray(r.images) && r.images.length > 0 && (
+                              <div className="mt-2 grid grid-cols-3 gap-2">
+                                {r.images.map((img, idx) => (
+                                  <img key={idx} src={img.startsWith('http') ? img : (img.startsWith('/') ? img : `/${img}`)} alt="" className="w-full h-20 object-cover rounded" />
+                                ))}
+                              </div>
+                            )}
+                            <div className="mt-2">
+                              <label className="inline-flex items-center">
+                                <input type="checkbox" checked={r.isVisible} onChange={async (e) => { const res = await fetch(`/api/reviews/${r.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ isVisible: e.target.checked }) }); if (res.ok) { const updated = await res.json(); setReviews(reviews.map(rr => rr.id === updated.id ? updated : rr)) } }} />
+                                <span className="ml-2 text-sm text-gray-700">显示在前台</span>
+                              </label>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 ml-4">
+                            <button type="button" onClick={() => startEditReview(r)} className="text-blue-600 hover:text-blue-700 text-sm">编辑</button>
+                            <button type="button" onClick={() => deleteReview(r.id)} className="text-red-600 hover:text-red-700"><Trash2 className="h-4 w-4" /></button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* 提交按钮 */}

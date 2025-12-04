@@ -182,6 +182,7 @@ export async function POST(request: NextRequest) {
     await db.message.deleteMany({})
     await db.navigation.deleteMany({})
     await db.siteSettings.deleteMany({})
+    await db.productReview.deleteMany({})
     await db.product.deleteMany({})
     await db.category.deleteMany({})
     await db.homeContent.deleteMany({})

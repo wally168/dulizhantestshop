@@ -1017,6 +1017,11 @@ export default function NewProduct() {
             </div>
           </div>
 
+          <div className="bg-white p-6 rounded-xl shadow-sm border">
+            <h2 className="text-lg font-semibold text-gray-900 mb-2">产品评论</h2>
+            <p className="text-sm text-gray-700">保存产品后，可在编辑页面添加和管理评论（国家、名称、标题、内容、星级、图片）。</p>
+          </div>
+
           {/* 提交按钮 */}
           <div className="flex items-center justify-end space-x-4">
             <Link

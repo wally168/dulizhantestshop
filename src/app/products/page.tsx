@@ -4,9 +4,10 @@ import { db } from '@/lib/db'
 import { formatPrice } from '@/lib/utils'
 import AddToCartButton from '@/components/AddToCartButton'
 import FallbackImage from '@/components/FallbackImage'
+import type { Product } from '@prisma/client'
 
 export default async function ProductsPage() {
-  let products: any[] = []
+  let products: Product[] = []
   try {
     products = await db.product.findMany({
       where: { active: true },
@@ -20,7 +21,7 @@ export default async function ProductsPage() {
     products = []
   }
 
-  const resolveImage = (p: any): string => {
+  const resolveImage = (p: Product): string => {
     const main = (p?.mainImage ?? '').trim()
     if (main) return main
     try {
@@ -52,8 +53,8 @@ export default async function ProductsPage() {
               const price = Number(product?.price ?? 0)
               const hasOriginal = typeof product?.originalPrice === 'number' && Number(product.originalPrice) > price
               const amazonUrl = typeof product?.amazonUrl === 'string' ? product.amazonUrl : ''
-              const showBuy = (product as any).showBuyOnAmazon !== false && !!amazonUrl
-              const showAdd = (product as any).showAddToCart !== false
+              const showBuy = product.showBuyOnAmazon !== false && !!amazonUrl
+              const showAdd = product.showAddToCart !== false
 
               return (
                 <div key={product.id} className="group relative">

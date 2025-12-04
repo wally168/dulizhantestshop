@@ -3,6 +3,7 @@ import ProductDetailClient from '@/components/ProductDetailClient'
 import { db } from '@/lib/db'
 import Link from 'next/link'
 import { formatPrice } from '@/lib/utils'
+import type { ProductReview } from '@prisma/client'
 
 function parseJson<T>(s: string | null | undefined, fallback: T): T {
   try { return s ? JSON.parse(s) as T : fallback } catch { return fallback }
@@ -58,13 +59,13 @@ export default async function ProductDetail({ params }: { params: Promise<{ slug
   const bullets = Array.isArray(parsedBullets) ? parsedBullets : []
 
   type VariantGroup = { name: string; options: string[] }
-  const brand = (product as any).brand as string | null | undefined
-  const upc = (product as any).upc as string | null | undefined
-  const publishedAt = (product as any).publishedAt as string | Date | null | undefined
-  const variantGroups = parseJson<VariantGroup[]>((product as any).variants, [])
+  const brand = product.brand ?? null
+  const upc = product.upc ?? null
+  const publishedAt = product.publishedAt ?? null
+  const variantGroups = parseJson<VariantGroup[]>(product.variants, [])
   const variantImageMap = (() => {
     try {
-      const raw = (product as any).variantImageMap as string | null | undefined
+      const raw = product.variantImageMap
       if (!raw) return null
       const obj = JSON.parse(raw)
       return obj && typeof obj === 'object' ? obj : null
@@ -72,7 +73,7 @@ export default async function ProductDetail({ params }: { params: Promise<{ slug
   })()
   const variantOptionImages = (() => {
     try {
-      const raw = (product as any).variantOptionImages as string | null | undefined
+      const raw = product.variantOptionImages
       if (!raw) return null
       const obj = JSON.parse(raw)
       return obj && typeof obj === 'object' ? obj : null
@@ -80,11 +81,29 @@ export default async function ProductDetail({ params }: { params: Promise<{ slug
   })()
   const variantOptionLinks = (() => {
     try {
-      const raw = (product as any).variantOptionLinks as string | null | undefined
+      const raw = product.variantOptionLinks
       if (!raw) return null
       const obj = JSON.parse(raw)
       return obj && typeof obj === 'object' ? obj : null
     } catch { return null }
+  })()
+
+  const reviews = await (async () => {
+    try {
+      const list = await db.productReview.findMany({
+        where: { productId: product.id, isVisible: true },
+        orderBy: { createdAt: 'desc' },
+      })
+      return list.map((r: ProductReview) => ({
+        id: r.id,
+        name: r.name || '',
+        country: r.country || '',
+        title: r.title || '',
+        content: r.content,
+        rating: r.rating,
+        images: parseJson<string[]>(r.images, []),
+      }))
+    } catch { return [] }
   })()
 
   return (
@@ -110,8 +129,9 @@ export default async function ProductDetail({ params }: { params: Promise<{ slug
             variantImageMap={variantImageMap}
             variantOptionImages={variantOptionImages}
             variantOptionLinks={variantOptionLinks}
-            showBuyOnAmazon={((product as any).showBuyOnAmazon !== false)}
-            showAddToCart={((product as any).showAddToCart !== false)}
+            showBuyOnAmazon={(product.showBuyOnAmazon !== false)}
+            showAddToCart={(product.showAddToCart !== false)}
+            reviews={reviews}
           />
         </div>
       </div>

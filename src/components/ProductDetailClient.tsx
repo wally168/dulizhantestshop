@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import ProductImageGallery from './ProductImageGallery'
 import { formatPrice } from '@/lib/utils'
 import AddToCartButton from './AddToCartButton'
@@ -43,31 +43,33 @@ import AddToCartButton from './AddToCartButton'
    variantGroups,
    variantImageMap,
    variantOptionImages,
-   variantOptionLinks,
-   showBuyOnAmazon = true,
-   showAddToCart = true,
- }: {
-   id: string
-   slug: string
-   title: string
-   categoryName?: string
-   brand?: string | null
-   upc?: string | null
-   publishedAt?: string | Date | null
-   description: string
-   amazonUrl: string
-   price: number
-   originalPrice?: number | null
-   images: string[]
-   mainImage: string
-   bullets: string[]
-   variantGroups: VariantGroup[]
-   variantImageMap?: Record<string, Record<string, number>> | null
-   variantOptionImages?: Record<string, Record<string, string>> | null
-   variantOptionLinks?: Record<string, Record<string, string>> | null
-   showBuyOnAmazon?: boolean
-   showAddToCart?: boolean
- }) {
+  variantOptionLinks,
+  showBuyOnAmazon = true,
+  showAddToCart = true,
+  reviews = [],
+}: {
+  id: string
+  slug: string
+  title: string
+  categoryName?: string
+  brand?: string | null
+  upc?: string | null
+  publishedAt?: string | Date | null
+  description: string
+  amazonUrl: string
+  price: number
+  originalPrice?: number | null
+  images: string[]
+  mainImage: string
+  bullets: string[]
+  variantGroups: VariantGroup[]
+  variantImageMap?: Record<string, Record<string, number>> | null
+  variantOptionImages?: Record<string, Record<string, string>> | null
+  variantOptionLinks?: Record<string, Record<string, string>> | null
+  showBuyOnAmazon?: boolean
+  showAddToCart?: boolean
+  reviews?: Array<{ id: string; name: string; country: string; title: string; content: string; rating: number; images: string[] }>
+}) {
    const [selectedImageIndex, setSelectedImageIndex] = useState<number>(0)
    const [selection, setSelection] = useState<Record<string, string>>({})
    const [failedThumb, setFailedThumb] = useState<Record<string, boolean>>({})
@@ -110,18 +112,16 @@ import AddToCartButton from './AddToCartButton'
   // 2) 再使用最近点击的分组映射
   // 3) 其次任何已选拥有映射的分组
   // 4) 兜底回退到产品 amazonUrl
-  const currentBuyUrl = useMemo(() => {
+  const currentBuyUrl = (() => {
     const ensureUrl = (u?: string | null): string | null => {
       if (!u || typeof u !== 'string') return null
-      // 允许外链和相对链接（极少数情况），默认原样返回
       return u
     }
-    // 尝试组合链接
     if (Array.isArray(variantGroups) && variantGroups.length > 1) {
       const allSelected = variantGroups.every(g => !!selection[g.name])
       if (allSelected) {
         const key = buildComboKey(variantGroups, selection)
-        const comboUrl = (variantOptionLinks as any)?.[COMBO_KEY]?.[key] as string | undefined
+        const comboUrl = variantOptionLinks?.[COMBO_KEY]?.[key]
         const e = ensureUrl(comboUrl)
         if (e) return e
       }
@@ -137,7 +137,7 @@ import AddToCartButton from './AddToCartButton'
       if (e) return e
     }
     return amazonUrl
-  }, [selection, variantOptionLinks, amazonUrl, lastClickedGroup])
+  })()
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
@@ -248,7 +248,7 @@ import AddToCartButton from './AddToCartButton'
            {originalPrice ? (
              <span className="text-gray-500 line-through">{formatPrice(originalPrice)}</span>
            ) : null}
-         </div>
+        </div>
 
         {Array.isArray(bullets) && bullets.length > 0 && (
           <ul className="mt-4 list-disc list-inside text-gray-700 space-y-1">
@@ -264,6 +264,33 @@ import AddToCartButton from './AddToCartButton'
             style={{ lineHeight: '1.6' }}
           />
         </div>
+
+        {Array.isArray(reviews) && reviews.length > 0 && (
+          <div className="mt-10">
+            <h2 className="text-lg font-semibold text-gray-900">Customer Reviews</h2>
+            <div className="mt-4 space-y-6">
+              {reviews.map((r) => (
+                <div key={r.id} className="border rounded-lg p-4">
+                  <div className="flex items-center gap-2">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <span key={i} className={i < r.rating ? 'text-yellow-500' : 'text-gray-300'}>★</span>
+                    ))}
+                    <span className="text-sm text-gray-700">{r.title}</span>
+                  </div>
+                  <div className="text-sm text-gray-600 mt-1">{r.name} {r.country ? `(${r.country})` : ''}</div>
+                  <div className="text-sm text-gray-700 mt-2">{r.content}</div>
+                  {Array.isArray(r.images) && r.images.length > 0 && (
+                    <div className="mt-2 grid grid-cols-3 gap-2">
+                      {r.images.map((img, idx) => (
+                        <img key={idx} src={img.startsWith('http') ? img : (img.startsWith('/') ? img : `/${img}`)} alt="" className="w-full h-24 object-cover rounded" />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

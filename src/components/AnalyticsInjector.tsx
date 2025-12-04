@@ -30,7 +30,7 @@ function injectHtml(target: HTMLElement, html: string) {
     const el = document.createElement('script')
     for (const [k, v] of Object.entries(s.attrs)) {
       if (v === '' && (k === 'async' || k === 'defer')) {
-        ;(el as any)[k] = true
+        el.setAttribute(k, '')
       } else {
         el.setAttribute(k, v)
       }
@@ -46,9 +46,9 @@ export default function AnalyticsInjector() {
   useEffect(() => {
     if (injected.current) return
     injected.current = true
-    const headHtml = (settings as any).analyticsHeadHtml as string | undefined
-    const bodyHtml = (settings as any).analyticsBodyHtml as string | undefined
-    const googleHtml = (settings as any).analyticsGoogleHtml as string | undefined
+    const headHtml = settings.analyticsHeadHtml
+    const bodyHtml = settings.analyticsBodyHtml
+    const googleHtml = settings.analyticsGoogleHtml
     if (typeof headHtml === 'string' && headHtml.trim() && typeof document !== 'undefined') {
       injectHtml(document.head, headHtml)
     }

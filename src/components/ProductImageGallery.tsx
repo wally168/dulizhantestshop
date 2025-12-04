@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 
 export default function ProductImageGallery({
   images,
@@ -16,14 +16,10 @@ export default function ProductImageGallery({
   onImageChange?: (index: number) => void
 }) {
   const displayImages = Array.isArray(images) && images.length > 0 ? images : [mainImage]
-  const [activeIndex, setActiveIndex] = useState(0)
-
-  // allow external control of active image index
-  useEffect(() => {
-    if (typeof selectedImageIndex === 'number' && selectedImageIndex >= 0 && selectedImageIndex < displayImages.length) {
-      setActiveIndex(selectedImageIndex)
-    }
-  }, [selectedImageIndex, displayImages.length])
+  const [internalIndex, setInternalIndex] = useState(0)
+  const activeIndex = (typeof selectedImageIndex === 'number' && selectedImageIndex >= 0 && selectedImageIndex < displayImages.length)
+    ? selectedImageIndex
+    : internalIndex
 
   const normalize = (src: string) => (src.startsWith("http") ? src : src.startsWith("/") ? src : `/${src}`)
 
@@ -54,7 +50,7 @@ export default function ProductImageGallery({
                 idx === activeIndex ? "ring-2 ring-blue-500" : "border-transparent"
               }`}
               onClick={() => {
-                setActiveIndex(idx)
+                setInternalIndex(idx)
                 onImageChange?.(idx)
               }}
               aria-label={`View image ${idx + 1}`}
