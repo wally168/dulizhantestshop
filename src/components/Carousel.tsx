@@ -65,29 +65,35 @@ export default function Carousel({ items, interval = 5000 }: { items: CarouselIt
           
           {/* Overlay Content */}
           {(item.title || item.description || item.link) ? (
-            <div className="absolute inset-0 bg-black/20 flex items-center justify-center text-center p-4">
-              <div className="max-w-4xl mx-auto text-white">
-                {item.title && (
-                  <h2 className="text-4xl md:text-6xl font-bold mb-4 drop-shadow-lg">
-                    {item.title}
-                  </h2>
-                )}
-                {item.description && (
-                  <p className="text-xl md:text-2xl mb-8 drop-shadow-md max-w-2xl mx-auto">
-                    {item.description}
-                  </p>
-                )}
-                {item.link && (
+            <div className="absolute inset-0 bg-black/20 p-4">
+              {(item.title || item.description) && (
+                <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 flex justify-center text-center">
+                  <div className="max-w-4xl mx-auto text-white">
+                    {item.title && (
+                      <h2 className="text-4xl md:text-6xl font-bold mb-4 drop-shadow-lg">
+                        {item.title}
+                      </h2>
+                    )}
+                    {item.description && (
+                      <p className="text-xl md:text-2xl mb-8 drop-shadow-md max-w-2xl mx-auto">
+                        {item.description}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+              {item.link && (
+                <div className="absolute bottom-16 left-1/2 -translate-x-1/2 z-20">
                   <Link
                     href={getValidUrl(item.link)}
                     target={item.newTab ? "_blank" : undefined}
                     rel={item.newTab ? "noopener noreferrer" : undefined}
-                    className="inline-block bg-white text-black px-8 py-3 rounded-full font-semibold hover:bg-gray-100 transition-colors"
+                    className="inline-block bg-white text-black px-8 py-3 rounded-full font-semibold hover:bg-gray-100 transition-colors shadow-lg"
                   >
                     {item.btnText || 'Learn More'}
                   </Link>
-                )}
-              </div>
+                </div>
+              )}
             </div>
           ) : null}
         </div>
