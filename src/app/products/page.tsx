@@ -22,7 +22,6 @@ export default async function ProductsPage() {
     products = []
   }
 
-  // 聚合可见评论的评分与数量
   let aggMap: Record<string, { avgRating: number; reviewCount: number }> = {}
   try {
     const ids = products.map((p) => p.id)

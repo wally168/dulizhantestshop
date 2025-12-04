@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState, useEffect } from 'react'
+import { useMemo, useState, useEffect, useRef } from 'react'
 import ProductImageGallery from './ProductImageGallery'
 import { formatPrice } from '@/lib/utils'
 import AddToCartButton from './AddToCartButton'
@@ -78,6 +78,7 @@ import AddToCartButton from './AddToCartButton'
   const [previewIndex, setPreviewIndex] = useState<number>(0)
   const [sortBy, setSortBy] = useState<'time' | 'rating'>('time')
   const [onlyWithImages, setOnlyWithImages] = useState<boolean>(false)
+  const touchStartXRef = useRef<number | null>(null)
  
    const safeImages = useMemo(() => {
      const arr = Array.isArray(images) && images.length > 0 ? images : [mainImage]
@@ -372,9 +373,9 @@ import AddToCartButton from './AddToCartButton'
           alt=""
           className="max-h-[85vh] max-w-[90vw] object-contain rounded shadow-lg"
           onClick={(e) => e.stopPropagation()}
-          onTouchStart={(e) => (e.touches?.[0] ? (window.__previewTouchStartX = e.touches[0].clientX) : null)}
+          onTouchStart={(e) => { touchStartXRef.current = e.touches?.[0]?.clientX ?? null }}
           onTouchEnd={(e) => {
-            const startX = (window as any).__previewTouchStartX
+            const startX = touchStartXRef.current
             const endX = e.changedTouches?.[0]?.clientX
             if (typeof startX === 'number' && typeof endX === 'number') {
               const dx = endX - startX
@@ -382,6 +383,7 @@ import AddToCartButton from './AddToCartButton'
               if (dx > TH) setPreviewIndex(i => Math.max(i - 1, 0))
               else if (dx < -TH) setPreviewIndex(i => Math.min(i + 1, previewUrls.length - 1))
             }
+            touchStartXRef.current = null
           }}
         />
       </div>
