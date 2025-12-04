@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { Star } from 'lucide-react'
 import Layout from '@/components/Layout'
 import { db } from '@/lib/db'
 import { formatPrice } from '@/lib/utils'
@@ -19,6 +20,29 @@ export default async function ProductsPage() {
   } catch (e) {
     console.error('Failed to load products:', e)
     products = []
+  }
+
+  // 聚合可见评论的评分与数量
+  let aggMap: Record<string, { avgRating: number; reviewCount: number }> = {}
+  try {
+    const ids = products.map((p) => p.id)
+    if (ids.length > 0) {
+      const groups = await (db as any).productReview.groupBy({
+        by: ['productId'],
+        where: { productId: { in: ids }, isVisible: true },
+        _avg: { rating: true },
+        _count: { _all: true },
+      })
+      aggMap = Object.fromEntries(groups.map((g: any) => [
+        g.productId,
+        {
+          avgRating: typeof g._avg?.rating === 'number' ? Math.round(g._avg.rating * 10) / 10 : 0,
+          reviewCount: typeof g._count?._all === 'number' ? g._count._all : 0,
+        }
+      ]))
+    }
+  } catch (e) {
+    console.error('Failed to aggregate reviews:', e)
   }
 
   const resolveImage = (p: Product): string => {
@@ -55,6 +79,8 @@ export default async function ProductsPage() {
               const amazonUrl = typeof product?.amazonUrl === 'string' ? product.amazonUrl : ''
               const showBuy = product.showBuyOnAmazon !== false && !!amazonUrl
               const showAdd = product.showAddToCart !== false
+              const avgRating = aggMap[product.id]?.avgRating ?? 0
+              const reviewCount = aggMap[product.id]?.reviewCount ?? 0
 
               return (
                 <div key={product.id} className="group relative">
@@ -73,6 +99,17 @@ export default async function ProductsPage() {
                           {product.title || 'Untitled Product'}
                         </Link>
                       </h3>
+                      {reviewCount > 0 && (
+                        <div className="mt-1 flex items-center gap-2 text-sm">
+                          <span className="text-gray-900 font-medium">{avgRating.toFixed(1)}</span>
+                          <span className="flex items-center">
+                            {Array.from({ length: 5 }).map((_, i) => (
+                              <Star key={i} className={"h-4 w-4 " + (i < Math.round(avgRating) ? 'text-yellow-500' : 'text-gray-300')} />
+                            ))}
+                          </span>
+                          <span className="text-gray-600">({reviewCount})</span>
+                        </div>
+                      )}
                       <div className="mt-2 flex items-center gap-2">
                         <p className="text-lg font-medium text-gray-900">
                           {formatPrice(price)}
