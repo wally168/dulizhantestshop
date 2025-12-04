@@ -208,6 +208,13 @@ export default function AdminDashboard() {
             color="bg-pink-500"
           />
           <QuickActionCard
+            icon={<Settings className="h-6 w-6" />}
+            title="SEO 设置"
+            description="配置 Sitemap、robots 与站点验证"
+            href="/admin/seo"
+            color="bg-slate-500"
+          />
+          <QuickActionCard
             icon={<RefreshCcw className="h-6 w-6" />}
             title="重置数据"
             description="清空并预设站点数据"

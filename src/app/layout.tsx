@@ -54,10 +54,19 @@ async function getNavigation() {
 
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getSettings();
+  const title = (settings as any).seoTitle || settings.siteName || 'Your Brand'
+  const description = (settings as any).seoDescription || settings.siteDescription || 'Discover premium products with exceptional quality and design'
+  const keywords = (settings as any).seoKeywords || settings.siteKeywords || 'premium products, quality, design, lifestyle'
+  const google = (settings as any).googleSiteVerification || ''
+  const baidu = (settings as any).baiduSiteVerification || ''
   return {
-    title: `${settings.siteName} - Premium Products`,
-    description: "Discover premium products with exceptional quality and design",
-    keywords: "premium products, quality, design, shopping",
+    title,
+    description,
+    keywords,
+    other: {
+      ...(google ? { 'google-site-verification': google } : {}),
+      ...(baidu ? { 'baidu-site-verification': baidu } : {}),
+    },
   };
 }
 

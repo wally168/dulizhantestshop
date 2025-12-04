@@ -24,6 +24,28 @@ interface SiteSettings {
   analyticsHeadHtml?: string
   analyticsBodyHtml?: string
   analyticsGoogleHtml?: string
+  // SEO settings
+  seoTitle?: string
+  seoKeywords?: string
+  seoDescription?: string
+  seoSummary?: string
+  // Sitemap
+  sitemapEnabled?: string
+  sitemapChangefreq?: string
+  sitemapPriority?: string
+  sitemapIncludeProducts?: string
+  sitemapIncludeCategories?: string
+  // Robots
+  robotsAllowAll?: string
+  robotsDisallowAdmin?: string
+  robotsDisallowApi?: string
+  robotsDisallowCart?: string
+  robotsDisallowCheckout?: string
+  robotsDisallowSearch?: string
+  robotsExtraRules?: string
+  // Site verification
+  googleSiteVerification?: string
+  baiduSiteVerification?: string
 }
 
 interface SettingsContextType {
@@ -54,6 +76,29 @@ const defaultSettings: SiteSettings = {
   analyticsHeadHtml: '',
   analyticsBodyHtml: '',
   analyticsGoogleHtml: ''
+  ,
+  // SEO defaults
+  seoTitle: 'Your Brand',
+  seoKeywords: 'premium products, quality, design, lifestyle',
+  seoDescription: 'Discover premium products with exceptional quality and design',
+  seoSummary: '',
+  // Sitemap defaults
+  sitemapEnabled: 'true',
+  sitemapChangefreq: 'daily',
+  sitemapPriority: '0.7',
+  sitemapIncludeProducts: 'true',
+  sitemapIncludeCategories: 'true',
+  // Robots defaults
+  robotsAllowAll: 'true',
+  robotsDisallowAdmin: 'true',
+  robotsDisallowApi: 'true',
+  robotsDisallowCart: 'true',
+  robotsDisallowCheckout: 'true',
+  robotsDisallowSearch: 'true',
+  robotsExtraRules: '',
+  // Site verification defaults
+  googleSiteVerification: '',
+  baiduSiteVerification: ''
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined)

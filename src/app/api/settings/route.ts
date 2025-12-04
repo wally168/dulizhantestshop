@@ -25,7 +25,29 @@ const defaultSettings = {
   termsOfService: 'By using our site, you agree to our terms. This includes acceptable use, product information, pricing, shipping, returns, disclaimers, and limitations of liability. Please review carefully and contact us with any questions.',
   analyticsHeadHtml: '',
   analyticsBodyHtml: '',
-  analyticsGoogleHtml: ''
+  analyticsGoogleHtml: '',
+  // SEO
+  seoTitle: 'Your Brand',
+  seoKeywords: 'premium products, quality, design, lifestyle',
+  seoDescription: 'Discover premium products with exceptional quality and design',
+  seoSummary: '',
+  // Sitemap
+  sitemapEnabled: 'true',
+  sitemapChangefreq: 'daily',
+  sitemapPriority: '0.7',
+  sitemapIncludeProducts: 'true',
+  sitemapIncludeCategories: 'true',
+  // Robots
+  robotsAllowAll: 'true',
+  robotsDisallowAdmin: 'true',
+  robotsDisallowApi: 'true',
+  robotsDisallowCart: 'true',
+  robotsDisallowCheckout: 'true',
+  robotsDisallowSearch: 'true',
+  robotsExtraRules: '',
+  // Site verification
+  googleSiteVerification: '',
+  baiduSiteVerification: ''
 }
 
 // GET - 获取所有设置
