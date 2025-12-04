@@ -1,6 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import type { ProductReview } from '@prisma/client'
+type ReviewRecord = {
+  id: string
+  productId: string
+  isVisible: boolean
+  country: string | null
+  name: string | null
+  title: string | null
+  content: string
+  rating: number
+  images: string | null
+  createdAt: Date
+  updatedAt: Date
+}
 
 export async function GET(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
@@ -13,7 +25,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
       orderBy: { createdAt: 'desc' },
     })
 
-    const result = reviews.map((r: ProductReview) => ({
+    const result = reviews.map((r: ReviewRecord) => ({
       id: r.id,
       productId: r.productId,
       isVisible: r.isVisible,

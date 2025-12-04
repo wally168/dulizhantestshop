@@ -1,6 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import type { ProductReview } from '@prisma/client'
+type ReviewRecord = {
+  id: string
+  productId: string
+  isVisible: boolean
+  country: string | null
+  name: string | null
+  title: string | null
+  content: string
+  rating: number
+  images: string | null
+  createdAt: Date
+  updatedAt: Date
+}
 
 export async function PUT(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
@@ -34,7 +46,7 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
     }
 
     const updated = await db.productReview.update({ where: { id }, data })
-    const result: ProductReview & { images: string[] } = {
+    const result: ReviewRecord & { images: string[] } = {
       id: updated.id,
       productId: updated.productId,
       isVisible: updated.isVisible,
