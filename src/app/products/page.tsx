@@ -1,5 +1,4 @@
 import Link from 'next/link'
-import { Star } from 'lucide-react'
 import Layout from '@/components/Layout'
 import { db } from '@/lib/db'
 import { formatPrice } from '@/lib/utils'
@@ -103,7 +102,7 @@ export default async function ProductsPage() {
                           <span className="text-gray-900 font-medium">{avgRating.toFixed(1)}</span>
                           <span className="flex items-center">
                             {Array.from({ length: 5 }).map((_, i) => (
-                              <Star key={i} className={"h-4 w-4 " + (i < Math.round(avgRating) ? 'text-yellow-500' : 'text-gray-300')} />
+                              <span key={i} className={i < Math.round(avgRating) ? 'text-yellow-500' : 'text-gray-300'}>★</span>
                             ))}
                           </span>
                           <span className="text-gray-600">({reviewCount})</span>

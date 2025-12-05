@@ -218,7 +218,7 @@ function ProductCard({ product }: { product: Product }) {
               <span className="text-gray-900 font-medium">{(product.avgRating ?? 0).toFixed(1)}</span>
               <span className="flex items-center">
                 {Array.from({ length: 5 }).map((_, i) => (
-                  <Star key={i} className={`h-4 w-4 ${i < Math.round(product.avgRating ?? 0) ? 'text-yellow-500' : 'text-gray-300'}`} />
+                  <span key={i} className={i < Math.round(product.avgRating ?? 0) ? 'text-yellow-500' : 'text-gray-300'}>★</span>
                 ))}
               </span>
               <span className="text-gray-600">({product.reviewCount})</span>
