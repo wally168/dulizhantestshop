@@ -90,7 +90,7 @@ export default async function ProductsPage({ searchParams }: { searchParams?: Pr
                 ))}
               </select>
               {q && <input type="hidden" name="q" value={q} />}
-              <button type="submit" className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm">Apply</button>
+              <button type="submit" className="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 text-sm hover:bg-gray-300">Apply</button>
             </form>
           </div>
 

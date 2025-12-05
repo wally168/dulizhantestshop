@@ -142,7 +142,7 @@ export default function Navigation({ initialNavItems = [] }: { initialNavItems?:
           {/* 中间：桌面导航 居中显示 + Products 下拉 */}
           <div className="hidden md:flex items-center justify-center space-x-1">
             {showSkeleton ? (
-              <div className="flex items中心 space-x-1">
+              <div className="flex items-center space-x-1">
                 <SkeletonPill />
                 <SkeletonPill />
                 <SkeletonPill />
@@ -155,7 +155,7 @@ export default function Navigation({ initialNavItems = [] }: { initialNavItems?:
                     <NavLink href={item.href}>{item.label}</NavLink>
                     {categories.length > 0 && (
                       <div className="absolute left-0 top-full mt-2 w-48 bg-white border border-gray-200 rounded-xl shadow-lg opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all">
-                        <Link href="/products" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">全部产品</Link>
+                        <Link href="/products" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">All Products</Link>
                         {categories.map((c) => (
                           <Link key={c.id} href={`/products?categoryId=${encodeURIComponent(c.id)}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
                             {c.name}
@@ -180,10 +180,10 @@ export default function Navigation({ initialNavItems = [] }: { initialNavItems?:
               <input
                 type="text"
                 name="q"
-                placeholder="搜索产品"
-                className="bg-transparent px-2 py-1 text-sm focus:outline-none"
+                placeholder="Search Products"
+                className="bg-transparent px-2 py-1 text-sm focus:outline-none w-40 md:w-48"
               />
-              <button type="submit" className="text-sm px-2 py-1 rounded-md bg-blue-600 text-white">搜索</button>
+              <button type="submit" className="text-sm px-2 py-1 rounded-md bg-gray-200 text-gray-700 hover:bg-gray-300">Search</button>
             </form>
             {/* Cart link always visible */}
             <Link
@@ -230,11 +230,11 @@ export default function Navigation({ initialNavItems = [] }: { initialNavItems?:
             ? 'max-h-64 opacity-100' 
             : 'max-h-0 opacity-0 overflow-hidden'
         }`}>
-          <div className="px-2 pt-2 pb-3 space-y-1 bg白/95 backdrop-blur-md border-t border-gray-200/50">
+          <div className="px-2 pt-2 pb-3 space-y-1 bg-white/95 backdrop-blur-md border-t border-gray-200/50">
             {/* Mobile search */}
             <form action="/products" method="get" className="flex items-center gap-2 bg-gray-100 rounded-lg px-2 py-2 mb-2">
-              <input type="text" name="q" placeholder="搜索产品" className="flex-1 bg-transparent px-2 py-1 text-sm focus:outline-none" />
-              <button type="submit" className="text-sm px-2 py-1 rounded-md bg-blue-600 text-white">搜索</button>
+              <input type="text" name="q" placeholder="Search Products" className="flex-1 bg-transparent px-2 py-1 text-sm focus:outline-none" />
+              <button type="submit" className="text-sm px-2 py-1 rounded-md bg-gray-200 text-gray-700 hover:bg-gray-300">Search</button>
             </form>
             {showSkeleton ? (
               <div className="space-y-1">
@@ -252,7 +252,7 @@ export default function Navigation({ initialNavItems = [] }: { initialNavItems?:
                 ))}
                 {categories.length > 0 && (
                   <div className="mt-2 bg-white rounded-xl border border-gray-200">
-                    <div className="px-4 py-2 text-xs text-gray-500">按分类浏览</div>
+                    <div className="px-4 py-2 text-xs text-gray-500">Browse by Category</div>
                     {categories.map((c) => (
                       <Link key={c.id} href={`/products?categoryId=${encodeURIComponent(c.id)}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50" onClick={() => setIsMenuOpen(false)}>
                         {c.name}

@@ -449,6 +449,46 @@ export default function AdminDashboard() {
                   </div>
                 </section>
 
+                {/* 前台功能说明 */}
+                <section>
+                  <h3 className="text-lg font-medium text-gray-900 mb-3">前台功能说明</h3>
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <ul className="space-y-2 text-sm text-gray-700">
+                      <li>• 导航栏提供产品搜索（桌面与移动端）</li>
+                      <li>• Products 菜单下拉显示启用分类，含“全部产品”入口</li>
+                      <li>• 产品列表支持按分类筛选与关键词搜索</li>
+                      <li>• 产品列表显示平均评分与评论数（实心星星）</li>
+                      <li>• 支持加入购物车与跳转亚马逊购买</li>
+                      <li>• 站点地图：访问 <code className="px-1 py-0.5 bg-gray-100 rounded">/sitemap.xml</code></li>
+                    </ul>
+                  </div>
+                </section>
+
+                {/* 评论管理说明 */}
+                <section>
+                  <h3 className="text-lg font-medium text-gray-900 mb-3">评论管理说明</h3>
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <ul className="space-y-2 text-sm text-gray-700">
+                      <li>• 入口：后台 → 产品 → 编辑 → 评论</li>
+                      <li>• 可添加/编辑评论，设置是否显示在前台</li>
+                      <li>• 支持星级评分（1–5）与图片上传</li>
+                      <li>• 前台自动聚合平均评分与评论数量</li>
+                    </ul>
+                  </div>
+                </section>
+
+                {/* 轮播图与 SEO/统计 */}
+                <section>
+                  <h3 className="text-lg font-medium text-gray-900 mb-3">轮播图与 SEO/统计</h3>
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <ul className="space-y-2 text-sm text-gray-700">
+                      <li>• 轮播图管理：设置图片、链接、是否新窗口，支持拖拽排序</li>
+                      <li>• SEO 设置：配置 Sitemap 与 Robots，控制是否包含产品/分类</li>
+                      <li>• 统计代码：支持 Head/Body/Google 代码注入，前台自动加载</li>
+                    </ul>
+                  </div>
+                </section>
+
                 {/* 技术支持 */}
                 <section>
                   <h3 className="text-lg font-medium text-gray-900 mb-3">技术支持</h3>
