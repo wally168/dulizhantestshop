@@ -6,11 +6,22 @@ import AddToCartButton from '@/components/AddToCartButton'
 import FallbackImage from '@/components/FallbackImage'
 import type { Product } from '@prisma/client'
 
-export default async function ProductsPage() {
+export default async function ProductsPage({ searchParams }: { searchParams?: Promise<{ categoryId?: string; q?: string }> }) {
+  const resolvedParams = searchParams ? await searchParams : {}
+  const selectedCategoryId = resolvedParams?.categoryId || ''
+  const q = resolvedParams?.q || ''
   let products: Product[] = []
   try {
+    const where: any = { active: true }
+    if (selectedCategoryId) where.categoryId = selectedCategoryId
+    if (q) {
+      where.OR = [
+        { title: { contains: q, mode: 'insensitive' } },
+        { description: { contains: q, mode: 'insensitive' } },
+      ]
+    }
     products = await db.product.findMany({
-      where: { active: true },
+      where,
       orderBy: [
         { sortOrder: 'asc' },
         { createdAt: 'desc' },
@@ -69,7 +80,21 @@ export default async function ProductsPage() {
             </p>
           </div>
 
-          <div className="mt-16 grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 xl:gap-x-8">
+          {/* Filter bar */}
+          <div className="mt-10 flex items-center justify-center">
+            <form method="get" action="/products" className="flex items-center gap-3">
+              <select name="categoryId" defaultValue={selectedCategoryId} className="px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                <option value="">All Categories</option>
+                {categories.map((c) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
+              {q && <input type="hidden" name="q" value={q} />}
+              <button type="submit" className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm">Apply</button>
+            </form>
+          </div>
+
+          <div className="mt-8 grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 xl:gap-x-8">
             {products.map((product) => {
               const displayImage = resolveImage(product)
               const price = Number(product?.price ?? 0)
@@ -166,3 +191,9 @@ export default async function ProductsPage() {
     </Layout>
   )
 }
+  // 类别列表
+  let categories: Array<{ id: string; name: string }> = []
+  try {
+    const rows = await db.category.findMany({ orderBy: { name: 'asc' }, select: { id: true, name: true } })
+    categories = rows
+  } catch {}

@@ -34,6 +34,8 @@ export default function Navigation({ initialNavItems = [] }: { initialNavItems?:
   const showSkeleton = navLoading && navItems.length === 0
   // 新增：购物车数量
   const [cartCount, setCartCount] = useState<number>(0)
+  // 新增：分类与搜索
+  const [categories, setCategories] = useState<Array<{ id: string; name: string; slug: string }>>([])
 
   useEffect(() => {
     setIsHydrated(true)
@@ -71,6 +73,22 @@ export default function Navigation({ initialNavItems = [] }: { initialNavItems?:
         setNavItems(defaultNav)
       } finally {
         if (shouldShowLoading) setNavLoading(false)
+      }
+    }
+    load()
+  }, [])
+
+  // 加载分类用于 Products 下拉
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const res = await fetch('/api/categories', { cache: 'no-store' })
+        if (res.ok) {
+          const data = await res.json()
+          if (Array.isArray(data)) setCategories(data as Array<{ id: string; name: string; slug: string }>)
+        }
+      } catch (e) {
+        console.error('Load categories failed:', e)
       }
     }
     load()
@@ -121,7 +139,7 @@ export default function Navigation({ initialNavItems = [] }: { initialNavItems?:
             </Link>
           </div>
 
-          {/* 中间：桌面导航 居中显示 */}
+          {/* 中间：桌面导航 居中显示 + Products 下拉 */}
           <div className="hidden md:flex items-center justify-center space-x-1">
             {showSkeleton ? (
               <div className="flex items中心 space-x-1">
@@ -132,15 +150,41 @@ export default function Navigation({ initialNavItems = [] }: { initialNavItems?:
               </div>
             ) : (
               itemsToRender.map((item) => (
-                <NavLink key={item.id} href={item.href}>
-                  {item.label}
-                </NavLink>
+                item.href === '/products' ? (
+                  <div key={item.id} className="relative group">
+                    <NavLink href={item.href}>{item.label}</NavLink>
+                    {categories.length > 0 && (
+                      <div className="absolute left-0 top-full mt-2 w-48 bg-white border border-gray-200 rounded-xl shadow-lg opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all">
+                        <Link href="/products" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">全部产品</Link>
+                        {categories.map((c) => (
+                          <Link key={c.id} href={`/products?categoryId=${encodeURIComponent(c.id)}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                            {c.name}
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <NavLink key={item.id} href={item.href}>
+                    {item.label}
+                  </NavLink>
+                )
               ))
             )}
           </div>
 
-          {/* 右侧：购物车入口与移动端菜单按钮 */}
+          {/* 右侧：搜索框、购物车入口与移动端菜单按钮 */}
           <div className="flex-1 flex justify-end items-center gap-2">
+            {/* Search */}
+            <form action="/products" method="get" className="hidden md:flex items-center gap-2 bg-gray-100 rounded-lg px-2 py-1">
+              <input
+                type="text"
+                name="q"
+                placeholder="搜索产品"
+                className="bg-transparent px-2 py-1 text-sm focus:outline-none"
+              />
+              <button type="submit" className="text-sm px-2 py-1 rounded-md bg-blue-600 text-white">搜索</button>
+            </form>
             {/* Cart link always visible */}
             <Link
               href="/cart"
@@ -180,13 +224,18 @@ export default function Navigation({ initialNavItems = [] }: { initialNavItems?:
           </div>
         </div>
 
-        {/* Mobile Navigation */}
+        {/* Mobile Navigation + 搜索与分类 */}
         <div className={`md:hidden transition-all duration-300 ease-in-out ${
           isMenuOpen 
             ? 'max-h-64 opacity-100' 
             : 'max-h-0 opacity-0 overflow-hidden'
         }`}>
           <div className="px-2 pt-2 pb-3 space-y-1 bg白/95 backdrop-blur-md border-t border-gray-200/50">
+            {/* Mobile search */}
+            <form action="/products" method="get" className="flex items-center gap-2 bg-gray-100 rounded-lg px-2 py-2 mb-2">
+              <input type="text" name="q" placeholder="搜索产品" className="flex-1 bg-transparent px-2 py-1 text-sm focus:outline-none" />
+              <button type="submit" className="text-sm px-2 py-1 rounded-md bg-blue-600 text-white">搜索</button>
+            </form>
             {showSkeleton ? (
               <div className="space-y-1">
                 <SkeletonRow />
@@ -195,11 +244,23 @@ export default function Navigation({ initialNavItems = [] }: { initialNavItems?:
                 <SkeletonRow />
               </div>
             ) : (
-              itemsToRender.map((item) => (
-                <MobileNavLink key={item.id} href={item.href} onClick={() => setIsMenuOpen(false)}>
-                  {item.label}
-                </MobileNavLink>
-              ))
+              <>
+                {itemsToRender.map((item) => (
+                  <MobileNavLink key={item.id} href={item.href} onClick={() => setIsMenuOpen(false)}>
+                    {item.label}
+                  </MobileNavLink>
+                ))}
+                {categories.length > 0 && (
+                  <div className="mt-2 bg-white rounded-xl border border-gray-200">
+                    <div className="px-4 py-2 text-xs text-gray-500">按分类浏览</div>
+                    {categories.map((c) => (
+                      <Link key={c.id} href={`/products?categoryId=${encodeURIComponent(c.id)}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50" onClick={() => setIsMenuOpen(false)}>
+                        {c.name}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>
