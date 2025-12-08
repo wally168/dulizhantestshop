@@ -71,7 +71,15 @@ export default function Footer({ initialNavItems = [] }: { initialNavItems?: Nav
             <div className="md:table-cell md:w-64 align-top pb-8 md:pb-0">
               <div className="space-y-8">
                 <Link href="/" className="flex items-center space-x-2">
-                  <ShoppingBag className="h-8 w-8 text-blue-600" />
+                  {settings.logoUrl ? (
+                    <img 
+                      src={settings.logoUrl} 
+                      alt={settings.siteName} 
+                      className="h-8 w-auto max-h-12 object-contain"
+                    />
+                  ) : (
+                    <ShoppingBag className="h-8 w-8 text-blue-600" />
+                  )}
                   <span className="text-xl font-semibold text-gray-900">{settings.siteName}</span>
                 </Link>
                 <p className="text-sm text-gray-600">

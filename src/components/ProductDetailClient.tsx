@@ -339,7 +339,7 @@ import AddToCartButton from './AddToCartButton'
               <div className="text-sm text-gray-600 mt-1">{r.name} {r.country ? `(${r.country})` : ''} {r.createdAt ? `• ${formatReviewDate(r.createdAt)}` : ''}</div>
               <div className="text-sm text-gray-700 mt-2">{r.content}</div>
               {Array.isArray(r.images) && r.images.length > 0 && (
-                <div className="mt-2 grid grid-cols-3 gap-2">
+                <div className="mt-2 flex flex-wrap gap-2">
                   {r.images.map((img, idx) => {
                     const u = normalizeUrl(img)
                     return (
@@ -347,7 +347,7 @@ import AddToCartButton from './AddToCartButton'
                         key={idx}
                         src={u}
                         alt=""
-                        className="w-full h-36 object-contain bg-gray-100 rounded cursor-zoom-in"
+                        className="h-32 w-auto object-contain rounded cursor-zoom-in border border-gray-200"
                         onClick={() => { setPreviewUrls(r.images.map(normalizeUrl)); setPreviewIndex(idx) }}
                       />
                     )
