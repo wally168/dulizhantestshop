@@ -18,7 +18,8 @@ import {
   HelpCircle,
   X,
   Tag,
-  Images
+  Images,
+  Database
 } from 'lucide-react'
 import { useSettings } from '@/lib/settings'
 
@@ -213,6 +214,13 @@ export default function AdminDashboard() {
             description="配置 Sitemap、robots 与站点验证"
             href="/admin/seo"
             color="bg-slate-500"
+          />
+          <QuickActionCard
+            icon={<Database className="h-6 w-6" />}
+            title="数据管理"
+            description="备份和恢复网站数据"
+            href="/admin/data"
+            color="bg-amber-500"
           />
           <QuickActionCard
             icon={<RefreshCcw className="h-6 w-6" />}
