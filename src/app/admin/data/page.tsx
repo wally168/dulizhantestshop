@@ -165,9 +165,16 @@ export default function DataManagement() {
             <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 mr-3" />
             <div>
               <h3 className="text-green-800 font-medium">导入完成</h3>
-              <div className="text-green-600 mt-1">
-                <p>成功导入分类: {importResult.results.categories.success} (失败: {importResult.results.categories.failed})</p>
-                <p>成功导入产品: {importResult.results.products.success} (失败: {importResult.results.products.failed})</p>
+              <div className="text-green-600 mt-1 grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-1 text-sm">
+                <p>分类: {importResult.results.categories?.success ?? 0} (失败: {importResult.results.categories?.failed ?? 0})</p>
+                <p>产品: {importResult.results.products?.success ?? 0} (失败: {importResult.results.products?.failed ?? 0})</p>
+                <p>评论: {importResult.results.productReviews?.success ?? 0} (失败: {importResult.results.productReviews?.failed ?? 0})</p>
+                <p>留言: {importResult.results.messages?.success ?? 0} (失败: {importResult.results.messages?.failed ?? 0})</p>
+                <p>站点设置: {importResult.results.siteSettings?.success ?? 0} (失败: {importResult.results.siteSettings?.failed ?? 0})</p>
+                <p>导航菜单: {importResult.results.navigation?.success ?? 0} (失败: {importResult.results.navigation?.failed ?? 0})</p>
+                <p>首页内容: {importResult.results.homeContent?.success ?? 0} (失败: {importResult.results.homeContent?.failed ?? 0})</p>
+                <p>轮播图: {importResult.results.carouselItems?.success ?? 0} (失败: {importResult.results.carouselItems?.failed ?? 0})</p>
+                <p>图片文件: {importResult.results.images?.success ?? 0} (失败: {importResult.results.images?.failed ?? 0})</p>
               </div>
             </div>
           </div>
