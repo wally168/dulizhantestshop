@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic'
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { SettingsProvider } from "@/lib/settings";
+import { SettingsProvider, SiteSettings } from "@/lib/settings";
 import AppShell from "@/components/AppShell";
 import { headers } from "next/headers";
 import Script from "next/script";
@@ -59,23 +59,24 @@ const defaultSettings = {
 }
 
 // 动态获取站点设置（服务端直接查询数据库）
-async function getSettings() {
+async function getSettings(): Promise<SiteSettings> {
   try {
     const settings = await db.siteSettings.findMany()
     
     // 将数据库中的设置转换为对象格式
-    const settingsObject: Record<string, string> = { ...defaultSettings }
+    // 使用 any 转换以避开 Record<string, string> 和 SiteSettings 之间的严格类型不匹配
+    const settingsObject: any = { ...defaultSettings }
     
     // 用数据库中的值覆盖
     settings.forEach(setting => {
       settingsObject[setting.key] = setting.value
     })
 
-    return settingsObject
+    return settingsObject as SiteSettings
   } catch (error) {
     console.error('Failed to fetch settings from DB:', error);
   }
-  return defaultSettings;
+  return defaultSettings as SiteSettings;
 }
 
 // 服务器端预取导航（首屏初始数据）
