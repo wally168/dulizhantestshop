@@ -27,7 +27,7 @@ const defaultSettings = {
   analyticsBodyHtml: '',
   analyticsGoogleHtml: '',
   // SEO
-  seoTitle: 'Your Brand',
+  seoTitle: '',
   seoKeywords: 'premium products, quality, design, lifestyle',
   seoDescription: 'Discover premium products with exceptional quality and design',
   seoSummary: '',

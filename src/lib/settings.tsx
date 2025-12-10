@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
 
-interface SiteSettings {
+export interface SiteSettings {
   siteName: string
   logoUrl: string
   siteDescription: string
@@ -78,7 +78,7 @@ const defaultSettings: SiteSettings = {
   analyticsGoogleHtml: ''
   ,
   // SEO defaults
-  seoTitle: 'Your Brand',
+  seoTitle: '',
   seoKeywords: 'premium products, quality, design, lifestyle',
   seoDescription: 'Discover premium products with exceptional quality and design',
   seoSummary: '',
