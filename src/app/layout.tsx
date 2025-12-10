@@ -96,7 +96,18 @@ async function getNavigation() {
 
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getSettings();
-  const title = (settings as any).seoTitle || settings.siteName || 'Your Brand'
+  
+  // Smart title resolution:
+  // 1. Use SEO Title if set and not the default "Your Brand"
+  // 2. Fallback to Site Name
+  // 3. Fallback to "Your Brand"
+  let title = (settings as any).seoTitle;
+  const siteName = settings.siteName || 'Your Brand';
+  
+  if (!title || title === 'Your Brand') {
+    title = siteName;
+  }
+
   const description = (settings as any).seoDescription || settings.siteDescription || 'Discover premium products with exceptional quality and design'
   const keywords = (settings as any).seoKeywords || settings.siteKeywords || 'premium products, quality, design, lifestyle'
   const google = (settings as any).googleSiteVerification || ''
