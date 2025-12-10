@@ -45,7 +45,7 @@ export default function Carousel({ items, interval = 5000 }: { items: CarouselIt
 
   return (
     <div 
-      className="relative w-full h-[250px] sm:h-[350px] md:h-[500px] lg:h-[600px] overflow-hidden group rounded-2xl shadow-xl mb-12"
+      className="relative w-full aspect-[2/1] sm:aspect-[2.5/1] md:h-[500px] lg:h-[600px] md:aspect-auto overflow-hidden group rounded-2xl shadow-xl mb-12"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
