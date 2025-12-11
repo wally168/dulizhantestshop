@@ -15,9 +15,35 @@ export default function ContactPage() {
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle')
+  const [emailError, setEmailError] = useState('')
+
+  const validateEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!email) {
+      return 'Email is required'
+    }
+    if (!emailRegex.test(email)) {
+      return 'Please enter a valid email address (e.g., user@example.com)'
+    }
+    return ''
+  }
+
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    if (e.target.name === 'email') {
+      setEmailError(validateEmail(e.target.value))
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    // Validate email before submitting
+    const emailValidationError = validateEmail(formData.email)
+    if (emailValidationError) {
+      setEmailError(emailValidationError)
+      return
+    }
+
     setIsSubmitting(true)
     setSubmitStatus('idle')
 
@@ -34,7 +60,13 @@ export default function ContactPage() {
         setSubmitStatus('success')
         setFormData({ name: '', email: '', subject: '', message: '' })
       } else {
-        setSubmitStatus('error')
+        const data = await response.json()
+        if (data.error && data.error.includes('valid email')) {
+          setEmailError(data.error)
+          setSubmitStatus('idle') // Don't show generic error if it's a specific field error
+        } else {
+          setSubmitStatus('error')
+        }
       }
     } catch (error) {
       setSubmitStatus('error')
@@ -44,10 +76,15 @@ export default function ContactPage() {
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target
     setFormData(prev => ({
       ...prev,
-      [e.target.name]: e.target.value
+      [name]: value
     }))
+
+    if (name === 'email') {
+      setEmailError('')
+    }
   }
 
   return (
@@ -109,8 +146,16 @@ export default function ContactPage() {
                     required
                     value={formData.email}
                     onChange={handleChange}
-                    className="block w-full rounded-md border-0 px-3.5 py-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6"
+                    onBlur={handleBlur}
+                    className={`block w-full rounded-md border-0 px-3.5 py-2 text-gray-900 shadow-sm ring-1 ring-inset placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6 ${
+                      emailError ? 'ring-red-500 focus:ring-red-500' : 'ring-gray-300'
+                    }`}
                   />
+                  {emailError && (
+                    <p className="mt-2 text-sm text-red-600" id="email-error">
+                      {emailError}
+                    </p>
+                  )}
                 </div>
               </div>
 
