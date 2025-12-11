@@ -23,7 +23,7 @@ export default function ContactPage() {
       return 'Email is required'
     }
     if (!emailRegex.test(email)) {
-      return 'Please enter a valid email address (e.g., user@example.com)'
+      return 'Your email format is incorrect. Please enter a valid email address (e.g., user@example.com)'
     }
     return ''
   }
@@ -116,7 +116,7 @@ export default function ContactPage() {
           </div>
 
           <div className="mx-auto mt-16 max-w-xl">
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-6" noValidate>
               <div>
                 <label htmlFor="name" className="block text-sm font-medium leading-6 text-gray-900">
                   Full Name *
