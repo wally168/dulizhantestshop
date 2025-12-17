@@ -14,6 +14,7 @@ import {
   Twitter,
   Instagram,
   Youtube,
+  Trash2,
   Video,
   Loader2
 } from 'lucide-react'
@@ -139,7 +140,9 @@ export default function SettingsPage() {
       const url = (data?.url ?? '') as string
       if (url && typeof url === 'string') {
         const finalUrl = url.startsWith('http') ? url : `${window.location.origin}${url}`
-        handleInputChange('logoUrl', finalUrl)
+        // 添加时间戳防止缓存
+        const urlWithTimestamp = `${finalUrl}?t=${Date.now()}`
+        handleInputChange('logoUrl', urlWithTimestamp)
       } else {
         alert('上传成功，但未返回有效URL')
       }
@@ -148,6 +151,12 @@ export default function SettingsPage() {
       alert('上传失败，请稍后重试')
     } finally {
       setUploadingLogo(false)
+    }
+  }
+
+  const handleDeleteLogo = () => {
+    if (confirm('确定要删除 Logo 吗？')) {
+      handleInputChange('logoUrl', '')
     }
   }
 
@@ -237,8 +246,18 @@ export default function SettingsPage() {
 
                   {settings.logoUrl && (
                     <div className="mt-3">
-                      <span className="block text-sm text-gray-700 mb-1">当前 Logo 预览</span>
-                      <div className="aspect-square w-24 overflow-hidden rounded-lg border bg-gray-100">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="block text-sm text-gray-700">当前 Logo 预览</span>
+                        <button
+                          type="button"
+                          onClick={handleDeleteLogo}
+                          className="text-sm text-red-600 hover:text-red-800 flex items-center"
+                        >
+                          <Trash2 className="h-4 w-4 mr-1" />
+                          删除 Logo
+                        </button>
+                      </div>
+                      <div className="aspect-square w-24 overflow-hidden rounded-lg border bg-gray-100 flex items-center justify-center">
                         <img src={settings.logoUrl} alt="Site logo" className="w-full h-full object-contain" />
                       </div>
                     </div>
