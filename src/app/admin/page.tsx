@@ -267,7 +267,7 @@ export default function AdminDashboard() {
                     <div key={product.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                       <div>
                         <h3 className="font-medium text-gray-900">{product.name}</h3>
-                        <p className="text-sm text-gray-600">¥{product.price}</p>
+                        <p className="text-sm text-gray-600">${product.price}</p>
                       </div>
                       <div className="flex items-center space-x-2">
                         <span className={`px-2 py-1 text-xs rounded-full ${

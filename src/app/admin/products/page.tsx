@@ -180,10 +180,10 @@ function SortableRow({
         </div>
       </td>
       <td className="px-6 py-4 whitespace-nowrap">
-        <div className="text-sm text-gray-900">¥{product.price}</div>
+        <div className="text-sm text-gray-900">${product.price}</div>
         {product.originalPrice && (
           <div className="text-sm text-gray-500 line-through">
-            ¥{product.originalPrice}
+            ${product.originalPrice}
           </div>
         )}
       </td>

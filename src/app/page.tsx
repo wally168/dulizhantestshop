@@ -110,12 +110,21 @@ export default function Home() {
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6 tracking-tight">
-              {homeContent?.featuredTitle || 'Featured Products'}
-            </h1>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-              {homeContent?.featuredSubtitle || 'Discover our carefully curated collection of premium products, each selected for exceptional quality and design.'}
-            </p>
+            {loading ? (
+              <>
+                <div className="h-10 md:h-16 bg-gray-200 rounded-lg w-64 mx-auto mb-6 animate-pulse"></div>
+                <div className="h-6 bg-gray-200 rounded w-full max-w-2xl mx-auto animate-pulse"></div>
+              </>
+            ) : (
+              <>
+                <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6 tracking-tight">
+                  {homeContent?.featuredTitle || 'Featured Products'}
+                </h1>
+                <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+                  {homeContent?.featuredSubtitle || 'Discover our carefully curated collection of premium products, each selected for exceptional quality and design.'}
+                </p>
+              </>
+            )}
           </div>
           
           {loading ? (
@@ -162,35 +171,57 @@ export default function Home() {
       <section className="py-24 bg-white relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-20">
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6 tracking-tight">
-              {homeContent?.whyChooseTitle || `Why Choose ${settings.siteName}`}
-            </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-              {homeContent?.whyChooseSubtitle || "We're redefining the shopping experience with uncompromising quality, innovative design, and customer-first approach."}
-            </p>
+            {loading ? (
+              <>
+                <div className="h-10 md:h-14 bg-gray-200 rounded-lg w-64 mx-auto mb-6 animate-pulse"></div>
+                <div className="h-6 bg-gray-200 rounded w-full max-w-2xl mx-auto animate-pulse"></div>
+              </>
+            ) : (
+              <>
+                <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6 tracking-tight">
+                  {homeContent?.whyChooseTitle || `Why Choose ${settings.siteName}`}
+                </h2>
+                <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+                  {homeContent?.whyChooseSubtitle || "We're redefining the shopping experience with uncompromising quality, innovative design, and customer-first approach."}
+                </p>
+              </>
+            )}
           </div>
           
           <div className="grid md:grid-cols-3 gap-8 lg:gap-12">
-            <FeatureCard
-              icon={<Star className="h-8 w-8" />}
-              iconBg="bg-gradient-to-br from-yellow-400 to-orange-500"
-              title={homeContent?.feature1Title || "Premium Quality"}
-              description={homeContent?.feature1Description || "Every product undergoes rigorous quality testing to ensure it meets our exceptional standards."}
-            />
-            
-            <FeatureCard
-              icon={<Shield className="h-8 w-8" />}
-              iconBg="bg-gradient-to-br from-green-400 to-emerald-500"
-              title={homeContent?.feature2Title || "Secure & Trusted"}
-              description={homeContent?.feature2Description || "Advanced security measures protect your data with enterprise-grade encryption and privacy."}
-            />
-            
-            <FeatureCard
-              icon={<Zap className="h-8 w-8" />}
-              iconBg="bg-gradient-to-br from-purple-400 to-pink-500"
-              title={homeContent?.feature3Title || "Lightning Fast"}
-              description={homeContent?.feature3Description || "Optimized delivery network ensures your orders arrive quickly and in perfect condition."}
-            />
+            {loading ? (
+              [1, 2, 3].map((i) => (
+                <div key={i} className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm animate-pulse">
+                  <div className="w-16 h-16 bg-gray-200 rounded-2xl mx-auto mb-6"></div>
+                  <div className="h-8 bg-gray-200 rounded w-3/4 mx-auto mb-4"></div>
+                  <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
+                  <div className="h-4 bg-gray-200 rounded w-2/3 mx-auto"></div>
+                </div>
+              ))
+            ) : (
+              <>
+                <FeatureCard
+                  icon={<Star className="h-8 w-8" />}
+                  iconBg="bg-gradient-to-br from-yellow-400 to-orange-500"
+                  title={homeContent?.feature1Title || "Premium Quality"}
+                  description={homeContent?.feature1Description || "Every product undergoes rigorous quality testing to ensure it meets our exceptional standards."}
+                />
+                
+                <FeatureCard
+                  icon={<Shield className="h-8 w-8" />}
+                  iconBg="bg-gradient-to-br from-green-400 to-emerald-500"
+                  title={homeContent?.feature2Title || "Secure & Trusted"}
+                  description={homeContent?.feature2Description || "Advanced security measures protect your data with enterprise-grade encryption and privacy."}
+                />
+                
+                <FeatureCard
+                  icon={<Zap className="h-8 w-8" />}
+                  iconBg="bg-gradient-to-br from-purple-400 to-pink-500"
+                  title={homeContent?.feature3Title || "Lightning Fast"}
+                  description={homeContent?.feature3Description || "Optimized delivery network ensures your orders arrive quickly and in perfect condition."}
+                />
+              </>
+            )}
           </div>
         </div>
       </section>
@@ -226,11 +257,11 @@ function ProductCard({ product }: { product: Product }) {
           )}
           <div className="flex items-center space-x-2">
             <span className="text-2xl font-bold text-gray-900">
-              ¥{product.price}
+              ${product.price}
             </span>
             {product.originalPrice && product.originalPrice > product.price && (
               <span className="text-lg text-gray-500 line-through">
-                ¥{product.originalPrice}
+                ${product.originalPrice}
               </span>
             )}
           </div>

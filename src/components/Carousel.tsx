@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import Link from 'next/link'
 
+import Image from 'next/image'
+
 interface CarouselItem {
   id: string
   title?: string | null
@@ -57,10 +59,12 @@ export default function Carousel({ items, interval = 5000 }: { items: CarouselIt
           }`}
         >
           {/* Image */}
-          <img
+          <Image
             src={item.imageUrl}
             alt={item.title || 'Carousel Image'}
-            className="w-full h-full object-cover"
+            fill
+            className="object-cover"
+            priority={index === 0}
           />
           
           {/* Overlay Content */}

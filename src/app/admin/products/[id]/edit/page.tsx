@@ -774,7 +774,7 @@ export default function EditProduct() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  售价 (¥) *
+                  售价 ($) *
                 </label>
                 <input
                   type="number"
@@ -789,7 +789,7 @@ export default function EditProduct() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  原价 (¥)
+                  原价 ($)
                 </label>
                 <input
                   type="number"

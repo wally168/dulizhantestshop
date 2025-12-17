@@ -220,6 +220,7 @@ export default function SettingsPage() {
                     {uploadingLogo && <Loader2 className="h-5 w-5 animate-spin text-blue-600" />}
                   </div>
                   <p className="text-xs text-gray-500 mt-1">仅支持图片，最大 5MB。上传成功后将自动填充上方 URL。</p>
+                  <p className="text-xs text-amber-600 mt-1">💡 建议尺寸：高度 96px（Retina 屏更清晰，前台将自动缩放为 48px 显示），宽度建议不超过 200px。长方形 LOGO 显示效果最佳。</p>
 
                   {settings.logoUrl && (
                     <div className="mt-3">

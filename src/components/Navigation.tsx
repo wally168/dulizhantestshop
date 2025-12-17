@@ -123,7 +123,7 @@ export default function Navigation({ initialNavItems = [] }: { initialNavItems?:
                   <img
                 src={settings.logoUrl}
                 alt={settings.siteName || 'Site Logo'}
-                className="h-12 w-12 max-w-[48px] max-h-[48px] object-contain transition-transform group-hover:scale-105"
+                className="h-12 w-auto max-w-[180px] object-contain transition-transform group-hover:scale-105"
               />
                 ) : (
                   <>
@@ -154,13 +154,15 @@ export default function Navigation({ initialNavItems = [] }: { initialNavItems?:
                   <div key={item.id} className="relative group">
                     <NavLink href={item.href}>{item.label}</NavLink>
                     {categories.length > 0 && (
-                      <div className="absolute left-0 top-full mt-2 w-48 bg-white border border-gray-200 rounded-xl shadow-lg opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all">
-                        <Link href="/products" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">All Products</Link>
-                        {categories.map((c) => (
-                          <Link key={c.id} href={`/products?categoryId=${encodeURIComponent(c.id)}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
-                            {c.name}
-                          </Link>
-                        ))}
+                      <div className="absolute left-0 top-full pt-2 w-48 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all z-50">
+                        <div className="bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
+                          <Link href="/products" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">All Products</Link>
+                          {categories.map((c) => (
+                            <Link key={c.id} href={`/products?categoryId=${encodeURIComponent(c.id)}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                              {c.name}
+                            </Link>
+                          ))}
+                        </div>
                       </div>
                     )}
                   </div>
