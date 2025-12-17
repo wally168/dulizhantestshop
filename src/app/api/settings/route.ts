@@ -7,6 +7,8 @@ import { Prisma } from '@prisma/client'
 const defaultSettings = {
   siteName: 'Your Brand',
   logoUrl: '',
+  logoWidth: '',
+  logoHeight: '',
   siteDescription: 'Discover premium products with exceptional quality and design',
   siteKeywords: 'premium products, quality, design, lifestyle',
   contactEmail: 'contact@yourbrand.com',

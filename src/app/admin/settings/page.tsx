@@ -55,6 +55,8 @@ export default function SettingsPage() {
   const [settings, setSettings] = useState<SiteSettings>({
     siteName: '',
     logoUrl: '',
+    logoWidth: '',
+    logoHeight: '',
     siteDescription: '',
     siteKeywords: '',
     contactEmail: '',
