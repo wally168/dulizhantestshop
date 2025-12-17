@@ -5,6 +5,8 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 export interface SiteSettings {
   siteName: string
   logoUrl: string
+  logoWidth: string
+  logoHeight: string
   siteDescription: string
   siteKeywords: string
   contactEmail: string
@@ -63,6 +65,8 @@ interface SettingsContextType {
 const defaultSettings: SiteSettings = {
   siteName: 'Your Brand',
   logoUrl: '',
+  logoWidth: '',
+  logoHeight: '',
   siteDescription: 'Discover premium products with exceptional quality and design',
   siteKeywords: 'premium products, quality, design, lifestyle',
   contactEmail: 'contact@yourbrand.com',
@@ -131,7 +135,7 @@ export function SettingsProvider({ children, initialSettings }: { children: Reac
         setSettings(data)
         if (typeof window !== 'undefined') {
           localStorage.setItem('siteSettings', JSON.stringify(data))
-          localStorage.setItem('siteSettingsVersion', '1.4')
+          localStorage.setItem('siteSettingsVersion', '1.5')
         }
       }
     } catch (error) {
@@ -149,7 +153,7 @@ export function SettingsProvider({ children, initialSettings }: { children: Reac
         try {
           const cached = localStorage.getItem('siteSettings')
           const cacheVersion = localStorage.getItem('siteSettingsVersion')
-          const currentVersion = '1.4'
+          const currentVersion = '1.5'
 
           if (cached && cacheVersion === currentVersion) {
             const parsedSettings = JSON.parse(cached)

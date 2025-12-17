@@ -121,10 +121,20 @@ export default function Navigation({ initialNavItems = [] }: { initialNavItems?:
               <div className="relative">
                 {settings.logoUrl ? (
                   <img
-                src={settings.logoUrl}
-                alt={settings.siteName || 'Site Logo'}
-                className="h-12 w-auto max-w-[180px] object-contain transition-transform group-hover:scale-105"
-              />
+                    src={settings.logoUrl}
+                    alt={settings.siteName || 'Site Logo'}
+                    className={`object-contain transition-transform group-hover:scale-105 ${
+                      settings.logoWidth || settings.logoHeight ? '' : 'h-12 w-auto max-w-[180px]'
+                    }`}
+                    style={
+                      settings.logoWidth || settings.logoHeight
+                        ? {
+                            width: settings.logoWidth || 'auto',
+                            height: settings.logoHeight || 'auto',
+                          }
+                        : undefined
+                    }
+                  />
                 ) : (
                   <>
 <ShoppingBag

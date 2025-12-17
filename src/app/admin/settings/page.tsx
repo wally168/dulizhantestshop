@@ -22,6 +22,8 @@ import {
 interface SiteSettings {
   siteName: string
   logoUrl: string
+  logoWidth: string
+  logoHeight: string
   siteDescription: string
   siteKeywords: string
   contactEmail: string
@@ -262,6 +264,33 @@ export default function SettingsPage() {
                       </div>
                     </div>
                   )}
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Logo 宽度 (例如: 180px 或 auto)
+                    </label>
+                    <input
+                      type="text"
+                      value={settings.logoWidth || ''}
+                      onChange={(e) => handleInputChange('logoWidth', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="默认: 180px"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Logo 高度 (例如: 55px 或 auto)
+                    </label>
+                    <input
+                      type="text"
+                      value={settings.logoHeight || ''}
+                      onChange={(e) => handleInputChange('logoHeight', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="默认: 48px"
+                    />
+                  </div>
                 </div>
               </div>
 
