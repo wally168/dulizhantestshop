@@ -11,9 +11,15 @@ export interface SiteSettings {
   contactPhone: string
   contactAddress: string
   socialFacebook: string
+  socialFacebookTitle: string
   socialTwitter: string
+  socialTwitterTitle: string
   socialInstagram: string
+  socialInstagramTitle: string
   socialYoutube: string
+  socialYoutubeTitle: string
+  socialTiktok: string
+  socialTiktokTitle: string
   footerText: string
   aboutText: string
   ourStory: string
@@ -63,9 +69,15 @@ const defaultSettings: SiteSettings = {
   contactPhone: '+1 (555) 123-4567',
   contactAddress: '123 Main Street, City, State 12345',
   socialFacebook: 'https://facebook.com/yourbrand',
+  socialFacebookTitle: 'Facebook',
   socialTwitter: 'https://twitter.com/yourbrand',
+  socialTwitterTitle: 'Twitter',
   socialInstagram: 'https://instagram.com/yourbrand',
+  socialInstagramTitle: 'Instagram',
   socialYoutube: 'https://youtube.com/yourbrand',
+  socialYoutubeTitle: 'YouTube',
+  socialTiktok: '',
+  socialTiktokTitle: 'TikTok',
   footerText: '© 2025 Your Brand. All rights reserved.',
   aboutText: 'We\'re passionate about bringing you the finest products that combine quality, innovation, and style.',
   ourStory: 'Founded with a vision to make premium products accessible to everyone, Your Brand has been dedicated to curating exceptional items that enhance your daily life. We believe that quality shouldn\'t be compromised, and every product in our collection reflects this commitment.',
@@ -119,7 +131,7 @@ export function SettingsProvider({ children, initialSettings }: { children: Reac
         setSettings(data)
         if (typeof window !== 'undefined') {
           localStorage.setItem('siteSettings', JSON.stringify(data))
-          localStorage.setItem('siteSettingsVersion', '1.3')
+          localStorage.setItem('siteSettingsVersion', '1.4')
         }
       }
     } catch (error) {
@@ -137,7 +149,7 @@ export function SettingsProvider({ children, initialSettings }: { children: Reac
         try {
           const cached = localStorage.getItem('siteSettings')
           const cacheVersion = localStorage.getItem('siteSettingsVersion')
-          const currentVersion = '1.3'
+          const currentVersion = '1.4'
 
           if (cached && cacheVersion === currentVersion) {
             const parsedSettings = JSON.parse(cached)

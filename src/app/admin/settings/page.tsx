@@ -14,6 +14,7 @@ import {
   Twitter,
   Instagram,
   Youtube,
+  Video,
   Loader2
 } from 'lucide-react'
 
@@ -26,9 +27,15 @@ interface SiteSettings {
   contactPhone: string
   contactAddress: string
   socialFacebook: string
+  socialFacebookTitle: string
   socialTwitter: string
+  socialTwitterTitle: string
   socialInstagram: string
+  socialInstagramTitle: string
   socialYoutube: string
+  socialYoutubeTitle: string
+  socialTiktok: string
+  socialTiktokTitle: string
   footerText: string
   aboutText: string
   ourStory: string
@@ -51,9 +58,15 @@ export default function SettingsPage() {
     contactPhone: '',
     contactAddress: '',
     socialFacebook: '',
+    socialFacebookTitle: '',
     socialTwitter: '',
+    socialTwitterTitle: '',
     socialInstagram: '',
+    socialInstagramTitle: '',
     socialYoutube: '',
+    socialYoutubeTitle: '',
+    socialTiktok: '',
+    socialTiktokTitle: '',
     footerText: '',
     aboutText: '',
     ourStory: '',
@@ -220,7 +233,7 @@ export default function SettingsPage() {
                     {uploadingLogo && <Loader2 className="h-5 w-5 animate-spin text-blue-600" />}
                   </div>
                   <p className="text-xs text-gray-500 mt-1">仅支持图片，最大 5MB。上传成功后将自动填充上方 URL。</p>
-                  <p className="text-xs text-amber-600 mt-1">💡 建议尺寸：高度 96px（Retina 屏更清晰，前台将自动缩放为 48px 显示），宽度建议不超过 200px。长方形 LOGO 显示效果最佳。</p>
+                  <p className="text-xs text-amber-600 mt-1">💡 建议尺寸：高度 96px（Retina 屏更清晰，前台将自动缩放为 48px 显示），宽度建议不超过 200px。</p>
 
                   {settings.logoUrl && (
                     <div className="mt-3">
@@ -382,67 +395,133 @@ export default function SettingsPage() {
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Facebook */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Facebook
                 </label>
-                <div className="relative">
+                <div className="space-y-2">
                   <input
-                    type="url"
-                    value={settings.socialFacebook}
-                    onChange={(e) => handleInputChange('socialFacebook', e.target.value)}
-                    className="w-full px-3 py-2 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="https://facebook.com/yourpage"
+                    type="text"
+                    value={settings.socialFacebookTitle}
+                    onChange={(e) => handleInputChange('socialFacebookTitle', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="显示标题 (默认: Facebook)"
                   />
-                  <Facebook className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <div className="relative">
+                    <input
+                      type="url"
+                      value={settings.socialFacebook}
+                      onChange={(e) => handleInputChange('socialFacebook', e.target.value)}
+                      className="w-full px-3 py-2 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="https://facebook.com/yourpage"
+                    />
+                    <Facebook className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  </div>
                 </div>
               </div>
 
+              {/* Twitter */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Twitter
                 </label>
-                <div className="relative">
+                <div className="space-y-2">
                   <input
-                    type="url"
-                    value={settings.socialTwitter}
-                    onChange={(e) => handleInputChange('socialTwitter', e.target.value)}
-                    className="w-full px-3 py-2 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="https://twitter.com/yourhandle"
+                    type="text"
+                    value={settings.socialTwitterTitle}
+                    onChange={(e) => handleInputChange('socialTwitterTitle', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="显示标题 (默认: Twitter)"
                   />
-                  <Twitter className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <div className="relative">
+                    <input
+                      type="url"
+                      value={settings.socialTwitter}
+                      onChange={(e) => handleInputChange('socialTwitter', e.target.value)}
+                      className="w-full px-3 py-2 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="https://twitter.com/yourhandle"
+                    />
+                    <Twitter className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  </div>
                 </div>
               </div>
 
+              {/* Instagram */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Instagram
                 </label>
-                <div className="relative">
+                <div className="space-y-2">
                   <input
-                    type="url"
-                    value={settings.socialInstagram}
-                    onChange={(e) => handleInputChange('socialInstagram', e.target.value)}
-                    className="w-full px-3 py-2 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="https://instagram.com/yourhandle"
+                    type="text"
+                    value={settings.socialInstagramTitle}
+                    onChange={(e) => handleInputChange('socialInstagramTitle', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="显示标题 (默认: Instagram)"
                   />
-                  <Instagram className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <div className="relative">
+                    <input
+                      type="url"
+                      value={settings.socialInstagram}
+                      onChange={(e) => handleInputChange('socialInstagram', e.target.value)}
+                      className="w-full px-3 py-2 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="https://instagram.com/yourhandle"
+                    />
+                    <Instagram className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  </div>
                 </div>
               </div>
 
+              {/* YouTube */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   YouTube
                 </label>
-                <div className="relative">
+                <div className="space-y-2">
                   <input
-                    type="url"
-                    value={settings.socialYoutube}
-                    onChange={(e) => handleInputChange('socialYoutube', e.target.value)}
-                    className="w-full px-3 py-2 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="https://youtube.com/yourchannel"
+                    type="text"
+                    value={settings.socialYoutubeTitle}
+                    onChange={(e) => handleInputChange('socialYoutubeTitle', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="显示标题 (默认: YouTube)"
                   />
-                  <Youtube className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <div className="relative">
+                    <input
+                      type="url"
+                      value={settings.socialYoutube}
+                      onChange={(e) => handleInputChange('socialYoutube', e.target.value)}
+                      className="w-full px-3 py-2 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="https://youtube.com/yourchannel"
+                    />
+                    <Youtube className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  </div>
+                </div>
+              </div>
+
+              {/* TikTok */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  TikTok
+                </label>
+                <div className="space-y-2">
+                  <input
+                    type="text"
+                    value={settings.socialTiktokTitle}
+                    onChange={(e) => handleInputChange('socialTiktokTitle', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="显示标题 (默认: TikTok)"
+                  />
+                  <div className="relative">
+                    <input
+                      type="url"
+                      value={settings.socialTiktok}
+                      onChange={(e) => handleInputChange('socialTiktok', e.target.value)}
+                      className="w-full px-3 py-2 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="https://tiktok.com/@yourhandle"
+                    />
+                    <Video className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  </div>
                 </div>
               </div>
             </div>

@@ -130,28 +130,35 @@ export default function Footer({ initialNavItems = [] }: { initialNavItems?: Nav
                       {settings.socialFacebook && (
                         <li>
                           <a href={settings.socialFacebook} className="text-sm text-gray-600 hover:text-gray-900" target="_blank" rel="noopener noreferrer">
-                            Facebook
+                            {settings.socialFacebookTitle || 'Facebook'}
                           </a>
                         </li>
                       )}
                       {settings.socialTwitter && (
                         <li>
                           <a href={settings.socialTwitter} className="text-sm text-gray-600 hover:text-gray-900" target="_blank" rel="noopener noreferrer">
-                            Twitter
+                            {settings.socialTwitterTitle || 'Twitter'}
                           </a>
                         </li>
                       )}
                       {settings.socialInstagram && (
                         <li>
                           <a href={settings.socialInstagram} className="text-sm text-gray-600 hover:text-gray-900" target="_blank" rel="noopener noreferrer">
-                            Instagram
+                            {settings.socialInstagramTitle || 'Instagram'}
                           </a>
                         </li>
                       )}
                       {settings.socialYoutube && (
                         <li>
                           <a href={settings.socialYoutube} className="text-sm text-gray-600 hover:text-gray-900" target="_blank" rel="noopener noreferrer">
-                            YouTube
+                            {settings.socialYoutubeTitle || 'YouTube'}
+                          </a>
+                        </li>
+                      )}
+                      {settings.socialTiktok && (
+                        <li>
+                          <a href={settings.socialTiktok} className="text-sm text-gray-600 hover:text-gray-900" target="_blank" rel="noopener noreferrer">
+                            {settings.socialTiktokTitle || 'TikTok'}
                           </a>
                         </li>
                       )}
