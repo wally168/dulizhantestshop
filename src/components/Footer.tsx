@@ -88,7 +88,7 @@ export default function Footer({ initialNavItems = [] }: { initialNavItems?: Nav
                           (settings.logoWidth && settings.logoWidth !== 'auto') || 
                           (settings.logoHeight && settings.logoHeight !== 'auto') 
                             ? 'max-h-12 w-auto max-w-[180px]' 
-                            : 'h-8 w-auto'
+                            : 'max-h-12 w-auto max-w-[180px]'
                         }`}
                         style={
                           (settings.logoWidth && settings.logoWidth !== 'auto') || 
@@ -108,7 +108,7 @@ export default function Footer({ initialNavItems = [] }: { initialNavItems?: Nav
                           (settings.logoWidth && settings.logoWidth !== 'auto') || 
                           (settings.logoHeight && settings.logoHeight !== 'auto') 
                             ? 'max-w-full' 
-                            : 'h-8 w-auto'
+                            : 'max-w-full'
                         }`}
                         style={
                           (settings.logoWidth && settings.logoWidth !== 'auto') || 

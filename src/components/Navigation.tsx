@@ -136,7 +136,7 @@ export default function Navigation({ initialNavItems = [] }: { initialNavItems?:
                 (settings.logoWidth && settings.logoWidth !== 'auto') || 
                 (settings.logoHeight && settings.logoHeight !== 'auto') 
                   ? 'max-h-14 w-auto max-w-[200px]' 
-                  : 'h-8 w-auto'
+                  : 'max-h-14 w-auto max-w-[200px]'
               }`}
               style={
                 (settings.logoWidth && settings.logoWidth !== 'auto') || 
@@ -157,7 +157,7 @@ export default function Navigation({ initialNavItems = [] }: { initialNavItems?:
                 (settings.logoWidth && settings.logoWidth !== 'auto') || 
                 (settings.logoHeight && settings.logoHeight !== 'auto') 
                   ? 'max-w-full max-h-16' 
-                  : 'h-8 w-auto'
+                  : 'max-w-full max-h-16'
               }`}
               style={
                 (settings.logoWidth && settings.logoWidth !== 'auto') || 
