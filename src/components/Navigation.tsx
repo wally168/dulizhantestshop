@@ -128,49 +128,47 @@ export default function Navigation({ initialNavItems = [] }: { initialNavItems?:
               <div className="relative">
                 {settings.logoUrl ? (
                   <>
-                    {/* 移动端 Logo: 独立控制，确保不大不小 */}
-                    {/* 如果有自定义尺寸：限制最大高度为 56px (h-14)，防止过大 */}
-                    {/* 如果无自定义尺寸：默认高度 48px (h-12)，防止过小 */}
-                    <img
-                      src={settings.logoUrl}
-                      alt={settings.siteName || 'Site Logo'}
-                      className={`md:hidden object-contain transition-transform group-hover:scale-105 ${
-                        (settings.logoWidth && settings.logoWidth !== 'auto') || 
-                        (settings.logoHeight && settings.logoHeight !== 'auto') 
-                          ? 'max-h-14 w-auto max-w-[200px]' 
-                          : 'h-12 w-auto'
-                      }`}
-                      style={
-                        (settings.logoWidth && settings.logoWidth !== 'auto') || 
-                        (settings.logoHeight && settings.logoHeight !== 'auto')
-                          ? {
-                              width: formatSize(settings.logoWidth),
-                              height: formatSize(settings.logoHeight),
-                            }
-                          : undefined
-                      }
-                    />
-                    
-                    {/* 桌面端 Logo: 保持原样，支持完整自定义尺寸 */}
-                    <img
-                      src={settings.logoUrl}
-                      alt={settings.siteName || 'Site Logo'}
-                      className={`hidden md:block object-contain transition-transform group-hover:scale-105 ${
-                        (settings.logoWidth && settings.logoWidth !== 'auto') || 
-                        (settings.logoHeight && settings.logoHeight !== 'auto') 
-                          ? 'max-w-full' 
-                          : 'h-12 w-auto'
-                      }`}
-                      style={
-                        (settings.logoWidth && settings.logoWidth !== 'auto') || 
-                        (settings.logoHeight && settings.logoHeight !== 'auto')
-                          ? {
-                              width: formatSize(settings.logoWidth),
-                              height: formatSize(settings.logoHeight),
-                            }
-                          : undefined
-                      }
-                    />
+                    {/* 移动端 Logo: 默认 h-8 (32px) 与桌面端页脚保持一致 */}
+            <img
+              src={settings.logoUrl}
+              alt={settings.siteName || 'Site Logo'}
+              className={`md:hidden object-contain transition-transform group-hover:scale-105 ${
+                (settings.logoWidth && settings.logoWidth !== 'auto') || 
+                (settings.logoHeight && settings.logoHeight !== 'auto') 
+                  ? 'max-h-14 w-auto max-w-[200px]' 
+                  : 'h-8 w-auto'
+              }`}
+              style={
+                (settings.logoWidth && settings.logoWidth !== 'auto') || 
+                (settings.logoHeight && settings.logoHeight !== 'auto')
+                  ? {
+                      width: formatSize(settings.logoWidth),
+                      height: formatSize(settings.logoHeight),
+                    }
+                  : undefined
+              }
+            />
+            
+            {/* 桌面端 Logo: 默认 h-8 (32px) 与桌面端页脚保持一致 */}
+            <img
+              src={settings.logoUrl}
+              alt={settings.siteName || 'Site Logo'}
+              className={`hidden md:block object-contain transition-transform group-hover:scale-105 ${
+                (settings.logoWidth && settings.logoWidth !== 'auto') || 
+                (settings.logoHeight && settings.logoHeight !== 'auto') 
+                  ? 'max-w-full max-h-16' 
+                  : 'h-8 w-auto'
+              }`}
+              style={
+                (settings.logoWidth && settings.logoWidth !== 'auto') || 
+                (settings.logoHeight && settings.logoHeight !== 'auto')
+                  ? {
+                      width: formatSize(settings.logoWidth),
+                      height: formatSize(settings.logoHeight),
+                    }
+                  : undefined
+              }
+            />
                   </>
                 ) : (
                   <>

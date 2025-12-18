@@ -278,7 +278,7 @@ export default function SettingsPage() {
                       value={settings.logoWidth || ''}
                       onChange={(e) => handleInputChange('logoWidth', e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="默认: 180px"
+                      placeholder="建议: 不超过 200px"
                     />
                   </div>
                   <div>
@@ -290,7 +290,7 @@ export default function SettingsPage() {
                       value={settings.logoHeight || ''}
                       onChange={(e) => handleInputChange('logoHeight', e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="默认: 48px"
+                      placeholder="默认: 32px"
                     />
                   </div>
                 </div>

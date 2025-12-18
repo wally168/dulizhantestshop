@@ -80,7 +80,7 @@ export default function Footer({ initialNavItems = [] }: { initialNavItems?: Nav
                 <Link href="/" className="flex items-center space-x-2">
                   {settings.logoUrl ? (
                     <>
-                      {/* 移动端 Logo (footer): 限制高度，保持适中 */}
+                      {/* 移动端 Logo (footer): 默认 h-8 (32px) */}
                       <img 
                         src={settings.logoUrl} 
                         alt={settings.siteName} 
@@ -88,7 +88,7 @@ export default function Footer({ initialNavItems = [] }: { initialNavItems?: Nav
                           (settings.logoWidth && settings.logoWidth !== 'auto') || 
                           (settings.logoHeight && settings.logoHeight !== 'auto') 
                             ? 'max-h-12 w-auto max-w-[180px]' 
-                            : 'h-10 w-auto'
+                            : 'h-8 w-auto'
                         }`}
                         style={
                           (settings.logoWidth && settings.logoWidth !== 'auto') || 
@@ -100,7 +100,7 @@ export default function Footer({ initialNavItems = [] }: { initialNavItems?: Nav
                             : undefined
                         }
                       />
-                      {/* 桌面端 Logo (footer) */}
+                      {/* 桌面端 Logo (footer): 默认 h-8 (32px) */}
                       <img 
                         src={settings.logoUrl} 
                         alt={settings.siteName} 
