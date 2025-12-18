@@ -61,6 +61,13 @@ export default function Footer({ initialNavItems = [] }: { initialNavItems?: Nav
       </footer>
     )
   }
+  // Helper to ensure units are present
+  const formatSize = (value: string | undefined | null) => {
+    if (!value || value === 'auto') return 'auto'
+    if (/^\d+$/.test(value)) return `${value}px`
+    return value
+  }
+
   return (
     <footer className="bg-gray-50 border-t border-gray-200">
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
@@ -72,11 +79,34 @@ export default function Footer({ initialNavItems = [] }: { initialNavItems?: Nav
               <div className="space-y-8">
                 <Link href="/" className="flex items-center space-x-2">
                   {settings.logoUrl ? (
-                    <img 
-                      src={settings.logoUrl} 
-                      alt={settings.siteName} 
-                      className="h-8 w-auto max-h-12 object-contain"
-                    />
+                    <>
+                      {/* 移动端 Logo (footer) - 限制高度以防止过大 */}
+                      <img 
+                        src={settings.logoUrl} 
+                        alt={settings.siteName} 
+                        className="md:hidden h-10 w-auto object-contain"
+                      />
+                      {/* 桌面端 Logo (footer) - 支持自定义尺寸 */}
+                      <img 
+                        src={settings.logoUrl} 
+                        alt={settings.siteName} 
+                        className={`hidden md:block object-contain ${
+                          (settings.logoWidth && settings.logoWidth !== 'auto') || 
+                          (settings.logoHeight && settings.logoHeight !== 'auto') 
+                            ? '' 
+                            : 'h-8 w-auto max-h-12'
+                        }`}
+                        style={
+                          (settings.logoWidth && settings.logoWidth !== 'auto') || 
+                          (settings.logoHeight && settings.logoHeight !== 'auto')
+                            ? {
+                                width: formatSize(settings.logoWidth),
+                                height: formatSize(settings.logoHeight),
+                              }
+                            : undefined
+                        }
+                      />
+                    </>
                   ) : (
                     <ShoppingBag className="h-8 w-8 text-blue-600" />
                   )}
