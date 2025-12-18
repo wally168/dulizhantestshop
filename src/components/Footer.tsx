@@ -79,25 +79,48 @@ export default function Footer({ initialNavItems = [] }: { initialNavItems?: Nav
               <div className="space-y-8">
                 <Link href="/" className="flex items-center space-x-2">
                   {settings.logoUrl ? (
-                    <img 
-                      src={settings.logoUrl} 
-                      alt={settings.siteName} 
-                      className={`object-contain ${
-                        (settings.logoWidth && settings.logoWidth !== 'auto') || 
-                        (settings.logoHeight && settings.logoHeight !== 'auto') 
-                          ? 'max-w-full max-h-16 md:max-h-none' 
-                          : 'h-8 w-auto'
-                      }`}
-                      style={
-                        (settings.logoWidth && settings.logoWidth !== 'auto') || 
-                        (settings.logoHeight && settings.logoHeight !== 'auto')
-                          ? {
-                              width: formatSize(settings.logoWidth),
-                              height: formatSize(settings.logoHeight),
-                            }
-                          : undefined
-                      }
-                    />
+                    <>
+                      {/* 移动端 Logo (footer): 限制高度，保持适中 */}
+                      <img 
+                        src={settings.logoUrl} 
+                        alt={settings.siteName} 
+                        className={`md:hidden object-contain ${
+                          (settings.logoWidth && settings.logoWidth !== 'auto') || 
+                          (settings.logoHeight && settings.logoHeight !== 'auto') 
+                            ? 'max-h-12 w-auto max-w-[180px]' 
+                            : 'h-10 w-auto'
+                        }`}
+                        style={
+                          (settings.logoWidth && settings.logoWidth !== 'auto') || 
+                          (settings.logoHeight && settings.logoHeight !== 'auto')
+                            ? {
+                                width: formatSize(settings.logoWidth),
+                                height: formatSize(settings.logoHeight),
+                              }
+                            : undefined
+                        }
+                      />
+                      {/* 桌面端 Logo (footer) */}
+                      <img 
+                        src={settings.logoUrl} 
+                        alt={settings.siteName} 
+                        className={`hidden md:block object-contain ${
+                          (settings.logoWidth && settings.logoWidth !== 'auto') || 
+                          (settings.logoHeight && settings.logoHeight !== 'auto') 
+                            ? 'max-w-full' 
+                            : 'h-8 w-auto'
+                        }`}
+                        style={
+                          (settings.logoWidth && settings.logoWidth !== 'auto') || 
+                          (settings.logoHeight && settings.logoHeight !== 'auto')
+                            ? {
+                                width: formatSize(settings.logoWidth),
+                                height: formatSize(settings.logoHeight),
+                              }
+                            : undefined
+                        }
+                      />
+                    </>
                   ) : (
                     <ShoppingBag className="h-8 w-8 text-blue-600" />
                   )}

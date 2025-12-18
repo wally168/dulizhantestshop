@@ -127,25 +127,51 @@ export default function Navigation({ initialNavItems = [] }: { initialNavItems?:
             <Link href="/" className="flex items-center space-x-2 group">
               <div className="relative">
                 {settings.logoUrl ? (
-                  <img
-                    src={settings.logoUrl}
-                    alt={settings.siteName || 'Site Logo'}
-                    className={`object-contain transition-transform group-hover:scale-105 ${
-                      (settings.logoWidth && settings.logoWidth !== 'auto') || 
-                      (settings.logoHeight && settings.logoHeight !== 'auto') 
-                        ? 'max-w-full max-h-20 md:max-h-none' 
-                        : 'h-10 md:h-12 w-auto'
-                    }`}
-                    style={
-                      (settings.logoWidth && settings.logoWidth !== 'auto') || 
-                      (settings.logoHeight && settings.logoHeight !== 'auto')
-                        ? {
-                            width: formatSize(settings.logoWidth),
-                            height: formatSize(settings.logoHeight),
-                          }
-                        : undefined
-                    }
-                  />
+                  <>
+                    {/* 移动端 Logo: 独立控制，确保不大不小 */}
+                    {/* 如果有自定义尺寸：限制最大高度为 56px (h-14)，防止过大 */}
+                    {/* 如果无自定义尺寸：默认高度 48px (h-12)，防止过小 */}
+                    <img
+                      src={settings.logoUrl}
+                      alt={settings.siteName || 'Site Logo'}
+                      className={`md:hidden object-contain transition-transform group-hover:scale-105 ${
+                        (settings.logoWidth && settings.logoWidth !== 'auto') || 
+                        (settings.logoHeight && settings.logoHeight !== 'auto') 
+                          ? 'max-h-14 w-auto max-w-[200px]' 
+                          : 'h-12 w-auto'
+                      }`}
+                      style={
+                        (settings.logoWidth && settings.logoWidth !== 'auto') || 
+                        (settings.logoHeight && settings.logoHeight !== 'auto')
+                          ? {
+                              width: formatSize(settings.logoWidth),
+                              height: formatSize(settings.logoHeight),
+                            }
+                          : undefined
+                      }
+                    />
+                    
+                    {/* 桌面端 Logo: 保持原样，支持完整自定义尺寸 */}
+                    <img
+                      src={settings.logoUrl}
+                      alt={settings.siteName || 'Site Logo'}
+                      className={`hidden md:block object-contain transition-transform group-hover:scale-105 ${
+                        (settings.logoWidth && settings.logoWidth !== 'auto') || 
+                        (settings.logoHeight && settings.logoHeight !== 'auto') 
+                          ? 'max-w-full' 
+                          : 'h-12 w-auto'
+                      }`}
+                      style={
+                        (settings.logoWidth && settings.logoWidth !== 'auto') || 
+                        (settings.logoHeight && settings.logoHeight !== 'auto')
+                          ? {
+                              width: formatSize(settings.logoWidth),
+                              height: formatSize(settings.logoHeight),
+                            }
+                          : undefined
+                      }
+                    />
+                  </>
                 ) : (
                   <>
 <ShoppingBag
