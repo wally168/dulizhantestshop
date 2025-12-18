@@ -120,21 +120,30 @@ export default function Navigation({ initialNavItems = [] }: { initialNavItems?:
             <Link href="/" className="flex items-center space-x-2 group">
               <div className="relative">
                 {settings.logoUrl ? (
-                  <img
-                    src={settings.logoUrl}
-                    alt={settings.siteName || 'Site Logo'}
-                    className={`object-contain transition-transform group-hover:scale-105 ${
-                      settings.logoWidth || settings.logoHeight ? '' : 'h-12 w-auto max-w-[180px]'
-                    }`}
-                    style={
-                      settings.logoWidth || settings.logoHeight
-                        ? {
-                            width: settings.logoWidth || 'auto',
-                            height: settings.logoHeight || 'auto',
-                          }
-                        : undefined
-                    }
-                  />
+                  <>
+                    {/* 移动端 Logo 渲染 */}
+                    <img
+                      src={settings.logoUrl}
+                      alt={settings.siteName || 'Site Logo'}
+                      className={`md:hidden object-contain transition-transform group-hover:scale-105 h-8 w-auto`}
+                    />
+                    {/* 桌面端 Logo 渲染 */}
+                    <img
+                      src={settings.logoUrl}
+                      alt={settings.siteName || 'Site Logo'}
+                      className={`hidden md:block object-contain transition-transform group-hover:scale-105 ${
+                        settings.logoWidth || settings.logoHeight ? '' : 'h-12 w-auto max-w-[180px]'
+                      }`}
+                      style={
+                        settings.logoWidth || settings.logoHeight
+                          ? {
+                              width: settings.logoWidth || 'auto',
+                              height: settings.logoHeight || 'auto',
+                            }
+                          : undefined
+                      }
+                    />
+                  </>
                 ) : (
                   <>
 <ShoppingBag
