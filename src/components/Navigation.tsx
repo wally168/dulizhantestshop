@@ -128,11 +128,11 @@ export default function Navigation({ initialNavItems = [] }: { initialNavItems?:
               <div className="relative">
                 {settings.logoUrl ? (
                   <>
-                    {/* 移动端 Logo 渲染 - 增大高度至 h-14 (56px) 且允许自动宽度 */}
+                    {/* 移动端 Logo 渲染 - 使用最大高度限制，允许图片自然缩放，上限设为 80px */}
                     <img
                       src={settings.logoUrl}
                       alt={settings.siteName || 'Site Logo'}
-                      className={`md:hidden object-contain transition-transform group-hover:scale-105 h-14 w-auto`}
+                      className={`md:hidden object-contain transition-transform group-hover:scale-105 w-auto h-auto max-h-20 max-w-[200px]`}
                     />
                     {/* 桌面端 Logo 渲染 */}
                     <img

@@ -80,11 +80,11 @@ export default function Footer({ initialNavItems = [] }: { initialNavItems?: Nav
                 <Link href="/" className="flex items-center space-x-2">
                   {settings.logoUrl ? (
                     <>
-                      {/* 移动端 Logo (footer) - 限制高度以防止过大 */}
+                      {/* 移动端 Logo (footer) - 调小高度适配移动端视图 */}
                       <img 
                         src={settings.logoUrl} 
                         alt={settings.siteName} 
-                        className="md:hidden h-10 w-auto object-contain"
+                        className="md:hidden h-8 w-auto object-contain"
                       />
                       {/* 桌面端 Logo (footer) - 支持自定义尺寸 */}
                       <img 
