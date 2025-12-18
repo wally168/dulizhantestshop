@@ -121,21 +121,25 @@ export default function Navigation({ initialNavItems = [] }: { initialNavItems?:
               <div className="relative">
                 {settings.logoUrl ? (
                   <>
-                    {/* 移动端 Logo 渲染 */}
+                    {/* 移动端 Logo 渲染 - 增大高度至 h-10 (40px) */}
                     <img
                       src={settings.logoUrl}
                       alt={settings.siteName || 'Site Logo'}
-                      className={`md:hidden object-contain transition-transform group-hover:scale-105 h-8 w-auto`}
+                      className={`md:hidden object-contain transition-transform group-hover:scale-105 h-10 w-auto`}
                     />
                     {/* 桌面端 Logo 渲染 */}
                     <img
                       src={settings.logoUrl}
                       alt={settings.siteName || 'Site Logo'}
                       className={`hidden md:block object-contain transition-transform group-hover:scale-105 ${
-                        settings.logoWidth || settings.logoHeight ? '' : 'h-12 w-auto max-w-[180px]'
+                        (settings.logoWidth && settings.logoWidth !== 'auto') || 
+                        (settings.logoHeight && settings.logoHeight !== 'auto') 
+                          ? 'max-h-16' 
+                          : 'h-12 w-auto max-w-[180px]'
                       }`}
                       style={
-                        settings.logoWidth || settings.logoHeight
+                        (settings.logoWidth && settings.logoWidth !== 'auto') || 
+                        (settings.logoHeight && settings.logoHeight !== 'auto')
                           ? {
                               width: settings.logoWidth || 'auto',
                               height: settings.logoHeight || 'auto',
