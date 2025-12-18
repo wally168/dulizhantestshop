@@ -128,7 +128,7 @@ export default function Navigation({ initialNavItems = [] }: { initialNavItems?:
               <div className="relative">
                 {settings.logoUrl ? (
                   <>
-                    {/* 移动端 Logo: 默认 h-10 (40px) 略大于页脚以提升导航栏可见性 */}
+                    {/* 移动端 Logo: 默认 h-8 (32px) 与桌面端保持完全一致 */}
             <img
               src={settings.logoUrl}
               alt={settings.siteName || 'Site Logo'}
@@ -136,7 +136,7 @@ export default function Navigation({ initialNavItems = [] }: { initialNavItems?:
                 (settings.logoWidth && settings.logoWidth !== 'auto') || 
                 (settings.logoHeight && settings.logoHeight !== 'auto') 
                   ? 'max-h-14 w-auto max-w-[200px]' 
-                  : 'h-10 w-auto'
+                  : 'h-8 w-auto'
               }`}
               style={
                 (settings.logoWidth && settings.logoWidth !== 'auto') || 
