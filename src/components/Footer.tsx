@@ -79,34 +79,25 @@ export default function Footer({ initialNavItems = [] }: { initialNavItems?: Nav
               <div className="space-y-8">
                 <Link href="/" className="flex items-center space-x-2">
                   {settings.logoUrl ? (
-                    <>
-                      {/* 移动端 Logo (footer) - 调小高度适配移动端视图 */}
-                      <img 
-                        src={settings.logoUrl} 
-                        alt={settings.siteName} 
-                        className="md:hidden h-8 w-auto object-contain"
-                      />
-                      {/* 桌面端 Logo (footer) - 支持自定义尺寸 */}
-                      <img 
-                        src={settings.logoUrl} 
-                        alt={settings.siteName} 
-                        className={`hidden md:block object-contain ${
-                          (settings.logoWidth && settings.logoWidth !== 'auto') || 
-                          (settings.logoHeight && settings.logoHeight !== 'auto') 
-                            ? '' 
-                            : 'h-8 w-auto max-h-12'
-                        }`}
-                        style={
-                          (settings.logoWidth && settings.logoWidth !== 'auto') || 
-                          (settings.logoHeight && settings.logoHeight !== 'auto')
-                            ? {
-                                width: formatSize(settings.logoWidth),
-                                height: formatSize(settings.logoHeight),
-                              }
-                            : undefined
-                        }
-                      />
-                    </>
+                    <img 
+                      src={settings.logoUrl} 
+                      alt={settings.siteName} 
+                      className={`object-contain ${
+                        (settings.logoWidth && settings.logoWidth !== 'auto') || 
+                        (settings.logoHeight && settings.logoHeight !== 'auto') 
+                          ? 'max-w-full max-h-16 md:max-h-none' 
+                          : 'h-8 w-auto'
+                      }`}
+                      style={
+                        (settings.logoWidth && settings.logoWidth !== 'auto') || 
+                        (settings.logoHeight && settings.logoHeight !== 'auto')
+                          ? {
+                              width: formatSize(settings.logoWidth),
+                              height: formatSize(settings.logoHeight),
+                            }
+                          : undefined
+                      }
+                    />
                   ) : (
                     <ShoppingBag className="h-8 w-8 text-blue-600" />
                   )}
