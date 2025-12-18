@@ -106,6 +106,13 @@ export default function Navigation({ initialNavItems = [] }: { initialNavItems?:
   }
 
   const itemsToRender = navItems.filter((item) => item.href !== '/cart')
+  
+  // Helper to ensure units are present
+  const formatSize = (value: string | undefined | null) => {
+    if (!value || value === 'auto') return 'auto'
+    if (/^\d+$/.test(value)) return `${value}px`
+    return value
+  }
 
   return (
     <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${
@@ -114,18 +121,18 @@ export default function Navigation({ initialNavItems = [] }: { initialNavItems?:
         : 'bg-white/95 backdrop-blur-md border-b border-gray-200'
     }`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center h-16">
+        <div className="flex items-center min-h-[4rem]">
           {/* 左侧：Logo 保持不变，占用等比空间 */}
           <div className="flex-1">
             <Link href="/" className="flex items-center space-x-2 group">
               <div className="relative">
                 {settings.logoUrl ? (
                   <>
-                    {/* 移动端 Logo 渲染 - 增大高度至 h-10 (40px) */}
+                    {/* 移动端 Logo 渲染 - 增大高度至 h-12 (48px) */}
                     <img
                       src={settings.logoUrl}
                       alt={settings.siteName || 'Site Logo'}
-                      className={`md:hidden object-contain transition-transform group-hover:scale-105 h-10 w-auto`}
+                      className={`md:hidden object-contain transition-transform group-hover:scale-105 h-12 w-auto`}
                     />
                     {/* 桌面端 Logo 渲染 */}
                     <img
@@ -134,15 +141,15 @@ export default function Navigation({ initialNavItems = [] }: { initialNavItems?:
                       className={`hidden md:block object-contain transition-transform group-hover:scale-105 ${
                         (settings.logoWidth && settings.logoWidth !== 'auto') || 
                         (settings.logoHeight && settings.logoHeight !== 'auto') 
-                          ? 'max-h-16' 
+                          ? '' 
                           : 'h-12 w-auto max-w-[180px]'
                       }`}
                       style={
                         (settings.logoWidth && settings.logoWidth !== 'auto') || 
                         (settings.logoHeight && settings.logoHeight !== 'auto')
                           ? {
-                              width: settings.logoWidth || 'auto',
-                              height: settings.logoHeight || 'auto',
+                              width: formatSize(settings.logoWidth),
+                              height: formatSize(settings.logoHeight),
                             }
                           : undefined
                       }
