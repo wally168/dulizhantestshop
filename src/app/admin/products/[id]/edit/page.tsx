@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { useRouter, useParams } from 'next/navigation'
 import useUnsavedChangesPrompt from '../../../../../hooks/useUnsavedChangesPrompt'
@@ -168,6 +168,54 @@ export default function EditProduct() {
   const [dragIndex, setDragIndex] = useState<number | null>(null)
   const [hasChanges, setHasChanges] = useState(false)
   useUnsavedChangesPrompt(hasChanges)
+
+  // 描述图片上传
+  const descTextareaRef = useRef<HTMLTextAreaElement>(null)
+  const [descUploading, setDescUploading] = useState(false)
+
+  const handleDescImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setDescUploading(true)
+    try {
+      const fd = new FormData()
+      fd.append('file', file)
+      const res = await fetch('/api/upload', { method: 'POST', body: fd })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const data = await res.json()
+      const url = data?.url
+      
+      if (typeof url === 'string' && url.length > 0) {
+        const finalUrl = url.startsWith('http') ? url : `${window.location.origin}${url}`
+        const imgTag = `<img src="${finalUrl}" alt="Description Image" style="max-width: 100%; height: auto;" />`
+        
+        setForm(prev => {
+          const textarea = descTextareaRef.current
+          let newDesc = prev.description
+          
+          if (textarea) {
+            const start = textarea.selectionStart
+            const end = textarea.selectionEnd
+            newDesc = prev.description.substring(0, start) + imgTag + prev.description.substring(end)
+          } else {
+            newDesc = prev.description + imgTag
+          }
+          
+          return { ...prev, description: newDesc }
+        })
+        setHasChanges(true)
+      } else {
+        alert('上传成功，但未返回有效URL')
+      }
+    } catch (e) {
+      console.error('上传描述图片失败:', e)
+      alert('上传图片失败，请重试')
+    } finally {
+      setDescUploading(false)
+      e.target.value = ''
+    }
+  }
 
   const [reviews, setReviews] = useState<Review[]>([])
   const [loadingReviews, setLoadingReviews] = useState(true)
@@ -1318,11 +1366,25 @@ export default function EditProduct() {
             <h2 className="text-lg font-semibold text-gray-900 mb-6">产品描述</h2>
             
             <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                详细描述 * <span className="text-xs text-gray-500">(最多3000字符，支持HTML)</span>
-              </label>
+              <div className="flex justify-between items-center mb-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  详细描述 * <span className="text-xs text-gray-500">(最多3000字符，支持HTML)</span>
+                </label>
+                <label className="cursor-pointer inline-flex items-center px-3 py-1.5 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                  <Upload className={`h-4 w-4 mr-2 ${descUploading ? 'animate-pulse' : ''}`} />
+                  {descUploading ? '上传中...' : '插入图片'}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleDescImageUpload}
+                    disabled={descUploading}
+                  />
+                </label>
+              </div>
               <textarea
-                required
+              ref={descTextareaRef}
+              required
                 rows={12}
                 maxLength={3000}
                 value={form.description}
