@@ -469,10 +469,10 @@ export default function CarouselAdmin() {
                         <img src={item.imageUrl} alt="" className="h-full w-full object-cover" />
                       </div>
                     </div>
-                    <div className="flex-1 px-4">
-                      <div className="font-medium text-gray-900">{item.title || '(无标题)'}</div>
-                      <div className="text-sm text-gray-500 truncate max-w-md">{item.description}</div>
-                      {item.link && <div className="text-xs text-blue-500 mt-1 truncate">{item.link}</div>}
+                    <div className="flex-1 px-4 min-w-0">
+                      <div className="font-medium text-gray-900 truncate">{item.title || '(无标题)'}</div>
+                      <div className="text-sm text-gray-500 truncate">{item.description}</div>
+                      {item.link && <div className="text-xs text-blue-500 mt-1 truncate" title={item.link}>{item.link}</div>}
                     </div>
                     <div className="w-24 flex justify-center space-x-1">
                       <button
