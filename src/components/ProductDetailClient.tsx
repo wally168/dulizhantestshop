@@ -300,16 +300,16 @@ import AddToCartButton from './AddToCartButton'
           </ul>
         )}
 
-        <div className="mt-8">
-          <h2 className="text-lg font-semibold text-gray-900">Product Description</h2>
-          <div 
-            className="mt-2 text-gray-700 prose prose-sm max-w-none"
-            dangerouslySetInnerHTML={{ __html: description }}
-            style={{ lineHeight: '1.6' }}
-          />
-        </div>
-
       </div>
+    </div>
+
+    <div className="mt-10">
+      <h2 className="text-lg font-semibold text-gray-900">Product Description</h2>
+      <div 
+        className="mt-2 text-gray-700 prose prose-sm max-w-none"
+        dangerouslySetInnerHTML={{ __html: description }}
+        style={{ lineHeight: '1.6' }}
+      />
     </div>
     {Array.isArray(sortedReviews) && sortedReviews.length > 0 && (
       <div className="mt-10">
