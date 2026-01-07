@@ -142,7 +142,7 @@ export default function EditProduct() {
     price: '',
     originalPrice: '',
     images: [''],
-    bulletPoints: ['', '', '', '', ''],
+    bulletPoints: ['', '', '', '', '', '', '', ''],
     amazonUrl: '',
     categoryId: '',
     featured: false,
@@ -373,8 +373,8 @@ export default function EditProduct() {
           originalPrice: data.originalPrice?.toString() || '',
           images: Array.isArray(data.images) && data.images.length > 0 ? data.images : [''],
           bulletPoints: Array.isArray(data.bulletPoints)
-            ? Array.from({ length: 5 }, (_, i) => (data.bulletPoints[i] ?? ''))
-            : ['', '', '', '', ''],
+            ? Array.from({ length: 8 }, (_, i) => (data.bulletPoints[i] ?? ''))
+            : ['', '', '', '', '', '', '', ''],
           amazonUrl: data.amazonUrl || '',
           categoryId: data.categoryId || '',
           featured: data.featured || false,
@@ -1335,9 +1335,9 @@ export default function EditProduct() {
             </div>
           </div>
 
-          {/* 产品要点 (5点) */}
+          {/* 产品要点 (8点) */}
           <div className="bg-white p-6 rounded-xl shadow-sm border">
-            <h2 className="text-lg font-semibold text-gray-900 mb-6">产品要点 (5点描述)</h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-6">产品要点 (8点描述)</h2>
             
             <div className="space-y-4">
               {form.bulletPoints.map((point, index) => (
