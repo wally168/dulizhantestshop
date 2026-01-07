@@ -296,7 +296,7 @@ import AddToCartButton from './AddToCartButton'
 
         {Array.isArray(bullets) && bullets.length > 0 && (
           <ul className="mt-4 list-disc list-inside text-gray-700 space-y-1">
-            {bullets.map((b, i) => (<li key={i}>{b}</li>))}
+            {bullets.filter(b => b && b.trim()).map((b, i) => (<li key={i}>{b}</li>))}
           </ul>
         )}
 
