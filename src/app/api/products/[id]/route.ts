@@ -13,6 +13,7 @@ export async function GET(
       },
       include: {
         category: true,
+        brandRelation: true,
       },
     })
 
@@ -71,6 +72,7 @@ export async function PUT(
       featured,
       inStock,
       brand,
+      brandId,
       upc,
       publishedAt,
       variants,
@@ -96,6 +98,7 @@ export async function PUT(
       featured: featured || false,
       active: inStock !== false,
       brand: brand ?? undefined,
+      brandId: brandId ?? undefined,
       upc: upc ?? undefined,
       publishedAt: publishedAt ? new Date(publishedAt) : undefined,
       variants: (() => {

@@ -161,8 +161,8 @@ export default function AdminDashboard() {
           />
           <QuickActionCard
             icon={<Tag className="h-6 w-6" />}
-            title="分类管理"
-            description="管理产品分类（添加/编辑/删除）"
+            title="分类与品牌"
+            description="管理产品分类和品牌"
             href="/admin/categories"
             color="bg-teal-500"
           />

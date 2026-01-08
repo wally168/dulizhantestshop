@@ -29,6 +29,7 @@ interface ProductForm {
   inStock: boolean
   showBuyOnAmazon: boolean
   showAddToCart: boolean
+  brandId: string
   brand?: string
   upc?: string
   publishedAt?: string
@@ -42,6 +43,7 @@ interface VariantGroup { name: string; options: string[] }
 
 // 分类类型（与 /api/categories 一致）
 interface Category { id: string; name: string; slug: string }
+interface Brand { id: string; name: string; slug: string }
 
 // 链接校验（仅校验为有效 http/https URL，不自动改写）
 function isValidAmazonUrl(url: string): boolean {
@@ -105,6 +107,7 @@ export default function NewProduct() {
     categoryId: '',
     featured: false,
     inStock: true,
+    brandId: '',
     brand: '',
     upc: '',
     publishedAt: '',
@@ -118,6 +121,7 @@ export default function NewProduct() {
   // 新增：分类状态
   const [categories, setCategories] = useState<Category[]>([])
   const [catLoading, setCatLoading] = useState(true)
+  const [brands, setBrands] = useState<Brand[]>([])
   const [urlError, setUrlError] = useState<string>('')
   // 上传状态：按索引标记（简化处理）
   const [uploadingIndex, setUploadingIndex] = useState<number | null>(null)
@@ -245,22 +249,34 @@ export default function NewProduct() {
     setHasChanges(true)
   }
 
-  // 新增：加载分类列表
+  // 新增：加载分类和品牌列表
   useEffect(() => {
-    const loadCategories = async () => {
+    const loadData = async () => {
       try {
-        const res = await fetch('/api/categories', { cache: 'no-store' })
-        if (res.ok) {
-          const data = await res.json()
+        const [catRes, brandRes] = await Promise.all([
+          fetch('/api/categories', { cache: 'no-store' }),
+          fetch('/api/brands', { cache: 'no-store' })
+        ])
+        
+        if (catRes.ok) {
+          const data = await catRes.json()
           setCategories(Array.isArray(data) ? data : [])
+          if (data.length > 0) {
+            setForm(prev => ({ ...prev, categoryId: data[0].id }))
+          }
+        }
+        
+        if (brandRes.ok) {
+          const data = await brandRes.json()
+          setBrands(Array.isArray(data) ? data : [])
         }
       } catch (e) {
-        console.error('加载分类失败:', e)
+        console.error('加载基础数据失败:', e)
       } finally {
         setCatLoading(false)
       }
     }
-    loadCategories()
+    loadData()
   }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -287,6 +303,7 @@ export default function NewProduct() {
           originalPrice: form.originalPrice ? parseFloat(form.originalPrice) : null,
           images: form.images.filter(img => img.trim() !== ''),
           bulletPoints: Array.from({ length: 5 }, (_, i) => (form.bulletPoints[i] ?? '').trim()),
+          brandId: form.brandId || null,
           brand: (form.brand ?? '').trim() || null,
           upc: (form.upc ?? '').trim() || null,
           publishedAt: form.publishedAt ? new Date(form.publishedAt).toISOString() : null,
@@ -443,15 +460,18 @@ export default function NewProduct() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  品牌名
+                  所属品牌 (可选)
                 </label>
-                <input
-                  type="text"
-                  value={form.brand || ''}
-                  onChange={(e) => setForm(prev => ({ ...prev, brand: e.target.value }))}
+                <select
+                  value={form.brandId}
+                  onChange={(e) => setForm(prev => ({ ...prev, brandId: e.target.value }))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="例如：Apple、Sony、Nike"
-                />
+                >
+                  <option value="">-- 不选择品牌 --</option>
+                  {brands.map((b) => (
+                    <option key={b.id} value={b.id}>{b.name}</option>
+                  ))}
+                </select>
               </div>
 
               <div>

@@ -58,6 +58,11 @@ interface Product {
     id: string
     name: string
   }
+  brand?: string
+  brandRelation?: {
+    id: string
+    name: string
+  }
 }
 
 interface SortableRowProps extends React.HTMLAttributes<HTMLTableRowElement> {
@@ -172,6 +177,18 @@ function SortableRow({
               </div>
               {product.featured && (
                 <Star className="h-4 w-4 text-yellow-400 ml-2" />
+              )}
+            </div>
+            <div className="flex items-center gap-2 mt-1 mb-1">
+              {product.category?.name && (
+                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
+                  {product.category.name}
+                </span>
+              )}
+              {(product.brandRelation?.name || product.brand) && (
+                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-50 text-blue-700">
+                  {product.brandRelation?.name || product.brand}
+                </span>
               )}
             </div>
             <div className="text-sm text-gray-500 truncate max-w-xs">

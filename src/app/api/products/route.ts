@@ -22,6 +22,7 @@ export async function GET(request: NextRequest) {
       where,
       include: {
         category: true,
+        brandRelation: true,
       },
       orderBy: [
         { sortOrder: 'asc' },
@@ -102,6 +103,7 @@ export async function POST(request: NextRequest) {
       featured,
       inStock,
       brand,
+      brandId,
       upc,
       publishedAt,
       variants,
@@ -240,6 +242,7 @@ export async function POST(request: NextRequest) {
       featured: featured || false,
       active: inStock !== false,
       brand: brand ?? null,
+      brandId: brandId ?? null,
       upc: upc ?? null,
       publishedAt: publishedAtDate,
       variants: variantsJson,

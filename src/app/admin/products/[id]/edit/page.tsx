@@ -28,6 +28,7 @@ interface Product {
   bulletPoints: string[]
   amazonUrl: string
   categoryId?: string
+  brandId?: string
   featured: boolean
   inStock: boolean
   brand?: string
@@ -48,6 +49,7 @@ interface ProductForm {
   bulletPoints: string[]
   amazonUrl: string
   categoryId: string
+  brandId: string
   featured: boolean
   inStock: boolean
   showBuyOnAmazon: boolean
@@ -65,6 +67,7 @@ interface VariantGroup { name: string; options: string[] }
 
 // 新增：分类类型
 interface Category { id: string; name: string; slug: string }
+interface Brand { id: string; name: string; slug: string }
 
 interface Review {
   id: string
@@ -160,6 +163,7 @@ export default function EditProduct() {
   // 新增：分类状态
   const [categories, setCategories] = useState<Category[]>([])
   const [catLoading, setCatLoading] = useState(true)
+  const [brands, setBrands] = useState<Brand[]>([])
   const [urlError, setUrlError] = useState<string>('')
   // 上传状态：按索引标记（简化处理）
   const [uploadingIndex, setUploadingIndex] = useState<number | null>(null)
@@ -332,22 +336,29 @@ export default function EditProduct() {
     fetchProduct()
   }, [productId])
 
-  // 新增：加载分类列表
+  // 新增：加载分类和品牌列表
   useEffect(() => {
-    const loadCategories = async () => {
+    const loadData = async () => {
       try {
-        const res = await fetch('/api/categories', { cache: 'no-store' })
-        if (res.ok) {
-          const data = await res.json()
+        const [catRes, brandRes] = await Promise.all([
+          fetch('/api/categories', { cache: 'no-store' }),
+          fetch('/api/brands', { cache: 'no-store' })
+        ])
+        if (catRes.ok) {
+          const data = await catRes.json()
           setCategories(Array.isArray(data) ? data : [])
         }
+        if (brandRes.ok) {
+          const data = await brandRes.json()
+          setBrands(Array.isArray(data) ? data : [])
+        }
       } catch (e) {
-        console.error('加载分类失败:', e)
+        console.error('加载基础数据失败:', e)
       } finally {
         setCatLoading(false)
       }
     }
-    loadCategories()
+    loadData()
   }, [])
 
   const fetchProduct = async () => {
@@ -377,6 +388,7 @@ export default function EditProduct() {
             : ['', '', '', '', '', '', '', ''],
           amazonUrl: data.amazonUrl || '',
           categoryId: data.categoryId || '',
+          brandId: data.brandId || data.brandRelation?.id || '',
           featured: data.featured || false,
           inStock: data.inStock !== false,
           showBuyOnAmazon: data.showBuyOnAmazon !== false,
@@ -783,6 +795,23 @@ export default function EditProduct() {
                 {!catLoading && categories.length === 0 && (
                   <p className="text-xs text-red-600 mt-1">暂无分类，请先执行重置数据或在数据库中创建分类。</p>
                 )}
+              </div>
+
+              {/* 新增：品牌选择 */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  所属品牌 (可选)
+                </label>
+                <select
+                  value={form.brandId}
+                  onChange={(e) => setForm(prev => ({ ...prev, brandId: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="">-- 不选择品牌 --</option>
+                  {brands.map((b) => (
+                    <option key={b.id} value={b.id}>{b.name}</option>
+                  ))}
+                </select>
               </div>
 
               <div>
