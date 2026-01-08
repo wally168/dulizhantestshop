@@ -31,6 +31,17 @@ model Category {
   updatedAt   DateTime  @updatedAt
 }
 
+model Brand {
+  id          String    @id @default(cuid())
+  name        String
+  slug        String    @unique
+  description String?
+  image       String?
+  products    Product[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
 model Product {
   id              String   @id @default(cuid())
   title           String   // 标题限制200字符
@@ -42,6 +53,8 @@ model Product {
   amazonUrl       String
   category        Category @relation(fields: [categoryId], references: [id])
   categoryId      String
+  brandRelation   Brand?   @relation(fields: [brandId], references: [id])
+  brandId         String?
   bulletPoints    String   // JSON string of 5 bullet points, 每点限制500字符
   description     String   // 统一的产品描述，支持HTML，限制3000字符
   featured        Boolean  @default(false)

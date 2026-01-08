@@ -19,11 +19,19 @@ interface Category {
   slug: string
 }
 
+interface Brand {
+  id: string
+  name: string
+  slug: string
+}
+
 export default function ImportProducts() {
   const router = useRouter()
   const [file, setFile] = useState<File | null>(null)
   const [categories, setCategories] = useState<Category[]>([])
   const [categoryId, setCategoryId] = useState('')
+  const [brands, setBrands] = useState<Brand[]>([])
+  const [brandId, setBrandId] = useState('')
   const [loading, setLoading] = useState(false)
   const [importing, setImporting] = useState(false)
   const [result, setResult] = useState<{
@@ -33,22 +41,34 @@ export default function ImportProducts() {
   } | null>(null)
 
   useEffect(() => {
-    fetchCategories()
+    fetchData()
   }, [])
 
-  const fetchCategories = async () => {
+  const fetchData = async () => {
     try {
       setLoading(true)
-      const response = await fetch('/api/categories')
-      if (response.ok) {
-        const data = await response.json()
+      const [catRes, brandRes] = await Promise.all([
+        fetch('/api/categories'),
+        fetch('/api/brands')
+      ])
+      
+      if (catRes.ok) {
+        const data = await catRes.json()
         setCategories(data)
         if (data.length > 0) {
           setCategoryId(data[0].id)
         }
       }
+
+      if (brandRes.ok) {
+        const data = await brandRes.json()
+        setBrands(data)
+        // 品牌是可选的，不默认选中第一个，或者默认选中 "无"
+        // 如果需要默认选中第一个：
+        // if (data.length > 0) setBrandId(data[0].id)
+      }
     } catch (error) {
-      console.error('Error fetching categories:', error)
+      console.error('Error fetching data:', error)
     } finally {
       setLoading(false)
     }
@@ -71,6 +91,9 @@ export default function ImportProducts() {
     const formData = new FormData()
     formData.append('file', file)
     formData.append('categoryId', categoryId)
+    if (brandId) {
+      formData.append('brandId', brandId)
+    }
 
     try {
       const response = await fetch('/api/products/import', {
@@ -132,29 +155,50 @@ export default function ImportProducts() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                选择分类
-              </label>
-              <select
-                value={categoryId}
-                onChange={(e) => setCategoryId(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                disabled={loading || categories.length === 0}
-                required
-              >
-                {categories.length === 0 && <option>加载分类中...</option>}
-                {categories.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  选择分类 <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={categoryId}
+                  onChange={(e) => setCategoryId(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  disabled={loading || categories.length === 0}
+                  required
+                >
+                  {categories.length === 0 && <option>加载分类中...</option>}
+                  {categories.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  选择品牌 (可选)
+                </label>
+                <select
+                  value={brandId}
+                  onChange={(e) => setBrandId(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  disabled={loading}
+                >
+                  <option value="">-- 不选择品牌 --</option>
+                  {brands.map((b) => (
+                    <option key={b.id} value={b.id}>
+                      {b.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Excel 文件
+                Excel 文件 <span className="text-red-500">*</span>
               </label>
               <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg hover:border-blue-500 transition-colors">
                 <div className="space-y-1 text-center">

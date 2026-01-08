@@ -19,6 +19,7 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData()
     const file = formData.get('file') as File
     const categoryId = formData.get('categoryId') as string
+    const brandId = formData.get('brandId') as string | null
 
     if (!file) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 })
@@ -119,6 +120,7 @@ export async function POST(request: NextRequest) {
             price: price,
             amazonUrl: row.url,
             categoryId: categoryId,
+            brandId: brandId || null,
             bulletPoints: JSON.stringify(bulletPoints),
             description: row.description || '',
             publishedAt: publishedAt,
