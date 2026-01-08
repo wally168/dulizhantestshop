@@ -740,19 +740,6 @@ export default function EditProduct() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  品牌名
-                </label>
-                <input
-                  type="text"
-                  value={form.brand || ''}
-                  onChange={(e) => setForm(prev => ({ ...prev, brand: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="例如：Apple、Sony、Nike"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
                   UPC（可选）
                 </label>
                 <input
@@ -805,7 +792,15 @@ export default function EditProduct() {
                 </label>
                 <select
                   value={form.brandId}
-                  onChange={(e) => setForm(prev => ({ ...prev, brandId: e.target.value }))}
+                  onChange={(e) => {
+                    const val = e.target.value
+                    const selected = brands.find(b => b.id === val)
+                    setForm(prev => ({ 
+                      ...prev, 
+                      brandId: val,
+                      brand: selected ? selected.name : ''
+                    }))
+                  }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value="">-- 不选择品牌 --</option>
@@ -813,6 +808,11 @@ export default function EditProduct() {
                     <option key={b.id} value={b.id}>{b.name}</option>
                   ))}
                 </select>
+                {!form.brandId && form.brand && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    当前保留的旧品牌名称：{form.brand}。请在上方选择对应品牌以关联（建议）。
+                  </p>
+                )}
               </div>
 
               <div>
