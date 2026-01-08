@@ -148,6 +148,7 @@ export default function EditProduct() {
     bulletPoints: ['', '', '', '', '', '', '', ''],
     amazonUrl: '',
     categoryId: '',
+    brandId: '',
     featured: false,
     inStock: true,
     showBuyOnAmazon: true,
