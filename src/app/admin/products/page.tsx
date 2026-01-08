@@ -16,7 +16,8 @@ import {
   Save,
   GripVertical,
   ChevronUp,
-  ChevronDown
+  ChevronDown,
+  Upload
 } from 'lucide-react'
 import {
   DndContext, 
@@ -525,6 +526,13 @@ export default function ProductsManagement() {
                 保存排序
               </button>
             )}
+            <Link
+              href="/admin/products/import"
+              className="bg-green-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors inline-flex items-center"
+            >
+              <Upload className="h-5 w-5 mr-2" />
+              导入产品
+            </Link>
             <Link
               href="/admin/products/new"
               className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors inline-flex items-center"
