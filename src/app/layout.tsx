@@ -132,47 +132,61 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode; }>) {
   const settings = await getSettings();
   const initialNavItems = await getNavigation();
-  function extractScripts(html: string): Array<{ src?: string; content?: string; attrs: Record<string, string> }> {
-    if (!html || typeof html !== 'string') return []
+  function extractScriptsAndRemainder(html: string): { scripts: Array<{ src?: string; content?: string; attrs: Record<string, string> }>, remainder: string } {
+    if (!html || typeof html !== 'string') return { scripts: [], remainder: '' }
     const scripts: Array<{ src?: string; content?: string; attrs: Record<string, string> }> = []
     const regexp = /<script([^>]*)>([\s\S]*?)<\/script>/gi
-    let match: RegExpExecArray | null
-    while ((match = regexp.exec(html))) {
-      const attrStr = match[1] || ''
-      const content = match[2] || ''
+    const remainder = html.replace(regexp, (_full, attrStrRaw, contentRaw) => {
+      const attrStr = attrStrRaw || ''
+      const content = contentRaw || ''
       const attrs: Record<string, string> = {}
-      attrStr.replace(/(\w+)(\s*=\s*"([^"]*)"|\s*=\s*'([^']*)'|\s*=\s*([^\s"'>]+))?/g, (_m, k, _v, q1, q2, q3) => {
+      attrStr.replace(
+        /(\w+)(\s*=\s*"([^"]*)"|\s*=\s*'([^']*)'|\s*=\s*([^\s"'>]+))?/g,
+        (_match: string, k: string, _v: string, q1?: string, q2?: string, q3?: string) => {
         const val = q1 ?? q2 ?? q3 ?? ''
         attrs[k] = val
         return ''
-      })
+        }
+      )
       const src = attrs.src
       scripts.push({ src, content, attrs })
-    }
-    if (scripts.length === 0 && html.trim()) {
-      scripts.push({ content: html, attrs: {} })
-    }
-    return scripts
+      return ''
+    })
+    return { scripts, remainder }
   }
 
-  const headScripts = extractScripts((settings as any).analyticsHeadHtml || '')
-  const googleScripts = extractScripts((settings as any).analyticsGoogleHtml || '')
+  const headScripts = extractScriptsAndRemainder((settings as any).analyticsHeadHtml || '')
+  const googleScripts = extractScriptsAndRemainder((settings as any).analyticsGoogleHtml || '')
+  const bodyScripts = extractScriptsAndRemainder((settings as any).analyticsBodyHtml || '')
+  const sanitizedBodyHtml = bodyScripts.remainder
+    .replace(/<\/?(html|head|body)[^>]*>/gi, '')
+    .replace(/<meta[^>]*name=['"]viewport['"][^>]*>/gi, '')
+
   return (
     <html lang="en">
-      {headScripts.concat(googleScripts).map((s, idx) => (
-        s.src ? (
-          <Script key={`a-head-${idx}`} src={s.src} strategy="beforeInteractive" />
-        ) : (
-          <Script key={`a-head-inline-${idx}`} id={`a-head-inline-${idx}`} strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: s.content || '' }} />
-        )
-      ))}
+      <head>
+        {headScripts.scripts.concat(googleScripts.scripts).map((s, idx) => (
+          s.src ? (
+            <Script key={`a-head-${idx}`} src={s.src} strategy="afterInteractive" />
+          ) : (
+            <Script key={`a-head-inline-${idx}`} id={`a-head-inline-${idx}`} strategy="afterInteractive" dangerouslySetInnerHTML={{ __html: s.content || '' }} />
+          )
+        ))}
+      </head>
       <body suppressHydrationWarning className={`${inter.variable} font-sans antialiased bg-white text-gray-900`}>
         <SettingsProvider initialSettings={settings}>
           <AppShell initialNavItems={initialNavItems}>
             {children}
           </AppShell>
-          <div dangerouslySetInnerHTML={{ __html: (settings as any).analyticsBodyHtml || '' }} />
         </SettingsProvider>
+        {sanitizedBodyHtml ? <div dangerouslySetInnerHTML={{ __html: sanitizedBodyHtml }} /> : null}
+        {bodyScripts.scripts.map((s, idx) => (
+          s.src ? (
+            <Script key={`a-body-${idx}`} src={s.src} strategy="afterInteractive" />
+          ) : (
+            <Script key={`a-body-inline-${idx}`} id={`a-body-inline-${idx}`} strategy="afterInteractive" dangerouslySetInnerHTML={{ __html: s.content || '' }} />
+          )
+        ))}
       </body>
     </html>
   );
