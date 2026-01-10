@@ -235,38 +235,38 @@ export default function ContactPage() {
 
             {/* Contact Details - Single Row */}
             <div className="mx-auto mt-16 max-w-4xl">
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-8 sm:gap-12">
-                <div className="flex items-center space-x-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
+                <div className="flex items-start sm:items-center gap-3 rounded-xl bg-white p-4 border border-gray-200 shadow-sm">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 flex-shrink-0">
                     <Mail className="h-5 w-5 text-blue-600" />
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <p className="text-sm font-medium text-gray-900">Email</p>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-gray-600 break-words">
                       {loading ? 'contact@yourstore.com' : settings.contactEmail || 'contact@yourstore.com'}
                     </p>
                   </div>
                 </div>
 
-                <div className="flex items-center space-x-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100">
+                <div className="flex items-start sm:items-center gap-3 rounded-xl bg-white p-4 border border-gray-200 shadow-sm">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 flex-shrink-0">
                     <Phone className="h-5 w-5 text-blue-600" />
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <p className="text-sm font-medium text-gray-900">Phone</p>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-gray-600 break-words">
                       {loading ? '+1 (555) 123-4567' : settings.contactPhone || '+1 (555) 123-4567'}
                     </p>
                   </div>
                 </div>
 
-                <div className="flex items-center space-x-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100">
+                <div className="flex items-start sm:items-center gap-3 rounded-xl bg-white p-4 border border-gray-200 shadow-sm">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 flex-shrink-0">
                     <MapPin className="h-5 w-5 text-blue-600" />
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <p className="text-sm font-medium text-gray-900">Address</p>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-gray-600 break-words">
                       {loading ? '123 Business St, City, State 12345' : settings.contactAddress || '123 Business St, City, State 12345'}
                     </p>
                   </div>

@@ -368,7 +368,7 @@ export default function CarouselAdmin() {
             <h1 className="text-2xl font-bold text-gray-900">轮播图列表</h1>
             <p className="text-gray-500 mt-1">管理首页顶部轮播图片</p>
             <p className="text-sm text-blue-600 mt-2 bg-blue-50 inline-block px-3 py-1.5 rounded-lg border border-blue-100">
-              💡 建议尺寸：宽度 1920px（或 1200px 以上），高度 500-600px；单张最大 5MB。保持统一宽高比可获得最佳展示效果。
+              💡 建议尺寸：宽度 1370px，高度 600px；单张最大 5MB。保持统一宽高比可获得最佳展示效果。
             </p>
           </div>
           <div className="flex items-center gap-4">
