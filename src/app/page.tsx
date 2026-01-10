@@ -1,11 +1,8 @@
-'use client'
-
 import Link from 'next/link'
-import { ArrowRight, Shield, Truck, Star, Sparkles, Zap, Heart, Package } from 'lucide-react'
+import { ArrowRight, Shield, Star, Zap, Package } from 'lucide-react'
 import Layout from '@/components/Layout'
 import Carousel from '@/components/Carousel'
-import { useSettings } from '@/lib/settings'
-import { useState, useEffect } from 'react'
+import { db } from '@/lib/db'
 
 interface Product {
   id: string
@@ -20,7 +17,6 @@ interface Product {
 }
 
 interface HomeContent {
-  id: string
   featuredTitle: string
   featuredSubtitle: string
   whyChooseTitle: string
@@ -43,57 +39,130 @@ interface CarouselItem {
   link?: string | null
   btnText?: string | null
   newTab?: boolean | null
-  active: boolean
 }
 
-export default function Home() {
-  const { settings } = useSettings()
-  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([])
-  const [homeContent, setHomeContent] = useState<HomeContent | null>(null)
-  const [carouselItems, setCarouselItems] = useState<CarouselItem[]>([])
-  const [loading, setLoading] = useState(true)
+const defaultHomeContent: HomeContent = {
+  featuredTitle: 'Featured Products',
+  featuredSubtitle: 'Discover our carefully curated collection of premium products, each selected for exceptional quality and design.',
+  whyChooseTitle: 'Why Choose Your Brand',
+  whyChooseSubtitle: "We're redefining the shopping experience with uncompromising quality, innovative design, and customer-first approach.",
+  feature1Title: 'Premium Quality',
+  feature1Description: 'Every product undergoes rigorous quality testing to ensure it meets our exceptional standards.',
+  feature2Title: 'Secure & Trusted',
+  feature2Description: 'Advanced security measures protect your data with enterprise-grade encryption and privacy.',
+  feature3Title: 'Lightning Fast',
+  feature3Description: 'Optimized delivery network ensures your orders arrive quickly and in perfect condition.',
+  carouselEnabled: true,
+  carouselInterval: 5000,
+}
 
-  useEffect(() => {
-    fetchData()
-  }, [])
+async function getSiteName(): Promise<string> {
+  try {
+    const rows = await db.siteSettings.findMany({ where: { key: 'siteName' } })
+    const v = rows?.[0]?.value
+    if (typeof v === 'string' && v.trim()) return v.trim()
+  } catch {}
+  return 'Your Brand'
+}
 
-  const fetchData = async () => {
-    try {
-      // 并行获取产品、首页内容和轮播图
-      const [productsResponse, contentResponse, carouselResponse] = await Promise.all([
-        fetch('/api/products?featured=true&limit=3'),
-        fetch('/api/home-content'),
-        fetch('/api/carousel')
-      ])
+async function getFeaturedProducts(): Promise<Product[]> {
+  try {
+    const products = await db.product.findMany({
+      where: { featured: true, active: true },
+      include: { category: true, brandRelation: true },
+      orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }],
+      take: 3,
+    })
 
-      if (productsResponse.ok) {
-        const productsData = await productsResponse.json()
-        setFeaturedProducts(productsData)
-      }
-
-      if (contentResponse.ok) {
-        const contentData = await contentResponse.json()
-        setHomeContent(contentData)
-      }
-
-      if (carouselResponse.ok) {
-        const carouselData = await carouselResponse.json()
-        // Only show active items on frontend
-        setCarouselItems(carouselData.filter((item: CarouselItem) => item.active))
-      }
-    } catch (error) {
-      console.error('Failed to fetch data:', error)
-    } finally {
-      setLoading(false)
+    const ids = products.map((p: any) => p.id)
+    let aggMap: Record<string, { avgRating: number; reviewCount: number }> = {}
+    if (ids.length > 0) {
+      try {
+        const groups = await (db as any).productReview.groupBy({
+          by: ['productId'],
+          where: { productId: { in: ids }, isVisible: true },
+          _avg: { rating: true },
+          _count: { _all: true },
+        })
+        aggMap = Object.fromEntries(
+          groups.map((g: any) => [
+            g.productId,
+            {
+              avgRating: typeof g._avg?.rating === 'number' ? Math.round(g._avg.rating * 10) / 10 : 0,
+              reviewCount: typeof g._count?._all === 'number' ? g._count._all : 0,
+            },
+          ])
+        )
+      } catch {}
     }
+
+    return products.map((p: any) => ({
+      ...p,
+      avgRating: aggMap[p.id]?.avgRating ?? 0,
+      reviewCount: aggMap[p.id]?.reviewCount ?? 0,
+    }))
+  } catch {
+    return []
   }
+}
+
+async function getHomeContent(): Promise<HomeContent> {
+  try {
+    const row = await db.homeContent.findFirst()
+    if (!row) return defaultHomeContent
+    return {
+      featuredTitle: row.featuredTitle || defaultHomeContent.featuredTitle,
+      featuredSubtitle: row.featuredSubtitle || defaultHomeContent.featuredSubtitle,
+      whyChooseTitle: row.whyChooseTitle || defaultHomeContent.whyChooseTitle,
+      whyChooseSubtitle: row.whyChooseSubtitle || defaultHomeContent.whyChooseSubtitle,
+      feature1Title: row.feature1Title || defaultHomeContent.feature1Title,
+      feature1Description: row.feature1Description || defaultHomeContent.feature1Description,
+      feature2Title: row.feature2Title || defaultHomeContent.feature2Title,
+      feature2Description: row.feature2Description || defaultHomeContent.feature2Description,
+      feature3Title: row.feature3Title || defaultHomeContent.feature3Title,
+      feature3Description: row.feature3Description || defaultHomeContent.feature3Description,
+      carouselEnabled: row.carouselEnabled ?? defaultHomeContent.carouselEnabled,
+      carouselInterval: row.carouselInterval ?? defaultHomeContent.carouselInterval,
+    }
+  } catch {
+    return defaultHomeContent
+  }
+}
+
+async function getCarouselItems(): Promise<CarouselItem[]> {
+  try {
+    const items = await db.carouselItem.findMany({
+      where: { active: true },
+      orderBy: { order: 'asc' },
+    })
+    return items.map((i: any) => ({
+      id: i.id,
+      title: i.title,
+      description: i.description,
+      imageUrl: i.imageUrl,
+      link: i.link,
+      btnText: i.btnText,
+      newTab: i.newTab,
+    }))
+  } catch {
+    return []
+  }
+}
+
+export default async function Home() {
+  const [siteName, featuredProducts, homeContent, carouselItems] = await Promise.all([
+    getSiteName(),
+    getFeaturedProducts(),
+    getHomeContent(),
+    getCarouselItems(),
+  ])
 
   return (
     <Layout>
       {/* Carousel Section */}
-      {(!loading && homeContent?.carouselEnabled !== false && carouselItems.length > 0) && (
+      {(homeContent.carouselEnabled !== false && carouselItems.length > 0) && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
-          <Carousel items={carouselItems} interval={homeContent?.carouselInterval || 5000} />
+          <Carousel items={carouselItems} interval={homeContent.carouselInterval || 5000} />
         </div>
       )}
 
@@ -111,26 +180,14 @@ export default function Home() {
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6 tracking-tight">
-              {homeContent?.featuredTitle || 'Featured Products'}
+              {homeContent.featuredTitle}
             </h1>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-              {homeContent?.featuredSubtitle || 'Discover our carefully curated collection of premium products, each selected for exceptional quality and design.'}
+              {homeContent.featuredSubtitle}
             </p>
           </div>
           
-          {loading ? (
-            <div className="grid md:grid-cols-3 gap-8 lg:gap-12">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden animate-pulse">
-                  <div className="aspect-square bg-gray-200"></div>
-                  <div className="p-6">
-                    <div className="h-6 bg-gray-200 rounded mb-3"></div>
-                    <div className="h-4 bg-gray-200 rounded w-2/3"></div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : featuredProducts.length > 0 ? (
+          {featuredProducts.length > 0 ? (
             <div className="grid md:grid-cols-3 gap-8 lg:gap-12">
               {featuredProducts.map((product) => (
                 <ProductCard key={product.id} product={product} />
@@ -163,47 +220,34 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-20">
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6 tracking-tight">
-              {homeContent?.whyChooseTitle || `Why Choose ${settings.siteName}`}
+              {homeContent.whyChooseTitle || `Why Choose ${siteName}`}
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-              {homeContent?.whyChooseSubtitle || "We're redefining the shopping experience with uncompromising quality, innovative design, and customer-first approach."}
+              {homeContent.whyChooseSubtitle}
             </p>
           </div>
           
           <div className="grid md:grid-cols-3 gap-8 lg:gap-12">
-            {loading ? (
-              [1, 2, 3].map((i) => (
-                <div key={i} className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm animate-pulse">
-                  <div className="w-16 h-16 bg-gray-200 rounded-2xl mx-auto mb-6"></div>
-                  <div className="h-8 bg-gray-200 rounded w-3/4 mx-auto mb-4"></div>
-                  <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
-                  <div className="h-4 bg-gray-200 rounded w-2/3 mx-auto"></div>
-                </div>
-              ))
-            ) : (
-              <>
-                <FeatureCard
-                  icon={<Star className="h-8 w-8" />}
-                  iconBg="bg-gradient-to-br from-yellow-400 to-orange-500"
-                  title={homeContent?.feature1Title || "Premium Quality"}
-                  description={homeContent?.feature1Description || "Every product undergoes rigorous quality testing to ensure it meets our exceptional standards."}
-                />
-                
-                <FeatureCard
-                  icon={<Shield className="h-8 w-8" />}
-                  iconBg="bg-gradient-to-br from-green-400 to-emerald-500"
-                  title={homeContent?.feature2Title || "Secure & Trusted"}
-                  description={homeContent?.feature2Description || "Advanced security measures protect your data with enterprise-grade encryption and privacy."}
-                />
-                
-                <FeatureCard
-                  icon={<Zap className="h-8 w-8" />}
-                  iconBg="bg-gradient-to-br from-purple-400 to-pink-500"
-                  title={homeContent?.feature3Title || "Lightning Fast"}
-                  description={homeContent?.feature3Description || "Optimized delivery network ensures your orders arrive quickly and in perfect condition."}
-                />
-              </>
-            )}
+            <FeatureCard
+              icon={<Star className="h-8 w-8" />}
+              iconBg="bg-gradient-to-br from-yellow-400 to-orange-500"
+              title={homeContent.feature1Title}
+              description={homeContent.feature1Description}
+            />
+            
+            <FeatureCard
+              icon={<Shield className="h-8 w-8" />}
+              iconBg="bg-gradient-to-br from-green-400 to-emerald-500"
+              title={homeContent.feature2Title}
+              description={homeContent.feature2Description}
+            />
+            
+            <FeatureCard
+              icon={<Zap className="h-8 w-8" />}
+              iconBg="bg-gradient-to-br from-purple-400 to-pink-500"
+              title={homeContent.feature3Title}
+              description={homeContent.feature3Description}
+            />
           </div>
         </div>
       </section>
