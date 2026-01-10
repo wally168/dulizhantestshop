@@ -39,6 +39,7 @@
     "@types/xlsx": "^0.0.35",
     "eslint": "^9",
     "eslint-config-next": "^16.0.7",
+    "postcss-preset-env": "^10.6.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   },
