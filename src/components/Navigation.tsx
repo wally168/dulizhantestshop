@@ -128,15 +128,15 @@ export default function Navigation({ initialNavItems = [] }: { initialNavItems?:
               <div className="relative">
                 {settings.logoUrl ? (
                   <>
-                    {/* 移动端 Logo: 移除高度限制，使用 h-auto 和 max-h-12 确保显示合理 */}
+                    {/* 移动端 Logo: 增加高度至 h-14 (56px) 以解决显示过小问题，同时保持 w-auto 锁定比例 */}
             <img
               src={settings.logoUrl}
               alt={settings.siteName || 'Site Logo'}
               className={`md:hidden object-contain transition-transform group-hover:scale-105 ${
                 (settings.logoWidth && settings.logoWidth !== 'auto') || 
                 (settings.logoHeight && settings.logoHeight !== 'auto') 
-                  ? 'max-h-14 w-auto max-w-[200px]' 
-                  : 'h-10 w-auto'
+                  ? 'max-h-16 w-auto max-w-[200px]' 
+                  : 'h-14 w-auto'
               }`}
               style={
                 (settings.logoWidth && settings.logoWidth !== 'auto') || 
