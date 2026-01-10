@@ -45,9 +45,10 @@
   },
   "browserslist": [
     "defaults",
-    "Android >= 5",
-    "iOS >= 12",
-    "Chrome >= 60",
+    "Android >= 4.4",
+    "iOS >= 10",
+    "Chrome >= 49",
+    "Samsung >= 5",
     "not dead"
   ]
 }

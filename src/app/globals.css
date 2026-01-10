@@ -1,5 +1,25 @@
 @import "tailwindcss";
 
+/* Fallback Reset for legacy browsers */
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* Ensure mobile layout constraints even if Grid/Flex fails */
+@media (max-width: 640px) {
+  body {
+    min-width: 320px;
+    overflow-x: hidden;
+  }
+  img {
+    max-width: 100%;
+    height: auto;
+  }
+}
+
 :root {
   --background: #ffffff;
   --foreground: #1d1d1f;
