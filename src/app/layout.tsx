@@ -10,7 +10,6 @@ import Script from "next/script";
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  viewportFit: 'cover',
 }
 
 const inter = Inter({
