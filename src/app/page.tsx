@@ -110,21 +110,12 @@ export default function Home() {
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            {loading ? (
-              <>
-                <div className="h-10 md:h-16 bg-gray-200 rounded-lg w-64 mx-auto mb-6 animate-pulse"></div>
-                <div className="h-6 bg-gray-200 rounded w-full max-w-2xl mx-auto animate-pulse"></div>
-              </>
-            ) : (
-              <>
-                <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6 tracking-tight">
-                  {homeContent?.featuredTitle || 'Featured Products'}
-                </h1>
-                <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-                  {homeContent?.featuredSubtitle || 'Discover our carefully curated collection of premium products, each selected for exceptional quality and design.'}
-                </p>
-              </>
-            )}
+            <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6 tracking-tight">
+              {homeContent?.featuredTitle || 'Featured Products'}
+            </h1>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+              {homeContent?.featuredSubtitle || 'Discover our carefully curated collection of premium products, each selected for exceptional quality and design.'}
+            </p>
           </div>
           
           {loading ? (
@@ -171,21 +162,12 @@ export default function Home() {
       <section className="py-24 bg-white relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-20">
-            {loading ? (
-              <>
-                <div className="h-10 md:h-14 bg-gray-200 rounded-lg w-64 mx-auto mb-6 animate-pulse"></div>
-                <div className="h-6 bg-gray-200 rounded w-full max-w-2xl mx-auto animate-pulse"></div>
-              </>
-            ) : (
-              <>
-                <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6 tracking-tight">
-                  {homeContent?.whyChooseTitle || `Why Choose ${settings.siteName}`}
-                </h2>
-                <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-                  {homeContent?.whyChooseSubtitle || "We're redefining the shopping experience with uncompromising quality, innovative design, and customer-first approach."}
-                </p>
-              </>
-            )}
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6 tracking-tight">
+              {homeContent?.whyChooseTitle || `Why Choose ${settings.siteName}`}
+            </h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+              {homeContent?.whyChooseSubtitle || "We're redefining the shopping experience with uncompromising quality, innovative design, and customer-first approach."}
+            </p>
           </div>
           
           <div className="grid md:grid-cols-3 gap-8 lg:gap-12">
