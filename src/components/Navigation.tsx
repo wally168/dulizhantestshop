@@ -114,6 +114,10 @@ export default function Navigation({ initialNavItems = [] }: { initialNavItems?:
     return value
   }
 
+  const hasCustomLogoSize =
+    (settings.logoWidth && settings.logoWidth !== 'auto') ||
+    (settings.logoHeight && settings.logoHeight !== 'auto')
+
   return (
     <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${
       isScrolled 
@@ -124,23 +128,19 @@ export default function Navigation({ initialNavItems = [] }: { initialNavItems?:
         <div className="flex items-center min-h-[4rem]">
           {/* 左侧：Logo 保持不变，占用等比空间 */}
           <div className="flex-1">
-            <Link href="/" className="flex items-center space-x-2 group">
-              <div className="relative">
+            <Link href="/" className="flex items-center space-x-2 group min-w-0">
+              <div className="relative shrink-0">
                 {settings.logoUrl ? (
                   <>
                     {/* 移动端 Logo: 恢复 object-contain 并参考 Footer 设置 (max-h-12/14) 确保比例正常且不过小 */}
             <img
               src={settings.logoUrl}
               alt={settings.siteName || 'Site Logo'}
-              className={`md:hidden object-contain transition-transform group-hover:scale-105 ${
-                (settings.logoWidth && settings.logoWidth !== 'auto') || 
-                (settings.logoHeight && settings.logoHeight !== 'auto') 
-                  ? 'max-h-14 w-auto max-w-[180px]' 
-                  : 'max-h-14 w-auto max-w-[180px]'
+              className={`md:hidden object-contain shrink-0 transition-transform group-hover:scale-105 ${
+                hasCustomLogoSize ? 'w-auto max-w-[180px]' : 'h-10 w-auto max-w-[180px]'
               }`}
               style={
-                (settings.logoWidth && settings.logoWidth !== 'auto') || 
-                (settings.logoHeight && settings.logoHeight !== 'auto')
+                hasCustomLogoSize
                   ? {
                       width: formatSize(settings.logoWidth),
                       height: formatSize(settings.logoHeight),
@@ -153,15 +153,11 @@ export default function Navigation({ initialNavItems = [] }: { initialNavItems?:
             <img
               src={settings.logoUrl}
               alt={settings.siteName || 'Site Logo'}
-              className={`hidden md:block object-contain transition-transform group-hover:scale-105 ${
-                (settings.logoWidth && settings.logoWidth !== 'auto') || 
-                (settings.logoHeight && settings.logoHeight !== 'auto') 
-                  ? 'max-w-full max-h-16' 
-                  : 'max-w-full max-h-16'
+              className={`hidden md:block object-contain shrink-0 transition-transform group-hover:scale-105 ${
+                hasCustomLogoSize ? 'max-w-full' : 'h-8 w-auto max-w-full'
               }`}
               style={
-                (settings.logoWidth && settings.logoWidth !== 'auto') || 
-                (settings.logoHeight && settings.logoHeight !== 'auto')
+                hasCustomLogoSize
                   ? {
                       width: formatSize(settings.logoWidth),
                       height: formatSize(settings.logoHeight),
@@ -178,7 +174,7 @@ export default function Navigation({ initialNavItems = [] }: { initialNavItems?:
                   </>
                 )}
               </div>
-              <span className="text-xl font-semibold text-gray-900 tracking-tight">
+              <span className="text-xl font-semibold text-gray-900 tracking-tight truncate">
                 {settings.siteName}
               </span>
             </Link>
