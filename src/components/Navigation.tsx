@@ -217,7 +217,7 @@ export default function Navigation({ initialNavItems = [] }: { initialNavItems?:
           </div>
 
           {/* 右侧：搜索框、购物车入口与移动端菜单按钮 */}
-          <div className="flex-1 flex justify-end items-center gap-2">
+          <div className="flex md:flex-1 justify-end items-center gap-2">
             {/* Search */}
             <form action="/products" method="get" className="hidden md:flex items-center gap-2 bg-gray-100 rounded-lg px-2 py-1">
               <input
