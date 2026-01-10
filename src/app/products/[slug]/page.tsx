@@ -1,3 +1,5 @@
+export const revalidate = 3600;
+
 import Layout from '@/components/Layout'
 import ProductDetailClient from '@/components/ProductDetailClient'
 import { db } from '@/lib/db'

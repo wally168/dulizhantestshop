@@ -1,4 +1,3 @@
-export const dynamic = 'force-dynamic'
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
@@ -88,7 +87,7 @@ async function getSettings(): Promise<SiteSettings> {
 async function getNavigation() {
   try {
     const baseUrl = await getBaseUrl();
-    const response = await fetch(`${baseUrl}/api/navigation`, { cache: 'no-store' });
+    const response = await fetch(`${baseUrl}/api/navigation`, { next: { revalidate: 3600 } });
     if (response.ok) {
       const data = await response.json();
       return Array.isArray(data) ? data : [];
