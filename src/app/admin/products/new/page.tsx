@@ -95,6 +95,8 @@ function getFirstMissingComboKey(groups: VariantGroup[] | undefined, existing: R
 
 export default function NewProduct() {
   const router = useRouter()
+  const MAX_IMAGE_BYTES = 4 * 1024 * 1024
+  const tooLargeMessage = '上传失败：图片不能大于4MB'
   const [loading, setLoading] = useState(false)
   const [form, setForm] = useState<ProductForm>({
     name: '',
@@ -138,13 +140,21 @@ export default function NewProduct() {
   const handleDescImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
+    if (file.size > MAX_IMAGE_BYTES) {
+      alert(tooLargeMessage)
+      e.target.value = ''
+      return
+    }
 
     setDescUploading(true)
     try {
       const fd = new FormData()
       fd.append('file', file)
       const res = await fetch('/api/upload', { method: 'POST', body: fd })
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      if (!res.ok) {
+        if (res.status === 413) throw new Error(tooLargeMessage)
+        throw new Error(`HTTP ${res.status}`)
+      }
       const data = await res.json()
       const url = data?.url
       
@@ -172,7 +182,7 @@ export default function NewProduct() {
       }
     } catch (e) {
       console.error('上传描述图片失败:', e)
-      alert('上传图片失败，请重试')
+      alert((e instanceof Error && e.message === tooLargeMessage) ? tooLargeMessage : '上传图片失败，请重试')
     } finally {
       setDescUploading(false)
       // 清空 input 以允许重复上传同一文件
@@ -181,12 +191,19 @@ export default function NewProduct() {
   }
 
   const handleUpload = async (index: number, file: File) => {
+    if (file.size > MAX_IMAGE_BYTES) {
+      alert(tooLargeMessage)
+      return
+    }
     setUploadingIndex(index)
     try {
       const fd = new FormData()
       fd.append('file', file)
       const res = await fetch('/api/upload', { method: 'POST', body: fd })
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      if (!res.ok) {
+        if (res.status === 413) throw new Error(tooLargeMessage)
+        throw new Error(`HTTP ${res.status}`)
+      }
       const data = await res.json()
       const url = data?.url
       if (typeof url === 'string' && url.length > 0) {
@@ -198,7 +215,7 @@ export default function NewProduct() {
       }
     } catch (e) {
       console.error('上传失败:', e)
-      alert('上传失败，请稍后重试')
+      alert((e instanceof Error && e.message === tooLargeMessage) ? tooLargeMessage : '上传失败，请稍后重试')
     } finally {
       setUploadingIndex(null)
     }
@@ -206,6 +223,10 @@ export default function NewProduct() {
 
   const handleBulkUpload = async (files: FileList) => {
     if (!files || files.length === 0) return
+    if (Array.from(files).some(f => f.size > MAX_IMAGE_BYTES)) {
+      alert(tooLargeMessage)
+      return
+    }
     setBulkUploading(true)
     try {
       const urls: string[] = []
@@ -213,7 +234,10 @@ export default function NewProduct() {
         const fd = new FormData()
         fd.append('file', file)
         const res = await fetch('/api/upload', { method: 'POST', body: fd })
-        if (!res.ok) throw new Error(`HTTP ${res.status}`)
+        if (!res.ok) {
+          if (res.status === 413) throw new Error(tooLargeMessage)
+          throw new Error(`HTTP ${res.status}`)
+        }
         const data = await res.json()
         const url = data?.url
         if (typeof url === 'string' && url.length > 0) {
@@ -228,7 +252,7 @@ export default function NewProduct() {
       setHasChanges(true)
     } catch (e) {
       console.error('批量上传失败:', e)
-      alert('批量上传失败，请稍后重试')
+      alert((e instanceof Error && e.message === tooLargeMessage) ? tooLargeMessage : '批量上传失败，请稍后重试')
     } finally {
       setBulkUploading(false)
     }
@@ -260,15 +284,21 @@ export default function NewProduct() {
         
         if (catRes.ok) {
           const data = await catRes.json()
-          setCategories(Array.isArray(data) ? data : [])
-          if (data.length > 0) {
-            setForm(prev => ({ ...prev, categoryId: data[0].id }))
+          const normalized = Array.isArray(data)
+            ? data.map((c: any) => ({ ...c, id: String(c?.id ?? '') })).filter((c: any) => c.id)
+            : []
+          setCategories(normalized)
+          if (normalized.length > 0) {
+            setForm(prev => ({ ...prev, categoryId: normalized[0].id }))
           }
         }
         
         if (brandRes.ok) {
           const data = await brandRes.json()
-          setBrands(Array.isArray(data) ? data : [])
+          const normalized = Array.isArray(data)
+            ? data.map((b: any) => ({ ...b, id: String(b?.id ?? '') })).filter((b: any) => b.id)
+            : []
+          setBrands(normalized)
         }
       } catch (e) {
         console.error('加载基础数据失败:', e)
@@ -467,7 +497,7 @@ export default function NewProduct() {
                   onChange={(e) => {
                     const val = e.target.value
                     // 先查找品牌对象
-                    const selected = brands.find(b => b.id === val)
+                    const selected = brands.find(b => String(b.id) === val)
                     // 使用回调函数确保状态更新的原子性，并强制触发重渲染
                     setForm(prev => {
                       // 如果选择为空，清空 brandId 和 brand

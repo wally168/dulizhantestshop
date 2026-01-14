@@ -135,6 +135,8 @@ export default function EditProduct() {
   const router = useRouter()
   const params = useParams()
   const productId = params.id as string
+  const MAX_IMAGE_BYTES = 4 * 1024 * 1024
+  const tooLargeMessage = '上传失败：图片不能大于4MB'
 
   const [loading, setLoading] = useState(false)
   const [fetching, setFetching] = useState(true)
@@ -181,13 +183,21 @@ export default function EditProduct() {
   const handleDescImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
+    if (file.size > MAX_IMAGE_BYTES) {
+      alert(tooLargeMessage)
+      e.target.value = ''
+      return
+    }
 
     setDescUploading(true)
     try {
       const fd = new FormData()
       fd.append('file', file)
       const res = await fetch('/api/upload', { method: 'POST', body: fd })
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      if (!res.ok) {
+        if (res.status === 413) throw new Error(tooLargeMessage)
+        throw new Error(`HTTP ${res.status}`)
+      }
       const data = await res.json()
       const url = data?.url
       
@@ -215,7 +225,7 @@ export default function EditProduct() {
       }
     } catch (e) {
       console.error('上传描述图片失败:', e)
-      alert('上传图片失败，请重试')
+      alert((e instanceof Error && e.message === tooLargeMessage) ? tooLargeMessage : '上传图片失败，请重试')
     } finally {
       setDescUploading(false)
       e.target.value = ''
@@ -265,12 +275,19 @@ export default function EditProduct() {
     )
   }
   const handleUpload = async (index: number, file: File) => {
+    if (file.size > MAX_IMAGE_BYTES) {
+      alert(tooLargeMessage)
+      return
+    }
     setUploadingIndex(index)
     try {
       const fd = new FormData()
       fd.append('file', file)
       const res = await fetch('/api/upload', { method: 'POST', body: fd })
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      if (!res.ok) {
+        if (res.status === 413) throw new Error(tooLargeMessage)
+        throw new Error(`HTTP ${res.status}`)
+      }
       const data = await res.json()
       const url = data?.url
       if (typeof url === 'string' && url.length > 0) {
@@ -282,7 +299,7 @@ export default function EditProduct() {
       }
     } catch (e) {
       console.error('上传失败:', e)
-      alert('上传失败，请稍后重试')
+      alert((e instanceof Error && e.message === tooLargeMessage) ? tooLargeMessage : '上传失败，请稍后重试')
     } finally {
       setUploadingIndex(null)
     }
@@ -290,6 +307,10 @@ export default function EditProduct() {
 
   const handleBulkUpload = async (files: FileList) => {
     if (!files || files.length === 0) return
+    if (Array.from(files).some(f => f.size > MAX_IMAGE_BYTES)) {
+      alert(tooLargeMessage)
+      return
+    }
     setBulkUploading(true)
     try {
       const urls: string[] = []
@@ -297,7 +318,10 @@ export default function EditProduct() {
         const fd = new FormData()
         fd.append('file', file)
         const res = await fetch('/api/upload', { method: 'POST', body: fd })
-        if (!res.ok) throw new Error(`HTTP ${res.status}`)
+        if (!res.ok) {
+          if (res.status === 413) throw new Error(tooLargeMessage)
+          throw new Error(`HTTP ${res.status}`)
+        }
         const data = await res.json()
         const url = data?.url
         if (typeof url === 'string' && url.length > 0) {
@@ -312,7 +336,7 @@ export default function EditProduct() {
       setHasChanges(true)
     } catch (e) {
       console.error('批量上传失败:', e)
-      alert('批量上传失败，请稍后重试')
+      alert((e instanceof Error && e.message === tooLargeMessage) ? tooLargeMessage : '批量上传失败，请稍后重试')
     } finally {
       setBulkUploading(false)
     }
@@ -347,11 +371,17 @@ export default function EditProduct() {
         ])
         if (catRes.ok) {
           const data = await catRes.json()
-          setCategories(Array.isArray(data) ? data : [])
+          const normalized = Array.isArray(data)
+            ? data.map((c: any) => ({ ...c, id: String(c?.id ?? '') })).filter((c: any) => c.id)
+            : []
+          setCategories(normalized)
         }
         if (brandRes.ok) {
           const data = await brandRes.json()
-          setBrands(Array.isArray(data) ? data : [])
+          const normalized = Array.isArray(data)
+            ? data.map((b: any) => ({ ...b, id: String(b?.id ?? '') })).filter((b: any) => b.id)
+            : []
+          setBrands(normalized)
         }
       } catch (e) {
         console.error('加载基础数据失败:', e)
@@ -368,6 +398,7 @@ export default function EditProduct() {
       if (response.ok) {
         const data = await response.json()
         setProduct(data)
+        const toId = (v: any): string => (v === null || v === undefined) ? '' : String(v)
         
         const toLocalInput = (dt: string | Date | null | undefined): string => {
           if (!dt) return ''
@@ -388,8 +419,8 @@ export default function EditProduct() {
             ? Array.from({ length: 8 }, (_, i) => (data.bulletPoints[i] ?? ''))
             : ['', '', '', '', '', '', '', ''],
           amazonUrl: data.amazonUrl || '',
-          categoryId: data.categoryId || '',
-          brandId: data.brandId || data.brandRelation?.id || '',
+          categoryId: toId(data.categoryId),
+          brandId: toId(data.brandId || data.brandRelation?.id),
           featured: data.featured || false,
           inStock: data.inStock !== false,
           showBuyOnAmazon: data.showBuyOnAmazon !== false,
@@ -477,10 +508,17 @@ export default function EditProduct() {
 
   const uploadReviewImage = async (index: number, file: File, isEdit: boolean) => {
     try {
+      if (file.size > MAX_IMAGE_BYTES) {
+        alert(tooLargeMessage)
+        return
+      }
       const fd = new FormData()
       fd.append('file', file)
       const res = await fetch('/api/upload', { method: 'POST', body: fd })
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      if (!res.ok) {
+        if (res.status === 413) throw new Error(tooLargeMessage)
+        throw new Error(`HTTP ${res.status}`)
+      }
       const data = await res.json()
       const url = data?.url
       if (typeof url === 'string' && url.length > 0) {
@@ -489,7 +527,7 @@ export default function EditProduct() {
       }
     } catch (e) {
       console.error('上传失败:', e)
-      alert('上传失败，请稍后重试')
+      alert((e instanceof Error && e.message === tooLargeMessage) ? tooLargeMessage : '上传失败，请稍后重试')
     }
   }
 
@@ -794,7 +832,7 @@ export default function EditProduct() {
                   value={form.brandId || ''}
                   onChange={(e) => {
                     const val = e.target.value
-                    const selected = brands.find(b => b.id === val)
+                    const selected = brands.find(b => String(b.id) === val)
                     setForm(prev => {
                       if (!val) {
                          return { ...prev, brandId: '', brand: '' }
