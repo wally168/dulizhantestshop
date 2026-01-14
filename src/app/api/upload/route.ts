@@ -18,7 +18,8 @@ export async function POST(request: NextRequest) {
     if (!contentType.startsWith('image/')) {
       return NextResponse.json({ error: '仅支持图片上传' }, { status: 400 })
     }
-    if (size > 5 * 1024 * 1024) { // 5MB 限制
+    // 内部放宽到 6MB 以避免 4-5MB 之间的文件因计算差异被拒，但提示仍显示 5MB
+    if (size > 6 * 1024 * 1024) { 
       return NextResponse.json({ error: '文件过大，最大 5MB' }, { status: 413 })
     }
 

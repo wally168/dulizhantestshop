@@ -45,7 +45,7 @@ export default async function ProductDetail({ params }: { params: Promise<{ slug
     }
   })()
 
-  if (!product) {
+  if (!product || !product.active) {
     return (
       <Layout>
         <div className="max-w-3xl mx-auto px-4 py-16">

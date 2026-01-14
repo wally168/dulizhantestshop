@@ -206,6 +206,13 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params
+    // Delete related reviews first (cascade delete logic)
+    await db.productReview.deleteMany({
+      where: {
+        productId: id,
+      },
+    })
+
     await db.product.delete({
       where: {
         id,

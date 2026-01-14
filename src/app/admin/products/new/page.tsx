@@ -463,7 +463,7 @@ export default function NewProduct() {
                   所属品牌 (可选)
                 </label>
                 <select
-                  value={form.brandId}
+                  value={form.brandId || ''}
                   onChange={(e) => {
                     const val = e.target.value
                     const selected = brands.find(b => b.id === val)
@@ -971,7 +971,7 @@ export default function NewProduct() {
               </div>
             </div>
 
-            <p className="text-xs text-gray-500 mb-2">提示：按住图片行拖拽进行排序</p>
+            <p className="text-xs text-gray-500 mb-2">提示：按住图片行拖拽进行排序；支持最大 5MB 图片上传</p>
 
             <div className="space-y-4">
               {form.images.map((image, index) => (
@@ -1079,7 +1079,7 @@ export default function NewProduct() {
                 </label>
                 <label className="cursor-pointer inline-flex items-center px-3 py-1.5 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
                   <Upload className={`h-4 w-4 mr-2 ${descUploading ? 'animate-pulse' : ''}`} />
-                  {descUploading ? '上传中...' : '插入图片'}
+                  {descUploading ? '上传中...' : '插入图片 (Max 5MB)'}
                   <input
                     type="file"
                     accept="image/*"
