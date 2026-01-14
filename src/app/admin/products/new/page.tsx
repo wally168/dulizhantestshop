@@ -466,12 +466,21 @@ export default function NewProduct() {
                   value={form.brandId || ''}
                   onChange={(e) => {
                     const val = e.target.value
+                    // 先查找品牌对象
                     const selected = brands.find(b => b.id === val)
-                    setForm(prev => ({ 
-                      ...prev, 
-                      brandId: val,
-                      brand: selected ? selected.name : ''
-                    }))
+                    // 使用回调函数确保状态更新的原子性，并强制触发重渲染
+                    setForm(prev => {
+                      // 如果选择为空，清空 brandId 和 brand
+                      if (!val) {
+                         return { ...prev, brandId: '', brand: '' }
+                      }
+                      // 否则更新为选中的品牌
+                      return { 
+                        ...prev, 
+                        brandId: val,
+                        brand: selected ? selected.name : ''
+                      }
+                    })
                   }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >

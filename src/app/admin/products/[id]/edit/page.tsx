@@ -795,11 +795,16 @@ export default function EditProduct() {
                   onChange={(e) => {
                     const val = e.target.value
                     const selected = brands.find(b => b.id === val)
-                    setForm(prev => ({ 
-                      ...prev, 
-                      brandId: val,
-                      brand: selected ? selected.name : ''
-                    }))
+                    setForm(prev => {
+                      if (!val) {
+                         return { ...prev, brandId: '', brand: '' }
+                      }
+                      return { 
+                        ...prev, 
+                        brandId: val,
+                        brand: selected ? selected.name : ''
+                      }
+                    })
                   }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
