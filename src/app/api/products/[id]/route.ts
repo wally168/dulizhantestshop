@@ -97,9 +97,9 @@ export async function PUT(
       categoryId: categoryId || undefined,
       featured: featured || false,
       active: inStock !== false,
-      brand: brand ?? undefined,
-      brandId: brandId ?? undefined,
-      upc: upc ?? undefined,
+      brand: brand === '' ? null : brand,
+      brandId: brandId === '' ? null : brandId,
+      upc: upc === '' ? null : upc,
       publishedAt: publishedAt ? new Date(publishedAt) : undefined,
       variants: (() => {
         try {
