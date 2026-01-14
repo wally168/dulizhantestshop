@@ -237,8 +237,8 @@ export async function POST(request: NextRequest) {
       images: JSON.stringify(imageList),
       bulletPoints: JSON.stringify(Array.isArray(bulletPoints) ? bulletPoints : []),
       amazonUrl: normalizedAmazonUrl,
-      // 通过关联连接分类，避免类型错误
-      category: { connect: { id: categoryId } },
+      // 直接使用 categoryId 赋值，与 import 接口保持一致
+      categoryId: categoryId,
       featured: featured || false,
       active: inStock !== false,
       brand: brand || null,
@@ -256,9 +256,6 @@ export async function POST(request: NextRequest) {
 
     const product = await db.product.create({
       data: createData,
-      include: {
-        category: true,
-      },
     })
 
     const parseArr = (s: string | null | undefined) => {
@@ -280,10 +277,14 @@ export async function POST(request: NextRequest) {
       variantOptionLinks: parseObj((product as any).variantOptionLinks),
     }
     return NextResponse.json(normalized, { status: 201 })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error creating product:', error)
+    // 打印更详细的错误信息以便调试
+    if (error.code) console.error('Error code:', error.code)
+    if (error.meta) console.error('Error meta:', error.meta)
+    
     return NextResponse.json(
-      { error: 'Failed to create product' },
+      { error: `Failed to create product: ${error.message || 'Unknown error'}` },
       { status: 500 }
     )
   }
