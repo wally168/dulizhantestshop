@@ -1,9 +1,10 @@
 'use client'
 
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import { useRouter, useParams } from 'next/navigation'
 import useUnsavedChangesPrompt from '../../../../../hooks/useUnsavedChangesPrompt'
+import * as XLSX from 'xlsx'
 import { 
   ArrowLeft, 
   Save, 
@@ -15,7 +16,8 @@ import {
   Package,
   Home,
   Loader2,
-  Trash2
+  Trash2,
+  FileText
 } from 'lucide-react'
 
 interface Product {
@@ -235,6 +237,21 @@ export default function EditProduct() {
   const [reviews, setReviews] = useState<Review[]>([])
   const [loadingReviews, setLoadingReviews] = useState(true)
   const [editingReview, setEditingReview] = useState<Review | null>(null)
+  const [reviewImportFile, setReviewImportFile] = useState<File | null>(null)
+  const [reviewImporting, setReviewImporting] = useState(false)
+  const [reviewImportResult, setReviewImportResult] = useState<{ success: number; failed: number; skipped: number; errors: string[] } | null>(null)
+  const [reviewImportVisible, setReviewImportVisible] = useState(true)
+  const [reviewImportPreview, setReviewImportPreview] = useState<Array<{
+    title: string
+    content: string
+    rating: number | null
+    name: string
+    country: string
+    images: string[]
+    createdAt?: string
+    willImport: boolean
+    reason: string
+  }>>([])
   const [newReview, setNewReview] = useState<Review>({
     id: '',
     productId: productId,
@@ -357,10 +374,6 @@ export default function EditProduct() {
     setHasChanges(true)
   }
 
-  useEffect(() => {
-    fetchProduct()
-  }, [productId])
-
   // 新增：加载分类和品牌列表
   useEffect(() => {
     const loadData = async () => {
@@ -392,7 +405,7 @@ export default function EditProduct() {
     loadData()
   }, [])
 
-  const fetchProduct = async () => {
+  const fetchProduct = useCallback(async () => {
     try {
       const response = await fetch(`/api/products/${productId}`)
       if (response.ok) {
@@ -444,43 +457,188 @@ export default function EditProduct() {
     } finally {
       setFetching(false)
     }
-  }
+  }, [productId, router])
 
   useEffect(() => {
-    const loadReviews = async () => {
-      try {
-        const res = await fetch(`/api/products/${productId}/reviews?visibleOnly=0`, { cache: 'no-store' })
-        if (res.ok) {
-          const data = await res.json()
-          const normalized = Array.isArray(data) ? data.map((r: any) => ({
-            id: String(r.id),
-            productId: String(r.productId),
-            isVisible: Boolean(r.isVisible),
-            country: String(r.country || ''),
-            name: String(r.name || ''),
-            title: String(r.title || ''),
-            content: String(r.content || ''),
-            rating: Number(r.rating || 5),
-            images: Array.isArray(r.images) ? r.images : [],
-            createdAt: (() => {
-              try {
-                if (!r.createdAt) return ''
-                const d = new Date(r.createdAt)
-                const pad = (n: number) => String(n).padStart(2, '0')
-                return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
-              } catch { return '' }
-            })()
-          })) : []
-          setReviews(normalized)
-        }
-      } catch (e) {
-        console.error('加载评论失败:', e)
-      } finally {
-        setLoadingReviews(false)
+    fetchProduct()
+  }, [fetchProduct])
+
+  const loadReviews = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/products/${productId}/reviews?visibleOnly=0`, { cache: 'no-store' })
+      if (res.ok) {
+        const data = await res.json()
+        const normalized = Array.isArray(data) ? data.map((r: any) => ({
+          id: String(r.id),
+          productId: String(r.productId),
+          isVisible: Boolean(r.isVisible),
+          country: String(r.country || ''),
+          name: String(r.name || ''),
+          title: String(r.title || ''),
+          content: String(r.content || ''),
+          rating: Number(r.rating || 5),
+          images: Array.isArray(r.images) ? r.images : [],
+          createdAt: (() => {
+            try {
+              if (!r.createdAt) return ''
+              const d = new Date(r.createdAt)
+              const pad = (n: number) => String(n).padStart(2, '0')
+              return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+            } catch { return '' }
+          })()
+        })) : []
+        setReviews(normalized)
       }
+    } catch (e) {
+      console.error('加载评论失败:', e)
+    } finally {
+      setLoadingReviews(false)
     }
-    loadReviews()
   }, [productId])
+
+  useEffect(() => {
+    loadReviews()
+  }, [loadReviews])
+
+  const parseExcelDateToIso = (value: any): string | undefined => {
+    if (!value) return undefined
+    if (value instanceof Date && !isNaN(value.getTime())) return value.toISOString()
+    if (typeof value === 'number') {
+      const parsed = XLSX.SSF.parse_date_code(value)
+      if (!parsed) return undefined
+      const d = new Date(Date.UTC(parsed.y, parsed.m - 1, parsed.d, parsed.H || 0, parsed.M || 0, parsed.S || 0))
+      if (!isNaN(d.getTime())) return d.toISOString()
+      return undefined
+    }
+    if (typeof value === 'string') {
+      const d = new Date(value)
+      if (!isNaN(d.getTime())) return d.toISOString()
+    }
+    return undefined
+  }
+
+  const parseRatingValue = (value: any): number | null => {
+    if (value === null || value === undefined) return null
+    if (typeof value === 'number' && !isNaN(value)) return value
+    const str = String(value).trim()
+    if (!str) return null
+    const match = str.match(/(\d+(\.\d+)?)/)
+    if (!match) return null
+    const num = Number(match[1])
+    return isNaN(num) ? null : num
+  }
+
+  const parseImagesValue = (value: any): string[] => {
+    if (!value) return []
+    if (Array.isArray(value)) return value.map(v => String(v).trim()).filter(Boolean)
+    if (typeof value === 'string') {
+      const str = value.trim()
+      if (!str) return []
+      if (str.startsWith('[')) {
+        try {
+          const arr = JSON.parse(str)
+          if (Array.isArray(arr)) return arr.map(v => String(v).trim()).filter(Boolean)
+        } catch {}
+      }
+      return str.split(/[\s,;]+/).map(v => v.trim()).filter(Boolean)
+    }
+    return [String(value).trim()].filter(Boolean)
+  }
+
+  const buildReviewImportPreview = (rows: Record<string, any>[]) => {
+    const preview = rows.map((row) => {
+      const title = String(row['标题'] ?? row['title'] ?? row['Title'] ?? '').trim()
+      const content = String(row['内容'] ?? row['content'] ?? row['Content'] ?? '').trim()
+      const ratingValue = parseRatingValue(row['星级'] ?? row['rating'] ?? row['Rating'])
+      const name = String(row['评论人'] ?? row['name'] ?? row['Name'] ?? '').trim()
+      const country = String(row['所属国家'] ?? row['country'] ?? row['Country'] ?? '').trim()
+      const images = parseImagesValue(row['图片地址'] ?? row['images'] ?? row['Images'])
+      const createdAt = parseExcelDateToIso(row['评论时间'] ?? row['time'] ?? row['Time'] ?? row['created_at'] ?? row['CreatedAt'])
+      const isFive = ratingValue === 5
+      const hasContent = Boolean(content)
+      const willImport = isFive && hasContent
+      let reason = ''
+      if (!isFive) reason = '非5星'
+      else if (!hasContent) reason = '内容为空'
+      return { title, content, rating: ratingValue, name, country, images, createdAt, willImport, reason }
+    })
+    setReviewImportPreview(preview)
+    return preview
+  }
+
+  const parseReviewImportFile = async (file: File) => {
+    const buffer = await file.arrayBuffer()
+    const workbook = XLSX.read(buffer, { type: 'array' })
+    const sheetName = workbook.SheetNames[0]
+    const worksheet = workbook.Sheets[sheetName]
+    const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: '' }) as Record<string, any>[]
+    return buildReviewImportPreview(jsonData)
+  }
+
+  const handleReviewImportFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setReviewImportFile(file)
+    setReviewImportResult(null)
+    parseReviewImportFile(file).catch(() => {
+      setReviewImportPreview([])
+      setReviewImportResult({ success: 0, failed: 0, skipped: 0, errors: ['解析失败或文件损坏'] })
+    })
+  }
+
+  const handleImportReviews = async () => {
+    if (!reviewImportFile || reviewImporting) return
+    setReviewImporting(true)
+    setReviewImportResult(null)
+    try {
+      const preview = reviewImportPreview.length > 0 ? reviewImportPreview : await parseReviewImportFile(reviewImportFile)
+      let success = 0
+      let failed = 0
+      let skipped = 0
+      const errors: string[] = []
+
+      for (const row of preview) {
+        if (!row.willImport) {
+          skipped++
+          continue
+        }
+        try {
+          const payload = {
+            isVisible: reviewImportVisible,
+            country: row.country,
+            name: row.name,
+            title: row.title,
+            content: row.content,
+            rating: 5,
+            images: row.images,
+            createdAt: row.createdAt
+          }
+          const res = await fetch(`/api/products/${productId}/reviews`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          })
+          if (res.ok) {
+            success++
+          } else {
+            failed++
+            const err = await res.json().catch(() => ({}))
+            errors.push(err.error || '导入失败')
+          }
+        } catch (e) {
+          failed++
+          errors.push('导入失败')
+        }
+      }
+
+      setReviewImportResult({ success, failed, skipped, errors })
+      await loadReviews()
+    } catch (e) {
+      setReviewImportResult({ success: 0, failed: 0, skipped: 0, errors: ['解析失败或文件损坏'] })
+    } finally {
+      setReviewImporting(false)
+    }
+  }
 
   const addReviewImageField = (isEdit: boolean) => {
     if (isEdit && editingReview) {
@@ -698,6 +856,9 @@ export default function EditProduct() {
     }))
     setHasChanges(true)
   }
+
+  const reviewImportableCount = reviewImportPreview.filter((r) => r.willImport).length
+  const reviewSkippedCount = reviewImportPreview.length - reviewImportableCount
 
   if (fetching) {
     return (
@@ -1484,6 +1645,107 @@ export default function EditProduct() {
               >
                 <Plus className="h-4 w-4 mr-1" /> 添加评论
               </button>
+            </div>
+
+            <div className="border rounded-lg p-4 mb-4 bg-gray-50">
+              <div className="flex items-center justify-between gap-4 flex-wrap">
+                <div className="flex items-center gap-3">
+                  <FileText className="h-5 w-5 text-gray-500" />
+                  <div>
+                    <div className="text-sm font-medium text-gray-700">表格导入评论（仅导入 5 星）</div>
+                    <div className="text-xs text-gray-500">字段：标题、内容、星级、图片地址、评论人、所属国家、评论时间</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <label className="inline-flex items-center px-3 py-2 text-sm bg-white border rounded-lg cursor-pointer hover:bg-gray-100">
+                    选择文件
+                    <input
+                      type="file"
+                      accept=".xlsx,.xls"
+                      className="hidden"
+                      onChange={handleReviewImportFileChange}
+                      disabled={reviewImporting}
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    onClick={handleImportReviews}
+                    disabled={!reviewImportFile || reviewImporting}
+                    className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                  >
+                    {reviewImporting ? '导入中…' : '开始导入'}
+                  </button>
+                </div>
+              </div>
+              {reviewImportFile && (
+                <div className="text-xs text-gray-600 mt-2">已选择：{reviewImportFile.name}</div>
+              )}
+              <div className="mt-3 flex items-center gap-2 text-sm text-gray-700">
+                <input
+                  type="checkbox"
+                  checked={reviewImportVisible}
+                  onChange={(e) => setReviewImportVisible(e.target.checked)}
+                />
+                <span>导入后显示在前台</span>
+              </div>
+              {reviewImportPreview.length > 0 && (
+                <div className="mt-3">
+                  <div className="text-xs text-gray-600 mb-2">
+                    预览：共 {reviewImportPreview.length} 条，预计导入 {reviewImportableCount} 条，跳过 {reviewSkippedCount} 条
+                  </div>
+                  <div className="overflow-x-auto border rounded-lg bg-white">
+                    <table className="min-w-full text-xs">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="text-left px-3 py-2 text-gray-600 font-medium">标题</th>
+                          <th className="text-left px-3 py-2 text-gray-600 font-medium">内容</th>
+                          <th className="text-left px-3 py-2 text-gray-600 font-medium">星级</th>
+                          <th className="text-left px-3 py-2 text-gray-600 font-medium">图片</th>
+                          <th className="text-left px-3 py-2 text-gray-600 font-medium">评论人</th>
+                          <th className="text-left px-3 py-2 text-gray-600 font-medium">国家</th>
+                          <th className="text-left px-3 py-2 text-gray-600 font-medium">时间</th>
+                          <th className="text-left px-3 py-2 text-gray-600 font-medium">结果</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {reviewImportPreview.slice(0, 20).map((row, i) => (
+                          <tr key={`${row.title}-${i}`} className="border-t">
+                            <td className="px-3 py-2 text-gray-700 whitespace-nowrap">{row.title || '-'}</td>
+                            <td className="px-3 py-2 text-gray-700 max-w-[240px]">
+                              {(row.content || '').length > 30 ? `${row.content.slice(0, 30)}…` : (row.content || '-')}
+                            </td>
+                            <td className="px-3 py-2 text-gray-700 whitespace-nowrap">{row.rating ?? '-'}</td>
+                            <td className="px-3 py-2 text-gray-700 whitespace-nowrap">{row.images.length}</td>
+                            <td className="px-3 py-2 text-gray-700 whitespace-nowrap">{row.name || '-'}</td>
+                            <td className="px-3 py-2 text-gray-700 whitespace-nowrap">{row.country || '-'}</td>
+                            <td className="px-3 py-2 text-gray-700 whitespace-nowrap">
+                              {row.createdAt ? row.createdAt.replace('T', ' ').slice(0, 16) : '-'}
+                            </td>
+                            <td className={`px-3 py-2 whitespace-nowrap ${row.willImport ? 'text-green-600' : 'text-gray-500'}`}>
+                              {row.willImport ? '将导入' : `跳过${row.reason ? `：${row.reason}` : ''}`}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  {reviewImportPreview.length > 20 && (
+                    <div className="text-xs text-gray-500 mt-1">仅显示前 20 条预览</div>
+                  )}
+                </div>
+              )}
+              {reviewImportResult && (
+                <div className="mt-3 text-sm text-gray-700">
+                  已导入 {reviewImportResult.success} 条，跳过 {reviewImportResult.skipped} 条，失败 {reviewImportResult.failed} 条
+                </div>
+              )}
+              {reviewImportResult?.errors?.length ? (
+                <div className="mt-2 text-xs text-red-600">
+                  {reviewImportResult.errors.slice(0, 5).map((e, i) => (
+                    <div key={`${e}-${i}`}>{e}</div>
+                  ))}
+                </div>
+              ) : null}
             </div>
 
             {loadingReviews ? (
