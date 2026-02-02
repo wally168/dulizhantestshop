@@ -29,6 +29,8 @@ interface SiteSettings {
   contactEmail: string
   contactPhone: string
   contactAddress: string
+  messageForwardEmail: string
+  messageForwardEnabled: string
   socialFacebook: string
   socialFacebookTitle: string
   socialTwitter: string
