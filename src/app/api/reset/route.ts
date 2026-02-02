@@ -11,6 +11,8 @@ const defaultSettings: Record<string, string> = {
   contactEmail: 'contact@yourbrand.com',
   contactPhone: '+1 (555) 123-4567',
   contactAddress: '123 Main Street, City, State 12345',
+  messageForwardEmail: '',
+  messageForwardEnabled: 'false',
   socialFacebook: 'https://facebook.com/yourbrand',
   socialTwitter: 'https://twitter.com/yourbrand',
   socialInstagram: 'https://instagram.com/yourbrand',
