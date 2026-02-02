@@ -86,6 +86,9 @@ export default function AdminEmailsPage() {
             <Link href="/admin" className="text-gray-600 hover:text-gray-900 flex items-center">
               <ArrowLeft className="h-4 w-4 mr-1" /> 返回仪表盘
             </Link>
+            <Link href="/admin/messages" className="text-gray-600 hover:text-gray-900 flex items-center">
+              <ArrowLeft className="h-4 w-4 mr-1" /> 返回留言管理
+            </Link>
             <div className="flex items-center">
               <Mail className="h-5 w-5 text-blue-600 mr-2" />
               <h1 className="text-lg font-semibold text-gray-900">邮箱管理</h1>

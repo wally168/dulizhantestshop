@@ -201,6 +201,19 @@ export default function SettingsPage() {
           </div>
         ) : (
         <form onSubmit={handleSubmit} className="space-y-8">
+          <div className="bg-white p-4 rounded-xl shadow-sm border">
+            <div className="flex items-center justify-between flex-wrap gap-3">
+              <div className="text-sm font-medium text-gray-700">快速跳转</div>
+              <div className="flex items-center flex-wrap gap-2">
+                <a
+                  href="#message-forward"
+                  className="px-3 py-1.5 text-sm text-blue-600 bg-blue-50 rounded-full hover:bg-blue-100"
+                >
+                  留言转发
+                </a>
+              </div>
+            </div>
+          </div>
           {/* 基本信息 */}
           <div className="bg-white p-6 rounded-xl shadow-sm border">
             <div className="flex items-center mb-6">
@@ -441,7 +454,7 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          <div className="bg-white p-6 rounded-xl shadow-sm border">
+          <div id="message-forward" className="bg-white p-6 rounded-xl shadow-sm border">
             <div className="flex items-center mb-6">
               <Mail className="h-6 w-6 text-blue-600 mr-2" />
               <h2 className="text-lg font-semibold text-gray-900">留言转发</h2>
