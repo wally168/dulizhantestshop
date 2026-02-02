@@ -98,6 +98,8 @@ model Message {
   name      String
   email     String
   subject   String?
+  country   String?
+  orderNo   String?
   message   String
   read      Boolean  @default(false)
   createdAt DateTime @default(now())

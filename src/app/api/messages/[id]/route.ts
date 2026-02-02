@@ -62,3 +62,38 @@ export async function GET(
     )
   }
 }
+
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params
+    const body = await request.json()
+    const { read } = body
+
+    const existingMessage = await db.message.findUnique({
+      where: { id }
+    })
+
+    if (!existingMessage) {
+      return NextResponse.json(
+        { error: '消息不存在' },
+        { status: 404 }
+      )
+    }
+
+    const updated = await db.message.update({
+      where: { id },
+      data: { read: Boolean(read) }
+    })
+
+    return NextResponse.json(updated)
+  } catch (error) {
+    console.error('更新消息失败:', error)
+    return NextResponse.json(
+      { error: '更新消息失败' },
+      { status: 500 }
+    )
+  }
+}

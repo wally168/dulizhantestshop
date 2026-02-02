@@ -10,6 +10,8 @@ export default function ContactPage() {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
+    country: '',
+    orderNo: '',
     subject: '',
     message: ''
   })
@@ -58,7 +60,7 @@ export default function ContactPage() {
 
       if (response.ok) {
         setSubmitStatus('success')
-        setFormData({ name: '', email: '', subject: '', message: '' })
+        setFormData({ name: '', email: '', country: '', orderNo: '', subject: '', message: '' })
       } else {
         const data = await response.json()
         if (data.error && data.error.includes('valid email')) {
@@ -169,6 +171,38 @@ export default function ContactPage() {
                     name="subject"
                     id="subject"
                     value={formData.subject}
+                    onChange={handleChange}
+                    className="block w-full rounded-md border-0 px-3.5 py-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="country" className="block text-sm font-medium leading-6 text-gray-900">
+                  Country
+                </label>
+                <div className="mt-2">
+                  <input
+                    type="text"
+                    name="country"
+                    id="country"
+                    value={formData.country}
+                    onChange={handleChange}
+                    className="block w-full rounded-md border-0 px-3.5 py-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="orderNo" className="block text-sm font-medium leading-6 text-gray-900">
+                  Order No.
+                </label>
+                <div className="mt-2">
+                  <input
+                    type="text"
+                    name="orderNo"
+                    id="orderNo"
+                    value={formData.orderNo}
                     onChange={handleChange}
                     className="block w-full rounded-md border-0 px-3.5 py-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6"
                   />

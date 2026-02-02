@@ -5,21 +5,25 @@ import Link from 'next/link'
 import { 
   Mail, 
   Search, 
-  Filter, 
   Trash2, 
   Eye, 
   Calendar,
   User,
   MessageSquare,
   ArrowLeft,
-  RefreshCw
+  RefreshCw,
+  Download
 } from 'lucide-react'
 
 interface Message {
   id: string
   name: string
   email: string
+  subject?: string
+  country?: string
+  orderNo?: string
   message: string
+  read: boolean
   createdAt: string
 }
 
@@ -72,10 +76,34 @@ export default function MessagesPage() {
     }
   }
 
+  const updateProcessed = async (id: string, read: boolean) => {
+    try {
+      const response = await fetch(`/api/messages/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ read })
+      })
+      if (response.ok) {
+        const updated = await response.json()
+        setMessages(messages.map(msg => msg.id === id ? updated : msg))
+        if (selectedMessage?.id === id) {
+          setSelectedMessage(updated)
+        }
+      } else {
+        alert('更新失败')
+      }
+    } catch (error) {
+      console.error('更新消息失败:', error)
+      alert('更新失败')
+    }
+  }
+
   const filteredMessages = messages.filter(message =>
     message.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     message.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    message.message.toLowerCase().includes(searchTerm.toLowerCase())
+    message.message.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (message.country || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (message.orderNo || '').toLowerCase().includes(searchTerm.toLowerCase())
   )
 
   const formatDate = (dateString: string) => {
@@ -178,6 +206,14 @@ export default function MessagesPage() {
                       <Mail className="h-4 w-4 mr-1" />
                       邮箱管理
                     </Link>
+                    <button
+                      onClick={() => { window.location.href = '/api/messages?format=csv' }}
+                      className="ml-3 text-green-600 hover:text-green-700 flex items-center text-sm"
+                      title="导出消息"
+                    >
+                      <Download className="h-4 w-4 mr-1" />
+                      导出消息
+                    </button>
                   </h2>
                   <span className="text-sm text-gray-500">
                     共 {filteredMessages.length} 条消息
@@ -225,6 +261,15 @@ export default function MessagesPage() {
                             <p className="text-sm font-medium text-gray-900 truncate">
                               {message.name}
                             </p>
+                          {message.read ? (
+                            <span className="text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
+                              已处理
+                            </span>
+                          ) : (
+                            <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+                              未处理
+                            </span>
+                          )}
                             <span className="text-xs text-gray-500">
                               {message.email}
                             </span>
@@ -237,6 +282,19 @@ export default function MessagesPage() {
                           </p>
                         </div>
                         <div className="flex items-center space-x-2 ml-4">
+                          <label className="flex items-center text-xs text-gray-600">
+                            <input
+                              type="checkbox"
+                              checked={message.read}
+                              onChange={(e) => {
+                                e.stopPropagation()
+                                updateProcessed(message.id, e.target.checked)
+                              }}
+                              onClick={(e) => e.stopPropagation()}
+                              className="mr-1"
+                            />
+                            已处理
+                          </label>
                           <button
                             onClick={(e) => {
                               e.stopPropagation()
@@ -292,6 +350,20 @@ export default function MessagesPage() {
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
+                        国家
+                      </label>
+                      <p className="text-sm text-gray-900">{selectedMessage.country || '-'}</p>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        订单号
+                      </label>
+                      <p className="text-sm text-gray-900">{selectedMessage.orderNo || '-'}</p>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
                         提交时间
                       </label>
                       <p className="text-sm text-gray-900">
@@ -308,6 +380,17 @@ export default function MessagesPage() {
                           {selectedMessage.message}
                         </p>
                       </div>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-2">
+                      <label className="text-sm font-medium text-gray-700">
+                        是否已处理
+                      </label>
+                      <input
+                        type="checkbox"
+                        checked={selectedMessage.read}
+                        onChange={(e) => updateProcessed(selectedMessage.id, e.target.checked)}
+                      />
                     </div>
 
                     <div className="pt-4 border-t">

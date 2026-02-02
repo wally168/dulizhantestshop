@@ -12,6 +12,8 @@ export interface SiteSettings {
   contactEmail: string
   contactPhone: string
   contactAddress: string
+  messageForwardEmail?: string
+  messageForwardEnabled?: string
   socialFacebook: string
   socialFacebookTitle: string
   socialTwitter: string
@@ -72,6 +74,8 @@ const defaultSettings: SiteSettings = {
   contactEmail: 'contact@yourbrand.com',
   contactPhone: '+1 (555) 123-4567',
   contactAddress: '123 Main Street, City, State 12345',
+  messageForwardEmail: '',
+  messageForwardEnabled: 'false',
   socialFacebook: 'https://facebook.com/yourbrand',
   socialFacebookTitle: 'Facebook',
   socialTwitter: 'https://twitter.com/yourbrand',
