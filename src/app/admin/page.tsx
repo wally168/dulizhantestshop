@@ -39,12 +39,14 @@ interface Message {
   subject: string
   message: string
   createdAt: string
+  read: boolean
 }
 
 export default function AdminDashboard() {
   const { settings } = useSettings()
   const [products, setProducts] = useState<Product[]>([])
   const [messages, setMessages] = useState<Message[]>([])
+  const [latestMessages, setLatestMessages] = useState<Message[]>([])
   const [loading, setLoading] = useState(true)
   const [showGuide, setShowGuide] = useState(false)
 
@@ -65,8 +67,9 @@ export default function AdminDashboard() {
       const safeProducts = Array.isArray(productsData) ? productsData : []
       const safeMessages = Array.isArray(messagesData) ? messagesData : []
       
-      setProducts(safeProducts) // 用全部产品用于统计
-      setMessages(safeMessages.slice(0, 5)) // 只显示最新5条消息
+      setProducts(safeProducts)
+      setMessages(safeMessages)
+      setLatestMessages(safeMessages.slice(0, 5))
     } catch (error) {
       console.error('获取数据失败:', error)
     } finally {
@@ -233,7 +236,7 @@ export default function AdminDashboard() {
           />
           <StatCard
             title="新留言"
-            value={messages.length.toString()}
+            value={messages.filter(m => !m.read).length.toString()}
             icon={<MessageSquare className="h-8 w-8 text-green-600" />}
           />
           <StatCard
@@ -305,11 +308,11 @@ export default function AdminDashboard() {
               </div>
             </div>
             <div className="p-6">
-              {messages.length === 0 ? (
+              {latestMessages.length === 0 ? (
                 <p className="text-gray-500 text-center py-4">暂无留言</p>
               ) : (
                 <div className="space-y-4">
-                  {messages.map((message) => (
+                  {latestMessages.map((message) => (
                     <div key={message.id} className="p-3 bg-gray-50 rounded-lg">
                       <div className="flex items-center justify-between mb-2">
                         <h3 className="font-medium text-gray-900">{message.name}</h3>
