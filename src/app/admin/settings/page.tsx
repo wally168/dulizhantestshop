@@ -201,19 +201,6 @@ export default function SettingsPage() {
           </div>
         ) : (
         <form onSubmit={handleSubmit} className="space-y-8">
-          <div className="bg-white p-4 rounded-xl shadow-sm border">
-            <div className="flex items-center justify-between flex-wrap gap-3">
-              <div className="text-sm font-medium text-gray-700">快速跳转</div>
-              <div className="flex items-center flex-wrap gap-2">
-                <a
-                  href="#message-forward"
-                  className="px-3 py-1.5 text-sm text-blue-600 bg-blue-50 rounded-full hover:bg-blue-100"
-                >
-                  留言转发
-                </a>
-              </div>
-            </div>
-          </div>
           {/* 基本信息 */}
           <div className="bg-white p-6 rounded-xl shadow-sm border">
             <div className="flex items-center mb-6">
@@ -449,46 +436,6 @@ export default function SettingsPage() {
                     placeholder="输入联系地址"
                   />
                   <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div id="message-forward" className="bg-white p-6 rounded-xl shadow-sm border">
-            <div className="flex items-center mb-6">
-              <Mail className="h-6 w-6 text-blue-600 mr-2" />
-              <h2 className="text-lg font-semibold text-gray-900">留言转发</h2>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  转发邮箱
-                </label>
-                <div className="relative">
-                  <input
-                    type="email"
-                    value={settings.messageForwardEmail || ''}
-                    onChange={(e) => handleInputChange('messageForwardEmail', e.target.value)}
-                    className="w-full px-3 py-2 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="notify@example.com"
-                  />
-                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  启用转发
-                </label>
-                <div className="flex items-center h-10">
-                  <input
-                    type="checkbox"
-                    checked={settings.messageForwardEnabled === 'true'}
-                    onChange={(e) => handleInputChange('messageForwardEnabled', e.target.checked ? 'true' : 'false')}
-                    className="h-4 w-4"
-                  />
-                  <span className="ml-2 text-sm text-gray-600">有新留言时自动转发</span>
                 </div>
               </div>
             </div>
