@@ -110,6 +110,7 @@ export async function POST(request: NextRequest) {
       variantImageMap,
       variantOptionImages,
       variantOptionLinks,
+      youtubeUrl,
       // 新增字段：前台按钮显示控制
       showBuyOnAmazon,
       showAddToCart,
@@ -235,6 +236,7 @@ export async function POST(request: NextRequest) {
       price: parseFloat(price),
       originalPrice: originalPrice ? parseFloat(originalPrice) : null,
       images: JSON.stringify(imageList),
+      youtubeUrl: typeof youtubeUrl === 'string' && youtubeUrl.trim() ? youtubeUrl.trim() : null,
       bulletPoints: JSON.stringify(Array.isArray(bulletPoints) ? bulletPoints : []),
       amazonUrl: normalizedAmazonUrl,
       // 直接使用 categoryId 赋值，与 import 接口保持一致

@@ -48,6 +48,7 @@ model Product {
   slug            String   @unique
   mainImage       String
   images          String   // JSON string of image URLs
+  youtubeUrl      String?
   price           Float
   originalPrice   Float?
   amazonUrl       String

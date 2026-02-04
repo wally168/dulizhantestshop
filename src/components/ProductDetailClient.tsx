@@ -1,6 +1,7 @@
 "use client"
 
 import { useMemo, useState, useEffect, useRef } from 'react'
+import type { ReactElement } from 'react'
 import ProductImageGallery from './ProductImageGallery'
 import { formatPrice } from '@/lib/utils'
 import AddToCartButton from './AddToCartButton'
@@ -24,6 +25,39 @@ import AddToCartButton from './AddToCartButton'
      return d.toLocaleDateString()
    } catch { return '' }
  }
+
+function extractYoutubeId(value?: string | null): string | null {
+  if (!value || typeof value !== 'string') return null
+  try {
+    const url = new URL(value)
+    const host = url.hostname.replace(/^www\./, '')
+    if (host === 'youtu.be') {
+      const id = url.pathname.split('/').filter(Boolean)[0]
+      return id || null
+    }
+    if (host === 'youtube.com' || host === 'youtube-nocookie.com') {
+      if (url.pathname === '/watch') {
+        return url.searchParams.get('v')
+      }
+      const parts = url.pathname.split('/').filter(Boolean)
+      const embedIndex = parts.findIndex(p => p === 'embed' || p === 'shorts')
+      if (embedIndex >= 0 && parts[embedIndex + 1]) return parts[embedIndex + 1]
+    }
+  } catch {}
+  return null
+}
+
+function replaceYoutubeLinks(input: string): string {
+  if (!input) return ''
+  if (input.includes('<iframe')) return input
+  const urlRegex = /(https?:\/\/[^\s"<>]+)/g
+  return input.replace(urlRegex, (url) => {
+    const id = extractYoutubeId(url)
+    if (!id) return url
+    const embedUrl = `https://www.youtube-nocookie.com/embed/${id}`
+    return `<div style="margin:12px 0;"><iframe src="${embedUrl}" title="YouTube video player" style="width:100%; aspect-ratio:16 / 9; border:0;" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div>`
+  })
+}
  
  export default function ProductDetailClient({
    id,
@@ -39,6 +73,7 @@ import AddToCartButton from './AddToCartButton'
    originalPrice,
    images,
    mainImage,
+  youtubeUrl,
    bullets,
    variantGroups,
    variantImageMap,
@@ -61,6 +96,7 @@ import AddToCartButton from './AddToCartButton'
   originalPrice?: number | null
   images: string[]
   mainImage: string
+  youtubeUrl?: string | null
   bullets: string[]
   variantGroups: VariantGroup[]
   variantImageMap?: Record<string, Record<string, number>> | null
@@ -69,8 +105,8 @@ import AddToCartButton from './AddToCartButton'
   showBuyOnAmazon?: boolean
   showAddToCart?: boolean
   reviews?: Array<{ id: string; name: string; country: string; title: string; content: string; rating: number; images: string[]; createdAt?: string | Date }>
-}) {
-   const [selectedImageIndex, setSelectedImageIndex] = useState<number>(0)
+}): ReactElement {
+   const [selectedGalleryIndex, setSelectedGalleryIndex] = useState<number>(0)
    const [selection, setSelection] = useState<Record<string, string>>({})
   const [failedThumb, setFailedThumb] = useState<Record<string, boolean>>({})
   const [lastClickedGroup, setLastClickedGroup] = useState<string | null>(null)
@@ -84,6 +120,19 @@ import AddToCartButton from './AddToCartButton'
      const arr = Array.isArray(images) && images.length > 0 ? images : [mainImage]
      return arr.filter(Boolean)
    }, [images, mainImage])
+   const youtubeId = useMemo(() => extractYoutubeId(youtubeUrl), [youtubeUrl])
+   const hasGalleryVideo = !!youtubeId
+   const toGalleryIndex = (imageIndex: number) => {
+     if (!hasGalleryVideo) return imageIndex
+     return imageIndex >= 1 ? imageIndex + 1 : imageIndex
+   }
+   const toImageIndex = (galleryIndex: number) => {
+     if (!hasGalleryVideo) return galleryIndex
+     if (galleryIndex <= 0) return 0
+     if (galleryIndex === 1) return 0
+     return galleryIndex - 1
+   }
+   const selectedImageIndex = toImageIndex(selectedGalleryIndex)
    const primaryImageUrl = safeImages[selectedImageIndex] || mainImage
  
    const resolveIndex = (groupName: string, option: string): number => {
@@ -102,8 +151,8 @@ import AddToCartButton from './AddToCartButton'
      setSelection((prev) => ({ ...prev, [groupName]: opt }))
      setLastClickedGroup(groupName)
      const idx = resolveIndex(groupName, opt)
-     setSelectedImageIndex(idx)
-   }
+    setSelectedGalleryIndex(toGalleryIndex(idx))
+  }
 
   // 构造缩略图URL
   const getThumbUrl = (groupName: string, opt: string): string | null => {
@@ -191,8 +240,9 @@ import AddToCartButton from './AddToCartButton'
           images={safeImages}
           mainImage={mainImage}
           title={title}
-          selectedImageIndex={selectedImageIndex}
-          onImageChange={setSelectedImageIndex}
+          youtubeUrl={youtubeUrl}
+          selectedIndex={selectedGalleryIndex}
+          onIndexChange={setSelectedGalleryIndex}
         />
       </div>
 
@@ -307,7 +357,7 @@ import AddToCartButton from './AddToCartButton'
       <h2 className="text-lg font-semibold text-gray-900">Product Description</h2>
       <div 
         className="mt-2 text-gray-700 prose prose-sm max-w-none"
-        dangerouslySetInnerHTML={{ __html: description }}
+        dangerouslySetInnerHTML={{ __html: replaceYoutubeLinks(description) }}
         style={{ lineHeight: '1.6' }}
       />
     </div>

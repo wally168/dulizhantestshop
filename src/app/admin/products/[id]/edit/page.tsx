@@ -29,6 +29,7 @@ interface Product {
   images: string[]
   bulletPoints: string[]
   amazonUrl: string
+  youtubeUrl?: string
   categoryId?: string
   brandId?: string
   featured: boolean
@@ -50,6 +51,7 @@ interface ProductForm {
   images: string[]
   bulletPoints: string[]
   amazonUrl: string
+  youtubeUrl: string
   categoryId: string
   brandId: string
   featured: boolean
@@ -93,6 +95,30 @@ function isValidAmazonUrl(url: string): boolean {
   } catch {
     return false
   }
+}
+function extractYoutubeId(value: string): string | null {
+  if (!value || typeof value !== 'string') return null
+  try {
+    const url = new URL(value)
+    const host = url.hostname.replace(/^www\./, '')
+    if (host === 'youtu.be') {
+      const id = url.pathname.split('/').filter(Boolean)[0]
+      return id || null
+    }
+    if (host === 'youtube.com' || host === 'youtube-nocookie.com') {
+      if (url.pathname === '/watch') {
+        return url.searchParams.get('v')
+      }
+      const parts = url.pathname.split('/').filter(Boolean)
+      const embedIndex = parts.findIndex(p => p === 'embed' || p === 'shorts')
+      if (embedIndex >= 0 && parts[embedIndex + 1]) return parts[embedIndex + 1]
+    }
+  } catch {}
+  return null
+}
+function isValidYoutubeUrl(url: string): boolean {
+  if (!url || !url.trim()) return true
+  return !!extractYoutubeId(url)
 }
 
 const COMBO_KEY = '__combo__'
@@ -151,6 +177,7 @@ export default function EditProduct() {
     images: [''],
     bulletPoints: ['', '', '', '', '', '', '', ''],
     amazonUrl: '',
+    youtubeUrl: '',
     categoryId: '',
     brandId: '',
     featured: false,
@@ -170,6 +197,7 @@ export default function EditProduct() {
   const [catLoading, setCatLoading] = useState(true)
   const [brands, setBrands] = useState<Brand[]>([])
   const [urlError, setUrlError] = useState<string>('')
+  const [youtubeUrlError, setYoutubeUrlError] = useState<string>('')
   // 上传状态：按索引标记（简化处理）
   const [uploadingIndex, setUploadingIndex] = useState<number | null>(null)
   const [previewImage, setPreviewImage] = useState<string | null>(null)
@@ -432,6 +460,7 @@ export default function EditProduct() {
             ? Array.from({ length: 8 }, (_, i) => (data.bulletPoints[i] ?? ''))
             : ['', '', '', '', '', '', '', ''],
           amazonUrl: data.amazonUrl || '',
+          youtubeUrl: (data as any).youtubeUrl || '',
           categoryId: toId(data.categoryId),
           brandId: toId(data.brandId || data.brandRelation?.id),
           featured: data.featured || false,
@@ -779,6 +808,11 @@ export default function EditProduct() {
       setLoading(false)
       return
     }
+    if (!isValidYoutubeUrl(form.youtubeUrl)) {
+      setYoutubeUrlError('请输入有效的 YouTube 链接')
+      setLoading(false)
+      return
+    }
 
     try {
       const response = await fetch(`/api/products/${productId}`, {
@@ -789,6 +823,7 @@ export default function EditProduct() {
         body: JSON.stringify({
           ...form,
           amazonUrl: form.amazonUrl,
+          youtubeUrl: (form.youtubeUrl ?? '').trim() || null,
           price: parseFloat(form.price),
           originalPrice: form.originalPrice ? parseFloat(form.originalPrice) : null,
           images: (Array.isArray(form.images) ? form.images : ['']).filter(img => img.trim() !== ''),
@@ -1496,6 +1531,27 @@ export default function EditProduct() {
                   添加图片
                 </button>
               </div>
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                YouTube 播放链接 <span className="text-gray-400 font-normal">(可选)</span>
+              </label>
+              <input
+                type="url"
+                value={form.youtubeUrl}
+                onChange={(e) => {
+                  setForm(prev => ({ ...prev, youtubeUrl: e.target.value }))
+                  if (youtubeUrlError) setYoutubeUrlError('')
+                }}
+                placeholder="https://youtu.be/xxxx 或 https://www.youtube.com/watch?v=xxxx"
+                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${youtubeUrlError ? 'border-red-500' : 'border-gray-300'}`}
+              />
+              {youtubeUrlError ? (
+                <p className="text-xs text-red-600 mt-1">{youtubeUrlError}</p>
+              ) : (
+                <p className="text-xs text-gray-500 mt-1">提供后将插入到主图第一张与第二张之间</p>
+              )}
             </div>
 
             <p className="text-xs text-gray-500 mb-2">提示：按住图片行拖拽进行排序；支持最大 4MB 图片上传</p>

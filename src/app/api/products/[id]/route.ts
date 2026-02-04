@@ -79,6 +79,7 @@ export async function PUT(
       variantImageMap,
       variantOptionImages,
       variantOptionLinks,
+      youtubeUrl,
       // 新增字段：前台按钮显示控制
       showBuyOnAmazon,
       showAddToCart,
@@ -92,6 +93,7 @@ export async function PUT(
       originalPrice: originalPrice ? parseFloat(originalPrice) : null,
       mainImage: Array.isArray(images) && images.length > 0 ? images[0] : undefined,
       images: JSON.stringify(images || []),
+      youtubeUrl: typeof youtubeUrl === 'string' && youtubeUrl.trim() ? youtubeUrl.trim() : null,
       bulletPoints: JSON.stringify(bulletPoints || []),
       amazonUrl,
       categoryId: categoryId || undefined,

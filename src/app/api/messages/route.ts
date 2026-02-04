@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
         country: country || '',
         orderNo: orderNo || '',
         message,
-      },
+      } as any,
     })
 
     const forwardSettings = await db.siteSettings.findMany({
@@ -94,7 +94,17 @@ export async function GET(request: NextRequest) {
       orderBy: {
         createdAt: 'desc',
       },
-    })
+    }) as Array<{
+      id: string
+      name: string
+      email: string
+      subject: string | null
+      country?: string | null
+      orderNo?: string | null
+      message: string
+      read: boolean
+      createdAt: Date
+    }>
 
     if (format === 'csv') {
       const header = 'name,email,message,createdAt,country,orderNo'

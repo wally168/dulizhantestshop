@@ -6,27 +6,57 @@ export default function ProductImageGallery({
   images,
   mainImage,
   title,
-  selectedImageIndex,
-  onImageChange,
+  youtubeUrl,
+  selectedIndex,
+  onIndexChange,
 }: {
   images: string[]
   mainImage: string
   title: string
-  selectedImageIndex?: number
-  onImageChange?: (index: number) => void
+  youtubeUrl?: string | null
+  selectedIndex?: number
+  onIndexChange?: (index: number) => void
 }) {
   const displayImages = Array.isArray(images) && images.length > 0 ? images : [mainImage]
   const [internalIndex, setInternalIndex] = useState(0)
-  const activeIndex = (typeof selectedImageIndex === 'number' && selectedImageIndex >= 0 && selectedImageIndex < displayImages.length)
-    ? selectedImageIndex
-    : internalIndex
 
   const normalize = (src: string) => (src.startsWith("http") ? src : src.startsWith("/") ? src : `/${src}`)
 
   // 新增：大图查看开关
   const [isModalOpen, setIsModalOpen] = useState(false)
 
-  const current = displayImages[activeIndex]
+  const extractYoutubeId = (value?: string | null): string | null => {
+    if (!value || typeof value !== 'string') return null
+    try {
+      const url = new URL(value)
+      const host = url.hostname.replace(/^www\./, '')
+      if (host === 'youtu.be') {
+        const id = url.pathname.split('/').filter(Boolean)[0]
+        return id || null
+      }
+      if (host === 'youtube.com' || host === 'youtube-nocookie.com') {
+        if (url.pathname === '/watch') {
+          return url.searchParams.get('v')
+        }
+        const parts = url.pathname.split('/').filter(Boolean)
+        const embedIndex = parts.findIndex(p => p === 'embed' || p === 'shorts')
+        if (embedIndex >= 0 && parts[embedIndex + 1]) return parts[embedIndex + 1]
+      }
+    } catch {}
+    return null
+  }
+
+  const youtubeId = extractYoutubeId(youtubeUrl)
+  const galleryItems = (() => {
+    if (!youtubeId) return displayImages.map((src) => ({ type: 'image' as const, src }))
+    const head = displayImages[0] ? [{ type: 'image' as const, src: displayImages[0] }] : []
+    const tail = displayImages.slice(1).map((src) => ({ type: 'image' as const, src }))
+    return [...head, { type: 'video' as const, id: youtubeId }, ...tail]
+  })()
+  const activeIndex = (typeof selectedIndex === 'number' && selectedIndex >= 0 && selectedIndex < galleryItems.length)
+    ? selectedIndex
+    : internalIndex
+  const current = galleryItems[activeIndex] || galleryItems[0]
 
   return (
     <div>
@@ -34,38 +64,56 @@ export default function ProductImageGallery({
       <div
         className="relative w-full overflow-hidden rounded-lg bg-white border flex items-center justify-center"
         style={{ maxWidth: 800, aspectRatio: '1 / 1' }}
-        onClick={() => setIsModalOpen(true)}
+        onClick={() => {
+          if (current?.type === 'image') setIsModalOpen(true)
+        }}
       >
-        <img src={normalize(current)} alt={title} className="max-w-full max-h-full object-contain cursor-zoom-in transition-transform duration-200" />
-        <div className="absolute bottom-2 right-2 text-xs text-gray-600 bg-white/80 px-2 py-1 rounded">Click to enlarge</div>
+        {current?.type === 'video' ? (
+          <iframe
+            src={`https://www.youtube-nocookie.com/embed/${current.id}`}
+            title={title}
+            className="w-full h-full"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowFullScreen
+          />
+        ) : (
+          <>
+            <img src={normalize(current?.src || '')} alt={title} className="max-w-full max-h-full object-contain cursor-zoom-in transition-transform duration-200" />
+            <div className="absolute bottom-2 right-2 text-xs text-gray-600 bg-white/80 px-2 py-1 rounded">Click to enlarge</div>
+          </>
+        )}
       </div>
 
-      {displayImages.length > 1 && (
+      {galleryItems.length > 1 && (
         <div className="mt-4 grid grid-cols-4 gap-2">
-          {displayImages.map((src, idx) => (
+          {galleryItems.map((item, idx) => (
             <button
-              key={idx}
+              key={`${item.type}-${idx}`}
               type="button"
               className={`relative rounded overflow-hidden border ${
                 idx === activeIndex ? "ring-2 ring-blue-500" : "border-transparent"
               }`}
               onClick={() => {
                 setInternalIndex(idx)
-                onImageChange?.(idx)
+                onIndexChange?.(idx)
               }}
               aria-label={`View image ${idx + 1}`}
             >
-              <img src={normalize(src)} alt={`Thumbnail ${idx + 1}`} className="w-full h-24 object-contain bg-white" />
+              {item.type === 'video' ? (
+                <img src={`https://img.youtube.com/vi/${item.id}/hqdefault.jpg`} alt={`Thumbnail ${idx + 1}`} className="w-full h-24 object-contain bg-white" />
+              ) : (
+                <img src={normalize(item.src)} alt={`Thumbnail ${idx + 1}`} className="w-full h-24 object-contain bg-white" />
+              )}
             </button>
           ))}
         </div>
       )}
 
       {/* 大图弹窗 */}
-      {isModalOpen && (
+      {isModalOpen && current?.type === 'image' && (
         <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center" onClick={() => setIsModalOpen(false)}>
           <div className="relative max-w-[90vw] max-h-[90vh]">
-            <img src={normalize(current)} alt={title} className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg shadow-lg" />
+            <img src={normalize(current?.src || '')} alt={title} className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg shadow-lg" />
             <button
               type="button"
               className="absolute -top-3 -right-3 bg-white rounded-full p-2 shadow hover:bg-gray-100"
