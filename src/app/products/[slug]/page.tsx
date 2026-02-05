@@ -67,6 +67,7 @@ export default async function ProductDetail({ params }: { params: Promise<{ slug
   const upc = product.upc ?? null
   const publishedAt = product.publishedAt ?? null
   const youtubeUrl = (product as { youtubeUrl?: string | null }).youtubeUrl ?? null
+  const youtubeIndex = (product as { youtubeIndex?: number | null }).youtubeIndex ?? null
   const variantGroups = parseJson<VariantGroup[]>(product.variants, [])
   const variantImageMap = (() => {
     try {
@@ -131,6 +132,7 @@ export default async function ProductDetail({ params }: { params: Promise<{ slug
             images={images}
             mainImage={product.mainImage}
             youtubeUrl={youtubeUrl}
+            youtubeIndex={youtubeIndex}
             bullets={bullets}
             variantGroups={Array.isArray(variantGroups) ? variantGroups : []}
             variantImageMap={variantImageMap}

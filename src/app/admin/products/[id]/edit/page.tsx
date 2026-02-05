@@ -30,6 +30,7 @@ interface Product {
   bulletPoints: string[]
   amazonUrl: string
   youtubeUrl?: string
+  youtubeIndex?: number | null
   categoryId?: string
   brandId?: string
   featured: boolean
@@ -52,6 +53,7 @@ interface ProductForm {
   bulletPoints: string[]
   amazonUrl: string
   youtubeUrl: string
+  youtubeIndex?: number | null
   categoryId: string
   brandId: string
   featured: boolean
@@ -178,6 +180,7 @@ export default function EditProduct() {
     bulletPoints: ['', '', '', '', '', '', '', ''],
     amazonUrl: '',
     youtubeUrl: '',
+    youtubeIndex: null,
     categoryId: '',
     brandId: '',
     featured: false,
@@ -461,6 +464,7 @@ export default function EditProduct() {
             : ['', '', '', '', '', '', '', ''],
           amazonUrl: data.amazonUrl || '',
           youtubeUrl: (data as any).youtubeUrl || '',
+          youtubeIndex: typeof (data as any).youtubeIndex === 'number' ? (data as any).youtubeIndex : null,
           categoryId: toId(data.categoryId),
           brandId: toId(data.brandId || data.brandRelation?.id),
           featured: data.featured || false,
@@ -815,6 +819,11 @@ export default function EditProduct() {
     }
 
     try {
+      const imageList = (Array.isArray(form.images) ? form.images : ['']).filter(img => img.trim() !== '')
+      const safeYoutubeIndex = (() => {
+        if (typeof form.youtubeIndex !== 'number' || !Number.isFinite(form.youtubeIndex)) return null
+        return Math.max(0, Math.min(form.youtubeIndex, imageList.length))
+      })()
       const response = await fetch(`/api/products/${productId}`, {
         method: 'PUT',
         headers: {
@@ -824,9 +833,10 @@ export default function EditProduct() {
           ...form,
           amazonUrl: form.amazonUrl,
           youtubeUrl: (form.youtubeUrl ?? '').trim() || null,
+          youtubeIndex: safeYoutubeIndex,
           price: parseFloat(form.price),
           originalPrice: form.originalPrice ? parseFloat(form.originalPrice) : null,
-          images: (Array.isArray(form.images) ? form.images : ['']).filter(img => img.trim() !== ''),
+          images: imageList,
           bulletPoints: Array.from({ length: 8 }, (_, i) => ((Array.isArray(form.bulletPoints) ? form.bulletPoints[i] : '') ?? '').trim()),
           brand: (form.brand ?? '').trim() || null,
           upc: (form.upc ?? '').trim() || null,
@@ -1550,8 +1560,28 @@ export default function EditProduct() {
               {youtubeUrlError ? (
                 <p className="text-xs text-red-600 mt-1">{youtubeUrlError}</p>
               ) : (
-                <p className="text-xs text-gray-500 mt-1">提供后将插入到主图第一张与第二张之间</p>
+                <p className="text-xs text-gray-500 mt-1">提供后可设置插入位置</p>
               )}
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                视频插入位置 <span className="text-gray-400 font-normal">(可选)</span>
+              </label>
+              <select
+                value={typeof form.youtubeIndex === 'number' && Number.isFinite(form.youtubeIndex) ? Math.max(0, Math.min(form.youtubeIndex, form.images.length)) : Math.min(1, form.images.length)}
+                onChange={(e) => {
+                  const v = parseInt(e.target.value, 10)
+                  setForm(prev => ({ ...prev, youtubeIndex: Number.isFinite(v) ? v : null }))
+                }}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                {Array.from({ length: Math.max(1, form.images.length) + 1 }, (_, i) => (
+                  <option key={i} value={i}>
+                    第 {i + 1} 位
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-gray-500 mt-1">第 1 位表示最前面，最后一位表示图片列表末尾</p>
             </div>
 
             <p className="text-xs text-gray-500 mb-2">提示：按住图片行拖拽进行排序；支持最大 4MB 图片上传</p>
@@ -1658,7 +1688,7 @@ export default function EditProduct() {
             <div className="mb-6">
               <div className="flex justify-between items-center mb-2">
                 <label className="block text-sm font-medium text-gray-700">
-                  详细描述 * <span className="text-xs text-gray-500">(最多3000字符，支持HTML)</span>
+                  详细描述 * <span className="text-xs text-gray-500">(最多3000字符，支持HTML，视频插入：直接粘贴 YouTube 链接即可)</span>
                 </label>
                 <label className="cursor-pointer inline-flex items-center px-3 py-1.5 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
                   <Upload className={`h-4 w-4 mr-2 ${descUploading ? 'animate-pulse' : ''}`} />

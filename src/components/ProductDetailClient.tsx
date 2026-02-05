@@ -74,6 +74,7 @@ function replaceYoutubeLinks(input: string): string {
    images,
    mainImage,
   youtubeUrl,
+  youtubeIndex,
    bullets,
    variantGroups,
    variantImageMap,
@@ -97,6 +98,7 @@ function replaceYoutubeLinks(input: string): string {
   images: string[]
   mainImage: string
   youtubeUrl?: string | null
+  youtubeIndex?: number | null
   bullets: string[]
   variantGroups: VariantGroup[]
   variantImageMap?: Record<string, Record<string, number>> | null
@@ -120,18 +122,25 @@ function replaceYoutubeLinks(input: string): string {
      const arr = Array.isArray(images) && images.length > 0 ? images : [mainImage]
      return arr.filter(Boolean)
    }, [images, mainImage])
-   const youtubeId = useMemo(() => extractYoutubeId(youtubeUrl), [youtubeUrl])
-   const hasGalleryVideo = !!youtubeId
-   const toGalleryIndex = (imageIndex: number) => {
-     if (!hasGalleryVideo) return imageIndex
-     return imageIndex >= 1 ? imageIndex + 1 : imageIndex
-   }
-   const toImageIndex = (galleryIndex: number) => {
-     if (!hasGalleryVideo) return galleryIndex
-     if (galleryIndex <= 0) return 0
-     if (galleryIndex === 1) return 0
-     return galleryIndex - 1
-   }
+  const youtubeId = useMemo(() => extractYoutubeId(youtubeUrl), [youtubeUrl])
+  const normalizedYoutubeIndex = useMemo(() => {
+    if (!youtubeId) return null
+    const raw = typeof youtubeIndex === 'number' && Number.isFinite(youtubeIndex) ? youtubeIndex : 1
+    return Math.max(0, Math.min(raw, safeImages.length))
+  }, [youtubeId, youtubeIndex, safeImages.length])
+  const hasGalleryVideo = !!youtubeId && normalizedYoutubeIndex !== null
+  const toGalleryIndex = (imageIndex: number) => {
+    if (!hasGalleryVideo || normalizedYoutubeIndex === null) return imageIndex
+    return imageIndex >= normalizedYoutubeIndex ? imageIndex + 1 : imageIndex
+  }
+  const toImageIndex = (galleryIndex: number) => {
+    if (!hasGalleryVideo || normalizedYoutubeIndex === null) return galleryIndex
+    if (galleryIndex === normalizedYoutubeIndex) {
+      return Math.min(normalizedYoutubeIndex, Math.max(0, safeImages.length - 1))
+    }
+    if (galleryIndex > normalizedYoutubeIndex) return galleryIndex - 1
+    return galleryIndex
+  }
    const selectedImageIndex = toImageIndex(selectedGalleryIndex)
    const primaryImageUrl = safeImages[selectedImageIndex] || mainImage
  
@@ -241,6 +250,7 @@ function replaceYoutubeLinks(input: string): string {
           mainImage={mainImage}
           title={title}
           youtubeUrl={youtubeUrl}
+          youtubeIndex={normalizedYoutubeIndex}
           selectedIndex={selectedGalleryIndex}
           onIndexChange={setSelectedGalleryIndex}
         />

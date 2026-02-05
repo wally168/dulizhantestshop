@@ -7,6 +7,7 @@ export default function ProductImageGallery({
   mainImage,
   title,
   youtubeUrl,
+  youtubeIndex,
   selectedIndex,
   onIndexChange,
 }: {
@@ -14,6 +15,7 @@ export default function ProductImageGallery({
   mainImage: string
   title: string
   youtubeUrl?: string | null
+  youtubeIndex?: number | null
   selectedIndex?: number
   onIndexChange?: (index: number) => void
 }) {
@@ -49,9 +51,17 @@ export default function ProductImageGallery({
   const youtubeId = extractYoutubeId(youtubeUrl)
   const galleryItems = (() => {
     if (!youtubeId) return displayImages.map((src) => ({ type: 'image' as const, src }))
-    const head = displayImages[0] ? [{ type: 'image' as const, src: displayImages[0] }] : []
-    const tail = displayImages.slice(1).map((src) => ({ type: 'image' as const, src }))
-    return [...head, { type: 'video' as const, id: youtubeId }, ...tail]
+    const insertIndex = (() => {
+      const raw = typeof youtubeIndex === 'number' && Number.isFinite(youtubeIndex) ? youtubeIndex : 1
+      return Math.max(0, Math.min(raw, displayImages.length))
+    })()
+    const items: Array<{ type: 'image'; src: string } | { type: 'video'; id: string }> = []
+    for (let i = 0; i < displayImages.length; i += 1) {
+      if (i === insertIndex) items.push({ type: 'video', id: youtubeId })
+      items.push({ type: 'image', src: displayImages[i] })
+    }
+    if (insertIndex >= displayImages.length) items.push({ type: 'video', id: youtubeId })
+    return items
   })()
   const activeIndex = (typeof selectedIndex === 'number' && selectedIndex >= 0 && selectedIndex < galleryItems.length)
     ? selectedIndex

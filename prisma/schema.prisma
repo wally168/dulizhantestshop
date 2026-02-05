@@ -49,6 +49,7 @@ model Product {
   mainImage       String
   images          String   // JSON string of image URLs
   youtubeUrl      String?
+  youtubeIndex    Int?
   price           Float
   originalPrice   Float?
   amazonUrl       String

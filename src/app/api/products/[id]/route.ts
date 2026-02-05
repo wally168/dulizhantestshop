@@ -80,10 +80,25 @@ export async function PUT(
       variantOptionImages,
       variantOptionLinks,
       youtubeUrl,
+      youtubeIndex,
       // 新增字段：前台按钮显示控制
       showBuyOnAmazon,
       showAddToCart,
     } = body
+
+    const normalizedYoutubeUrl = typeof youtubeUrl === 'string' && youtubeUrl.trim() ? youtubeUrl.trim() : null
+    const imageList = Array.isArray(images) ? images.filter((s: string) => s && s.trim() !== '') : []
+    const normalizedYoutubeIndex = (() => {
+      if (!normalizedYoutubeUrl) return null
+      const raw = typeof youtubeIndex === 'number'
+        ? youtubeIndex
+        : typeof youtubeIndex === 'string'
+          ? parseInt(youtubeIndex, 10)
+          : NaN
+      const fallback = Math.min(1, imageList.length)
+      if (!Number.isFinite(raw)) return fallback
+      return Math.max(0, Math.min(raw, imageList.length))
+    })()
 
     const updateData: any = {
       title: name,
@@ -91,9 +106,10 @@ export async function PUT(
       description: longDescription || description || '',
       price: parseFloat(price),
       originalPrice: originalPrice ? parseFloat(originalPrice) : null,
-      mainImage: Array.isArray(images) && images.length > 0 ? images[0] : undefined,
-      images: JSON.stringify(images || []),
-      youtubeUrl: typeof youtubeUrl === 'string' && youtubeUrl.trim() ? youtubeUrl.trim() : null,
+      mainImage: imageList.length > 0 ? imageList[0] : undefined,
+      images: JSON.stringify(imageList),
+      youtubeUrl: normalizedYoutubeUrl,
+      youtubeIndex: normalizedYoutubeIndex,
       bulletPoints: JSON.stringify(bulletPoints || []),
       amazonUrl,
       categoryId: categoryId || undefined,
