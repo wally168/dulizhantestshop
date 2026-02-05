@@ -4,7 +4,7 @@ import Layout from '@/components/Layout'
 import Carousel from '@/components/Carousel'
 import { db } from '@/lib/db'
 import { cookies } from 'next/headers'
-import { formatPrice, getLocale, getTranslations, normalizeLanguage, type SupportedLanguage, type Translations } from '@/lib/utils'
+import { formatPrice, getLocale, getTranslations, normalizeLanguage, parseI18nMap, resolveI18nText, type SupportedLanguage, type Translations } from '@/lib/utils'
 
 interface Product {
   id: string
@@ -16,6 +16,7 @@ interface Product {
   featured: boolean
   avgRating?: number
   reviewCount?: number
+  i18n?: string | null
 }
 
 interface HomeContent {
@@ -41,6 +42,7 @@ interface CarouselItem {
   link?: string | null
   btnText?: string | null
   newTab?: boolean | null
+  i18n?: string | null
 }
 
 function resolveHomeValue(value: string | null, base: string, next: string) {
@@ -123,17 +125,23 @@ async function getHomeContent(language: SupportedLanguage): Promise<HomeContent>
   try {
     const row = await db.homeContent.findFirst()
     if (!row) return defaults
+    const map = parseI18nMap(row.i18n)
+    const getI18nText = (key: keyof HomeContent) => {
+      const entry = map[language]
+      const value = entry && typeof entry === 'object' ? entry[key] : undefined
+      return typeof value === 'string' && value.trim() ? value : null
+    }
     return {
-      featuredTitle: resolveHomeValue(row.featuredTitle, base.home.featuredTitle, t.home.featuredTitle),
-      featuredSubtitle: resolveHomeValue(row.featuredSubtitle, base.home.featuredSubtitle, t.home.featuredSubtitle),
-      whyChooseTitle: resolveHomeValue(row.whyChooseTitle, base.home.whyChooseTitle, t.home.whyChooseTitle),
-      whyChooseSubtitle: resolveHomeValue(row.whyChooseSubtitle, base.home.whyChooseSubtitle, t.home.whyChooseSubtitle),
-      feature1Title: resolveHomeValue(row.feature1Title, base.home.feature1Title, t.home.feature1Title),
-      feature1Description: resolveHomeValue(row.feature1Description, base.home.feature1Description, t.home.feature1Description),
-      feature2Title: resolveHomeValue(row.feature2Title, base.home.feature2Title, t.home.feature2Title),
-      feature2Description: resolveHomeValue(row.feature2Description, base.home.feature2Description, t.home.feature2Description),
-      feature3Title: resolveHomeValue(row.feature3Title, base.home.feature3Title, t.home.feature3Title),
-      feature3Description: resolveHomeValue(row.feature3Description, base.home.feature3Description, t.home.feature3Description),
+      featuredTitle: getI18nText('featuredTitle') ?? resolveHomeValue(row.featuredTitle, base.home.featuredTitle, t.home.featuredTitle),
+      featuredSubtitle: getI18nText('featuredSubtitle') ?? resolveHomeValue(row.featuredSubtitle, base.home.featuredSubtitle, t.home.featuredSubtitle),
+      whyChooseTitle: getI18nText('whyChooseTitle') ?? resolveHomeValue(row.whyChooseTitle, base.home.whyChooseTitle, t.home.whyChooseTitle),
+      whyChooseSubtitle: getI18nText('whyChooseSubtitle') ?? resolveHomeValue(row.whyChooseSubtitle, base.home.whyChooseSubtitle, t.home.whyChooseSubtitle),
+      feature1Title: getI18nText('feature1Title') ?? resolveHomeValue(row.feature1Title, base.home.feature1Title, t.home.feature1Title),
+      feature1Description: getI18nText('feature1Description') ?? resolveHomeValue(row.feature1Description, base.home.feature1Description, t.home.feature1Description),
+      feature2Title: getI18nText('feature2Title') ?? resolveHomeValue(row.feature2Title, base.home.feature2Title, t.home.feature2Title),
+      feature2Description: getI18nText('feature2Description') ?? resolveHomeValue(row.feature2Description, base.home.feature2Description, t.home.feature2Description),
+      feature3Title: getI18nText('feature3Title') ?? resolveHomeValue(row.feature3Title, base.home.feature3Title, t.home.feature3Title),
+      feature3Description: getI18nText('feature3Description') ?? resolveHomeValue(row.feature3Description, base.home.feature3Description, t.home.feature3Description),
       carouselEnabled: row.carouselEnabled ?? defaults.carouselEnabled,
       carouselInterval: row.carouselInterval ?? defaults.carouselInterval,
     }
@@ -142,7 +150,7 @@ async function getHomeContent(language: SupportedLanguage): Promise<HomeContent>
   }
 }
 
-async function getCarouselItems(): Promise<CarouselItem[]> {
+async function getCarouselItems(language: SupportedLanguage): Promise<CarouselItem[]> {
   try {
     const items = await db.carouselItem.findMany({
       where: { active: true },
@@ -150,12 +158,13 @@ async function getCarouselItems(): Promise<CarouselItem[]> {
     })
     return items.map((i: any) => ({
       id: i.id,
-      title: i.title,
-      description: i.description,
+      title: resolveI18nText(i.title, i.i18n, language, 'title'),
+      description: resolveI18nText(i.description, i.i18n, language, 'description'),
       imageUrl: i.imageUrl,
       link: i.link,
-      btnText: i.btnText,
+      btnText: resolveI18nText(i.btnText, i.i18n, language, 'btnText'),
       newTab: i.newTab,
+      i18n: i.i18n ?? null,
     }))
   } catch {
     return []
@@ -180,7 +189,7 @@ export default async function Home() {
     getSiteName(),
     getFeaturedProducts(),
     getHomeContent(language),
-    getCarouselItems(),
+    getCarouselItems(language),
   ])
 
   return (
@@ -215,9 +224,12 @@ export default async function Home() {
           
           {featuredProducts.length > 0 ? (
             <div className="grid md:grid-cols-3 gap-8 lg:gap-12">
-              {featuredProducts.map((product) => (
-                <ProductCard key={product.id} product={product} locale={locale} />
-              ))}
+              {featuredProducts.map((product) => {
+                const title = resolveI18nText(product.title, (product as any).i18n, language, 'title')
+                return (
+                  <ProductCard key={product.id} product={{ ...product, title }} locale={locale} />
+                )
+              })}
             </div>
           ) : (
             <div className="text-center py-12">

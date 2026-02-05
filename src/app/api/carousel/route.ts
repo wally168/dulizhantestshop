@@ -6,7 +6,11 @@ export async function GET() {
     const items = await db.carouselItem.findMany({
       orderBy: { order: 'asc' },
     })
-    return NextResponse.json(items)
+    const normalized = items.map((i) => ({
+      ...i,
+      i18n: (() => { try { return i.i18n ? JSON.parse(i.i18n) : {} } catch { return {} } })(),
+    }))
+    return NextResponse.json(normalized)
   } catch (error) {
     console.error('Failed to fetch carousel items:', error)
     return NextResponse.json({ error: 'Failed to fetch carousel items' }, { status: 500 })
@@ -37,9 +41,21 @@ export async function POST(request: NextRequest) {
         newTab: data.newTab ?? false,
         order: newOrder,
         active: data.active ?? true,
+        i18n: (() => {
+          try {
+            if (!data.i18n) return null
+            if (typeof data.i18n === 'string') return data.i18n
+            if (typeof data.i18n === 'object') return JSON.stringify(data.i18n)
+            return null
+          } catch { return null }
+        })(),
       },
     })
-    return NextResponse.json(item)
+    const normalized = {
+      ...item,
+      i18n: (() => { try { return item.i18n ? JSON.parse(item.i18n) : {} } catch { return {} } })(),
+    }
+    return NextResponse.json(normalized)
   } catch (error) {
     console.error('Failed to create carousel item:', error)
     return NextResponse.json({ error: 'Failed to create carousel item' }, { status: 500 })

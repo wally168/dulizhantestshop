@@ -5,7 +5,7 @@ import ProductDetailClient from '@/components/ProductDetailClient'
 import { db } from '@/lib/db'
 import Link from 'next/link'
 import { cookies } from 'next/headers'
-import { getTranslations, normalizeLanguage, type SupportedLanguage } from '@/lib/utils'
+import { getTranslations, normalizeLanguage, resolveI18nList, resolveI18nText, type SupportedLanguage } from '@/lib/utils'
 
 function parseJson<T>(s: string | null | undefined, fallback: T): T {
   try { return s ? JSON.parse(s) as T : fallback } catch { return fallback }
@@ -74,6 +74,10 @@ export default async function ProductDetail({ params }: { params: Promise<{ slug
   const images = Array.isArray(parsedImages) ? parsedImages : [product.mainImage]
   const parsedBullets = parseJson<string[]>(product.bulletPoints, [])
   const bullets = Array.isArray(parsedBullets) ? parsedBullets : []
+  const resolvedTitle = resolveI18nText(product.title, (product as any).i18n, language, 'title')
+  const resolvedDescription = resolveI18nText(product.description, (product as any).i18n, language, 'description')
+  const resolvedBullets = resolveI18nList(bullets, (product as any).i18n, language, 'bulletPoints')
+  const resolvedCategoryName = resolveI18nText(product.category?.name ?? null, (product as any).category?.i18n, language, 'name')
 
   type VariantGroup = { name: string; options: string[] }
   // 优先使用关联品牌的名称，回退到旧字段
@@ -134,12 +138,12 @@ export default async function ProductDetail({ params }: { params: Promise<{ slug
           <ProductDetailClient
             id={product.id}
             slug={product.slug}
-            title={product.title}
-            categoryName={product.category?.name ?? 'Uncategorized'}
+            title={resolvedTitle}
+            categoryName={resolvedCategoryName || 'Uncategorized'}
             brand={brand ?? null}
             upc={upc ?? null}
             publishedAt={publishedAt ?? null}
-            description={product.description}
+            description={resolvedDescription}
             amazonUrl={product.amazonUrl}
             price={product.price}
             originalPrice={product.originalPrice ?? null}
@@ -147,7 +151,7 @@ export default async function ProductDetail({ params }: { params: Promise<{ slug
             mainImage={product.mainImage}
             youtubeUrl={youtubeUrl}
             youtubeIndex={youtubeIndex}
-            bullets={bullets}
+            bullets={resolvedBullets}
             variantGroups={Array.isArray(variantGroups) ? variantGroups : []}
             variantImageMap={variantImageMap}
             variantOptionImages={variantOptionImages}

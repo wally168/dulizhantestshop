@@ -6,7 +6,7 @@ export async function GET(_req: NextRequest, context: { params: Promise<{ id: st
     const { id } = await context.params
     const c = await db.category.findUnique({ where: { id } })
     if (!c) return NextResponse.json({ error: '未找到该分类' }, { status: 404 })
-    return NextResponse.json({ id: c.id, name: c.name, slug: c.slug, description: c.description, image: c.image })
+    return NextResponse.json({ id: c.id, name: c.name, slug: c.slug, description: c.description, image: c.image, i18n: (() => { try { return c.i18n ? JSON.parse(c.i18n) : {} } catch { return {} } })() })
   } catch (error) {
     console.error('获取分类详情失败:', error)
     return NextResponse.json({ error: '获取分类详情失败' }, { status: 500 })
@@ -21,6 +21,7 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
     const slugInput: string | undefined = payload?.slug?.trim()
     const description: string | null | undefined = payload?.description ?? undefined
     const image: string | null | undefined = payload?.image ?? undefined
+    const i18n = payload?.i18n
 
     const updateData: any = {}
     if (typeof name === 'string' && name.length > 0) updateData.name = name
@@ -33,6 +34,16 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
     }
     if (description !== undefined) updateData.description = description
     if (image !== undefined) updateData.image = image
+    if (i18n !== undefined) {
+      updateData.i18n = (() => {
+        try {
+          if (!i18n) return null
+          if (typeof i18n === 'string') return i18n
+          if (typeof i18n === 'object') return JSON.stringify(i18n)
+          return null
+        } catch { return null }
+      })()
+    }
 
     if (Object.keys(updateData).length === 0) {
       return NextResponse.json({ error: '没有可更新的字段' }, { status: 400 })
@@ -47,7 +58,7 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
     }
 
     const updated = await db.category.update({ where: { id }, data: updateData })
-    return NextResponse.json({ id: updated.id, name: updated.name, slug: updated.slug, description: updated.description, image: updated.image })
+    return NextResponse.json({ id: updated.id, name: updated.name, slug: updated.slug, description: updated.description, image: updated.image, i18n: (() => { try { return updated.i18n ? JSON.parse(updated.i18n) : {} } catch { return {} } })() })
   } catch (error) {
     console.error('更新分类失败:', error)
     return NextResponse.json({ error: '更新分类失败' }, { status: 500 })

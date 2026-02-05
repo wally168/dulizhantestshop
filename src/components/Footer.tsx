@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { ShoppingBag } from 'lucide-react'
 import { useSettings } from '@/lib/settings'
 import { useEffect, useState } from 'react'
-import { getTranslations, resolveContent } from '@/lib/utils'
+import { getTranslations, parseI18nMap, resolveI18nText } from '@/lib/utils'
 
 interface NavItem {
   id: string
@@ -12,6 +12,7 @@ interface NavItem {
   href: string
   order: number
   isExternal?: boolean
+  i18n?: any
 }
 
 export default function Footer({ initialNavItems = [] }: { initialNavItems?: NavItem[] }) {
@@ -62,6 +63,10 @@ export default function Footer({ initialNavItems = [] }: { initialNavItems?: Nav
       </footer>
     )
   }
+  const contentI18n = parseI18nMap((settings as any).contentI18n)
+  const resolvedDescription = resolveI18nText(settings.siteDescription, contentI18n, language, 'siteDescription')
+  const resolvedFooterText = resolveI18nText(settings.footerText, contentI18n, language, 'footerText')
+
   // Helper to ensure units are present
   const formatSize = (value: string | undefined | null) => {
     if (!value || value === 'auto') return 'auto'
@@ -128,7 +133,7 @@ export default function Footer({ initialNavItems = [] }: { initialNavItems?: Nav
                   <span className="text-xl font-semibold text-gray-900">{settings.siteName}</span>
                 </Link>
                 <p className="text-sm text-gray-600">
-                  {resolveContent(settings.siteDescription, 'siteDescription', language)}
+                  {resolvedDescription}
                 </p>
               </div>
             </div>
@@ -144,7 +149,7 @@ export default function Footer({ initialNavItems = [] }: { initialNavItems?: Nav
                       {navItems.map((item) => (
                         <li key={item.id}>
                           <Link href={item.href} className="text-sm text-gray-600 hover:text-gray-900">
-                            {item.label}
+                            {resolveI18nText(item.label, item.i18n, language, 'label')}
                           </Link>
                         </li>
                       ))}
@@ -216,7 +221,7 @@ export default function Footer({ initialNavItems = [] }: { initialNavItems?: Nav
         </div>
         <div className="mt-12 border-t border-gray-200 pt-8 clear-both">
           <p className="text-sm text-gray-600 text-center">
-            {settings.footerText}
+            {resolvedFooterText}
           </p>
         </div>
       </div>

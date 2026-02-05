@@ -47,6 +47,22 @@ interface VariantGroup { name: string; options: string[] }
 interface Category { id: string; name: string; slug: string }
 interface Brand { id: string; name: string; slug: string }
 
+type I18nProductEntry = {
+  title?: string
+  description?: string
+  bulletPoints?: string[]
+}
+
+const languageOptions = [
+  { value: 'en', label: 'English' },
+  { value: 'zh', label: '中文' },
+  { value: 'ja', label: '日本語' },
+  { value: 'es', label: 'Español' },
+  { value: 'fr', label: 'Français' },
+  { value: 'de', label: 'Deutsch' },
+  { value: 'ko', label: '한국어' },
+]
+
 // 链接校验（仅校验为有效 http/https URL，不自动改写）
 function isValidAmazonUrl(url: string): boolean {
   try {
@@ -160,6 +176,7 @@ export default function NewProduct() {
   const [bulkUploading, setBulkUploading] = useState(false)
   const [dragIndex, setDragIndex] = useState<number | null>(null)
   const [hasChanges, setHasChanges] = useState(false)
+  const [i18n, setI18n] = useState<Record<string, I18nProductEntry>>({})
   useUnsavedChangesPrompt(hasChanges)
 
   // 描述图片上传
@@ -360,6 +377,26 @@ export default function NewProduct() {
         if (typeof form.youtubeIndex !== 'number' || !Number.isFinite(form.youtubeIndex)) return null
         return Math.max(0, Math.min(form.youtubeIndex, imageList.length))
       })()
+      const i18nPayload = (() => {
+        const result: Record<string, I18nProductEntry> = {}
+        languageOptions.forEach((lang) => {
+          const entry = i18n[lang.value]
+          if (!entry) return
+          const title = (entry.title ?? '').trim()
+          const description = (entry.description ?? '').trim()
+          const bulletPoints = Array.isArray(entry.bulletPoints)
+            ? entry.bulletPoints.map((v) => (v ?? '').toString().trim()).filter(Boolean)
+            : []
+          if (title || description || bulletPoints.length > 0) {
+            result[lang.value] = {
+              ...(title ? { title } : {}),
+              ...(description ? { description } : {}),
+              ...(bulletPoints.length > 0 ? { bulletPoints } : {}),
+            }
+          }
+        })
+        return result
+      })()
       const response = await fetch('/api/products', {
         method: 'POST',
         headers: {
@@ -374,6 +411,7 @@ export default function NewProduct() {
           originalPrice: form.originalPrice ? parseFloat(form.originalPrice) : null,
           images: imageList,
           bulletPoints: Array.from({ length: 5 }, (_, i) => (form.bulletPoints[i] ?? '').trim()),
+          i18n: i18nPayload,
           brandId: form.brandId || null,
           brand: (form.brand ?? '').trim() || null,
           upc: (form.upc ?? '').trim() || null,
@@ -438,6 +476,23 @@ export default function NewProduct() {
       ...prev,
       bulletPoints: prev.bulletPoints.map((point, i) => i === index ? value : point)
     }))
+    setHasChanges(true)
+  }
+
+  const updateI18nField = (lang: string, field: keyof I18nProductEntry, value: string) => {
+    setI18n((prev) => {
+      const entry = prev[lang] ?? {}
+      return { ...prev, [lang]: { ...entry, [field]: value } }
+    })
+    setHasChanges(true)
+  }
+
+  const updateI18nBulletPoints = (lang: string, value: string) => {
+    const bulletPoints = value.split('\n').map((v) => v.trim()).filter(Boolean)
+    setI18n((prev) => {
+      const entry = prev[lang] ?? {}
+      return { ...prev, [lang]: { ...entry, bulletPoints } }
+    })
     setHasChanges(true)
   }
 
@@ -1226,6 +1281,50 @@ export default function NewProduct() {
               <div className="text-xs text-gray-600 mt-2">
                 <strong>支持的HTML标签：</strong> &lt;p&gt;, &lt;br&gt;, &lt;strong&gt;, &lt;em&gt;, &lt;ul&gt;, &lt;ol&gt;, &lt;li&gt;, &lt;img&gt;, &lt;a&gt;, &lt;h1-h6&gt;
               </div>
+            </div>
+          </div>
+
+          <div className="bg-white p-6 rounded-xl shadow-sm border">
+            <h2 className="text-lg font-semibold text-gray-900 mb-6">多语言内容</h2>
+            <div className="space-y-6">
+              {languageOptions.map((lang) => {
+                const entry = i18n[lang.value] ?? {}
+                return (
+                  <div key={lang.value} className="border rounded-lg p-4">
+                    <div className="text-sm font-semibold text-gray-900 mb-3">{lang.label}</div>
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">产品名称</label>
+                        <input
+                          type="text"
+                          value={entry.title ?? ''}
+                          onChange={(e) => updateI18nField(lang.value, 'title', e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">产品描述</label>
+                        <textarea
+                          rows={4}
+                          value={entry.description ?? ''}
+                          onChange={(e) => updateI18nField(lang.value, 'description', e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">产品要点</label>
+                        <textarea
+                          rows={4}
+                          value={Array.isArray(entry.bulletPoints) ? entry.bulletPoints.join('\n') : ''}
+                          onChange={(e) => updateI18nBulletPoints(lang.value, e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          placeholder="一行一个要点"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
             </div>
           </div>
 

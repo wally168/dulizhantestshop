@@ -25,7 +25,22 @@ interface NavItem {
   order: number
   isExternal: boolean
   active: boolean
+  i18n?: any
 }
+
+type I18nNavEntry = {
+  label?: string
+}
+
+const languageOptions = [
+  { value: 'en', label: 'English' },
+  { value: 'zh', label: '中文' },
+  { value: 'ja', label: '日本語' },
+  { value: 'es', label: 'Español' },
+  { value: 'fr', label: 'Français' },
+  { value: 'de', label: 'Deutsch' },
+  { value: 'ko', label: '한국어' },
+]
 
 export default function NavigationPage() {
   const { settings } = useSettings()
@@ -56,6 +71,7 @@ export default function NavigationPage() {
                 order: Number(i.order || 0),
                 isExternal: Boolean(i.isExternal) || false,
                 active: Boolean(i.active ?? true),
+                i18n: i?.i18n ?? null,
               }))
               .sort((a, b) => a.order - b.order)
               .map((item, idx) => ({ ...item, order: idx + 1 }))
@@ -76,6 +92,25 @@ export default function NavigationPage() {
     setSaving(true)
 
     try {
+      const normalizeI18n = (raw: any): Record<string, I18nNavEntry> => {
+        let map: Record<string, any> = {}
+        if (raw) {
+          if (typeof raw === 'object') map = raw
+          if (typeof raw === 'string') {
+            try {
+              const parsed = JSON.parse(raw)
+              if (parsed && typeof parsed === 'object') map = parsed
+            } catch {}
+          }
+        }
+        const result: Record<string, I18nNavEntry> = {}
+        languageOptions.forEach((lang) => {
+          const entry = map[lang.value]
+          const label = entry?.label ? String(entry.label).trim() : ''
+          if (label) result[lang.value] = { label }
+        })
+        return result
+      }
       // 基础校验：label/href 不可为空，order 为数字
       const cleaned = navItems
         .map((item) => ({
@@ -84,6 +119,7 @@ export default function NavigationPage() {
           href: String(item.href).trim(),
           order: Number(item.order),
           active: Boolean(item.active),
+          i18n: normalizeI18n(item?.i18n),
         }))
         .filter((item) => item.label && item.href)
         .sort((a, b) => a.order - b.order)
@@ -119,6 +155,7 @@ export default function NavigationPage() {
                 order: Number(i.order || 0),
                 isExternal: Boolean(i.isExternal) || false,
                 active: Boolean(i.active ?? true),
+                i18n: i?.i18n ?? null,
               }))
               .sort((a, b) => a.order - b.order)
               .map((item, idx) => ({ ...item, order: idx + 1 }))
@@ -143,7 +180,8 @@ export default function NavigationPage() {
       href: '',
       order: navItems.length + 1,
       isExternal: false,
-      active: true
+      active: true,
+      i18n: {}
     }
     setNavItems([...navItems, newItem])
   }
@@ -156,6 +194,25 @@ export default function NavigationPage() {
     setNavItems(navItems.map(item => 
       item.id === id ? { ...item, [field]: value } : item
     ))
+  }
+
+  const updateI18nField = (id: string, lang: string, value: string) => {
+    setNavItems((prev) =>
+      prev.map((item) => {
+        if (item.id !== id) return item
+        const map = typeof item.i18n === 'object' && item.i18n ? item.i18n : {}
+        return {
+          ...item,
+          i18n: {
+            ...map,
+            [lang]: {
+              ...(map[lang] || {}),
+              label: value,
+            },
+          },
+        }
+      })
+    )
   }
 
   const moveNavItem = (id: string, direction: 'up' | 'down') => {
@@ -298,6 +355,29 @@ export default function NavigationPage() {
                     >
                       <X className="h-4 w-4" />
                     </button>
+                  </div>
+                  <div className="md:col-span-12">
+                    <div className="border rounded-lg p-3">
+                      <div className="text-sm font-semibold text-gray-900 mb-3">多语言名称</div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {languageOptions.map((lang) => {
+                          const map = typeof item.i18n === 'object' && item.i18n ? item.i18n : {}
+                          const value = map?.[lang.value]?.label ?? ''
+                          return (
+                            <div key={`${item.id}-${lang.value}`}>
+                              <label className="block text-xs text-gray-500 mb-1">{lang.label}</label>
+                              <input
+                                type="text"
+                                value={value}
+                                onChange={(e) => updateI18nField(item.id, lang.value, e.target.value)}
+                                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+                                placeholder="导航名称"
+                              />
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
                   </div>
                 </div>
               ))}

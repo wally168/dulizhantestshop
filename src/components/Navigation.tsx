@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { Menu, X, ShoppingBag, ShoppingCart } from 'lucide-react'
 import { useSettings } from '@/lib/settings'
 import { getCount, onCartChange } from '@/lib/cart'
-import { getTranslations, type SupportedLanguage } from '@/lib/utils'
+import { getTranslations, resolveI18nText, type SupportedLanguage } from '@/lib/utils'
 
 // 新增：动态导航项类型
 interface NavItem {
@@ -14,6 +14,7 @@ interface NavItem {
   href: string
   order: number
   isExternal?: boolean
+  i18n?: any
 }
 
 const languageOptions: Array<{ value: SupportedLanguage; label: string }> = [
@@ -203,14 +204,14 @@ export default function Navigation({ initialNavItems = [] }: { initialNavItems?:
               itemsToRender.map((item) => (
                 item.href === '/products' ? (
                   <div key={item.id} className="relative group">
-                    <NavLink href={item.href}>{item.label}</NavLink>
+                    <NavLink href={item.href}>{resolveI18nText(item.label, item.i18n, language, 'label')}</NavLink>
                     {categories.length > 0 && (
                       <div className="absolute left-0 top-full pt-2 w-48 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all z-50">
                         <div className="bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
                           <Link href="/products" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">{t.nav.allProducts}</Link>
                           {categories.map((c) => (
                             <Link key={c.id} href={`/products?categoryId=${encodeURIComponent(c.id)}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
-                              {c.name}
+                              {resolveI18nText(c.name, (c as any).i18n, language, 'name')}
                             </Link>
                           ))}
                         </div>
@@ -219,7 +220,7 @@ export default function Navigation({ initialNavItems = [] }: { initialNavItems?:
                   </div>
                 ) : (
                   <NavLink key={item.id} href={item.href}>
-                    {item.label}
+                    {resolveI18nText(item.label, item.i18n, language, 'label')}
                   </NavLink>
                 )
               ))
@@ -329,7 +330,7 @@ export default function Navigation({ initialNavItems = [] }: { initialNavItems?:
               <>
                 {itemsToRender.map((item) => (
                   <MobileNavLink key={item.id} href={item.href} onClick={() => setIsMenuOpen(false)}>
-                    {item.label}
+                    {resolveI18nText(item.label, item.i18n, language, 'label')}
                   </MobileNavLink>
                 ))}
                 {categories.length > 0 && (
@@ -337,7 +338,7 @@ export default function Navigation({ initialNavItems = [] }: { initialNavItems?:
                     <div className="px-4 py-2 text-xs text-gray-500">{t.nav.browseByCategory}</div>
                     {categories.map((c) => (
                       <Link key={c.id} href={`/products?categoryId=${encodeURIComponent(c.id)}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50" onClick={() => setIsMenuOpen(false)}>
-                        {c.name}
+                        {resolveI18nText(c.name, (c as any).i18n, language, 'name')}
                       </Link>
                     ))}
                   </div>

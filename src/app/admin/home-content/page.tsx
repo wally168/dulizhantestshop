@@ -18,8 +18,32 @@ interface HomeContent {
   feature3Description: string
 }
 
+type I18nHomeEntry = {
+  featuredTitle?: string
+  featuredSubtitle?: string
+  whyChooseTitle?: string
+  whyChooseSubtitle?: string
+  feature1Title?: string
+  feature1Description?: string
+  feature2Title?: string
+  feature2Description?: string
+  feature3Title?: string
+  feature3Description?: string
+}
+
+const languageOptions = [
+  { value: 'en', label: 'English' },
+  { value: 'zh', label: '中文' },
+  { value: 'ja', label: '日本語' },
+  { value: 'es', label: 'Español' },
+  { value: 'fr', label: 'Français' },
+  { value: 'de', label: 'Deutsch' },
+  { value: 'ko', label: '한국어' },
+]
+
 export default function HomeContentPage() {
   const [content, setContent] = useState<HomeContent | null>(null)
+  const [i18n, setI18n] = useState<Record<string, I18nHomeEntry>>({})
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
@@ -34,6 +58,18 @@ export default function HomeContentPage() {
       if (response.ok) {
         const data = await response.json()
         setContent(data)
+        const parsedI18n = (() => {
+          if (!data?.i18n) return {}
+          if (typeof data.i18n === 'object') return data.i18n
+          if (typeof data.i18n === 'string') {
+            try {
+              const parsed = JSON.parse(data.i18n)
+              return parsed && typeof parsed === 'object' ? parsed : {}
+            } catch { return {} }
+          }
+          return {}
+        })()
+        setI18n(parsedI18n as Record<string, I18nHomeEntry>)
       }
     } catch (error) {
       console.error('Failed to fetch content:', error)
@@ -53,12 +89,26 @@ export default function HomeContentPage() {
     try {
       console.log('开始保存，数据:', content)
       
+      const i18nPayload = (() => {
+        const result: Record<string, I18nHomeEntry> = {}
+        languageOptions.forEach((lang) => {
+          const entry = i18n[lang.value]
+          if (!entry) return
+          const normalized = Object.entries(entry).reduce((acc, [k, v]) => {
+            const value = (v ?? '').toString().trim()
+            if (value) acc[k as keyof I18nHomeEntry] = value
+            return acc
+          }, {} as I18nHomeEntry)
+          if (Object.keys(normalized).length > 0) result[lang.value] = normalized
+        })
+        return result
+      })()
       const response = await fetch('/api/home-content', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(content),
+        body: JSON.stringify({ ...content, i18n: i18nPayload }),
       })
 
       console.log('响应状态:', response.status)
@@ -87,6 +137,13 @@ export default function HomeContentPage() {
   const handleChange = (field: keyof HomeContent, value: string) => {
     if (!content) return
     setContent({ ...content, [field]: value })
+  }
+
+  const updateI18nField = (lang: string, field: keyof I18nHomeEntry, value: string) => {
+    setI18n((prev) => {
+      const entry = prev[lang] ?? {}
+      return { ...prev, [lang]: { ...entry, [field]: value } }
+    })
   }
 
   if (loading) {
@@ -342,6 +399,108 @@ export default function HomeContentPage() {
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h2 className="text-xl font-semibold text-gray-900 mb-6">多语言内容</h2>
+            <div className="space-y-6">
+              {languageOptions.map((lang) => {
+                const entry = i18n[lang.value] ?? {}
+                return (
+                  <div key={lang.value} className="border border-gray-200 rounded-lg p-4 space-y-4">
+                    <div className="text-sm font-semibold text-gray-900">{lang.label}</div>
+                    <div className="grid grid-cols-1 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">精选主标题</label>
+                        <input
+                          type="text"
+                          value={entry.featuredTitle ?? ''}
+                          onChange={(e) => updateI18nField(lang.value, 'featuredTitle', e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">精选副标题</label>
+                        <textarea
+                          rows={2}
+                          value={entry.featuredSubtitle ?? ''}
+                          onChange={(e) => updateI18nField(lang.value, 'featuredSubtitle', e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">为什么选择我们主标题</label>
+                        <input
+                          type="text"
+                          value={entry.whyChooseTitle ?? ''}
+                          onChange={(e) => updateI18nField(lang.value, 'whyChooseTitle', e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">为什么选择我们副标题</label>
+                        <textarea
+                          rows={2}
+                          value={entry.whyChooseSubtitle ?? ''}
+                          onChange={(e) => updateI18nField(lang.value, 'whyChooseSubtitle', e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        />
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">功能卡片1标题</label>
+                          <input
+                            type="text"
+                            value={entry.feature1Title ?? ''}
+                            onChange={(e) => updateI18nField(lang.value, 'feature1Title', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          />
+                          <textarea
+                            rows={2}
+                            value={entry.feature1Description ?? ''}
+                            onChange={(e) => updateI18nField(lang.value, 'feature1Description', e.target.value)}
+                            className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            placeholder="描述"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">功能卡片2标题</label>
+                          <input
+                            type="text"
+                            value={entry.feature2Title ?? ''}
+                            onChange={(e) => updateI18nField(lang.value, 'feature2Title', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          />
+                          <textarea
+                            rows={2}
+                            value={entry.feature2Description ?? ''}
+                            onChange={(e) => updateI18nField(lang.value, 'feature2Description', e.target.value)}
+                            className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            placeholder="描述"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">功能卡片3标题</label>
+                          <input
+                            type="text"
+                            value={entry.feature3Title ?? ''}
+                            onChange={(e) => updateI18nField(lang.value, 'feature3Title', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          />
+                          <textarea
+                            rows={2}
+                            value={entry.feature3Description ?? ''}
+                            onChange={(e) => updateI18nField(lang.value, 'feature3Description', e.target.value)}
+                            className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            placeholder="描述"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
             </div>
           </div>
 

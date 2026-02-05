@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import Layout from '@/components/Layout'
 import { db } from '@/lib/db'
-import { formatPrice, getLocale, getTranslations, normalizeLanguage, type SupportedLanguage } from '@/lib/utils'
+import { formatPrice, getLocale, getTranslations, normalizeLanguage, resolveI18nText, type SupportedLanguage } from '@/lib/utils'
 import { cookies } from 'next/headers'
 import AddToCartButton from '@/components/AddToCartButton'
 import FallbackImage from '@/components/FallbackImage'
@@ -100,7 +100,7 @@ export default async function ProductsPage({ searchParams }: { searchParams?: Pr
               <select name="categoryId" defaultValue={selectedCategoryId} className="px-3 py-2 border border-gray-300 rounded-lg text-sm">
                 <option value="">{t.products.allCategories}</option>
                 {categories.map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
+                  <option key={c.id} value={c.id}>{resolveI18nText(c.name, (c as any).i18n, language, 'name')}</option>
                 ))}
               </select>
               {q && <input type="hidden" name="q" value={q} />}
@@ -111,6 +111,7 @@ export default async function ProductsPage({ searchParams }: { searchParams?: Pr
           <div className="mt-8 grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 xl:gap-x-8">
             {products.map((product) => {
               const displayImage = resolveImage(product)
+              const resolvedTitle = resolveI18nText(product.title, (product as any).i18n, language, 'title')
               const price = Number(product?.price ?? 0)
               const hasOriginal = typeof product?.originalPrice === 'number' && Number(product.originalPrice) > price
               const amazonUrl = typeof product?.amazonUrl === 'string' ? product.amazonUrl : ''
@@ -122,18 +123,18 @@ export default async function ProductsPage({ searchParams }: { searchParams?: Pr
               return (
                 <div key={product.id} className="group relative">
                   <div className="aspect-square w-full overflow-hidden rounded-lg bg-gray-100">
-                    <FallbackImage
-                      src={displayImage}
-                      alt={product.title || t.products.productImage}
-                      className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                    />
+                      <FallbackImage
+                        src={displayImage}
+                        alt={resolvedTitle || t.products.productImage}
+                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      />
                   </div>
                   <div className="mt-4 flex justify-between">
                     <div className="flex-1">
                       <h3 className="relative text-sm text-gray-700">
                         <Link href={`/products/${product.slug}`}>
                           <span aria-hidden="true" className="absolute inset-0" />
-                          {product.title || t.products.untitledProduct}
+                          {resolvedTitle || t.products.untitledProduct}
                         </Link>
                       </h3>
                       {reviewCount > 0 && (
@@ -179,7 +180,7 @@ export default async function ProductsPage({ searchParams }: { searchParams?: Pr
                             <AddToCartButton
                               id={product.id}
                               slug={product.slug}
-                              title={product.title}
+                              title={resolvedTitle}
                               price={price}
                               imageUrl={resolveImage(product)}
                               size="sm"
@@ -206,8 +207,8 @@ export default async function ProductsPage({ searchParams }: { searchParams?: Pr
   )
 }
   // 类别列表
-  let categories: Array<{ id: string; name: string }> = []
+  let categories: Array<{ id: string; name: string; i18n?: string | null }> = []
   try {
-    const rows = await db.category.findMany({ orderBy: { name: 'asc' }, select: { id: true, name: true } })
+    const rows = await db.category.findMany({ orderBy: { name: 'asc' }, select: { id: true, name: true, i18n: true } })
     categories = rows
   } catch {}

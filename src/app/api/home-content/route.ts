@@ -24,7 +24,11 @@ export async function GET() {
       })
     }
     
-    return NextResponse.json(homeContent)
+    const normalized = {
+      ...homeContent,
+      i18n: (() => { try { return homeContent.i18n ? JSON.parse(homeContent.i18n) : {} } catch { return {} } })(),
+    }
+    return NextResponse.json(normalized)
   } catch (error: any) {
     console.error('Failed to fetch home content:', error)
     return NextResponse.json(
@@ -77,6 +81,14 @@ export async function PUT(request: NextRequest) {
           feature3Description: data.feature3Description.trim(),
           carouselEnabled: data.carouselEnabled !== undefined ? data.carouselEnabled : homeContent.carouselEnabled,
           carouselInterval: data.carouselInterval !== undefined ? parseInt(data.carouselInterval) : homeContent.carouselInterval,
+          i18n: (() => {
+            try {
+              if (!data.i18n) return homeContent.i18n ?? null
+              if (typeof data.i18n === 'string') return data.i18n
+              if (typeof data.i18n === 'object') return JSON.stringify(data.i18n)
+              return homeContent.i18n ?? null
+            } catch { return homeContent.i18n ?? null }
+          })(),
         }
       })
     } else {
@@ -95,11 +107,23 @@ export async function PUT(request: NextRequest) {
           feature3Description: data.feature3Description.trim(),
           carouselEnabled: data.carouselEnabled !== undefined ? data.carouselEnabled : true,
           carouselInterval: data.carouselInterval !== undefined ? parseInt(data.carouselInterval) : 5000,
+          i18n: (() => {
+            try {
+              if (!data.i18n) return null
+              if (typeof data.i18n === 'string') return data.i18n
+              if (typeof data.i18n === 'object') return JSON.stringify(data.i18n)
+              return null
+            } catch { return null }
+          })(),
         }
       })
     }
     
-    return NextResponse.json(homeContent)
+    const normalized = {
+      ...homeContent,
+      i18n: (() => { try { return homeContent.i18n ? JSON.parse(homeContent.i18n) : {} } catch { return {} } })(),
+    }
+    return NextResponse.json(normalized)
   } catch (error: any) {
     console.error('Failed to update home content:', error)
     return NextResponse.json(

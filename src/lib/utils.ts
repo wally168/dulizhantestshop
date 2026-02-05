@@ -1197,3 +1197,45 @@ export function parseJsonField<T>(field: string | null): T[] {
     return [] as T[]
   }
 }
+
+export function parseI18nMap(value?: string | null | Record<string, any>): Record<string, any> {
+  if (!value) return {}
+  if (typeof value === 'object') return value
+  if (typeof value !== 'string') return {}
+  try {
+    const parsed = JSON.parse(value)
+    return parsed && typeof parsed === 'object' ? parsed : {}
+  } catch {
+    return {}
+  }
+}
+
+export function resolveI18nText(
+  base: string | null | undefined,
+  i18n: string | null | undefined | Record<string, any>,
+  language: SupportedLanguage,
+  key: string
+): string {
+  const map = parseI18nMap(i18n)
+  const langEntry = map[language]
+  const value = langEntry && typeof langEntry === 'object' ? langEntry[key] : undefined
+  if (typeof value === 'string' && value.trim()) return value
+  if (typeof base === 'string') return base
+  return ''
+}
+
+export function resolveI18nList(
+  base: string[] | null | undefined,
+  i18n: string | null | undefined | Record<string, any>,
+  language: SupportedLanguage,
+  key: string
+): string[] {
+  const map = parseI18nMap(i18n)
+  const langEntry = map[language]
+  const value = langEntry && typeof langEntry === 'object' ? langEntry[key] : undefined
+  if (Array.isArray(value)) {
+    return value.map((v) => String(v)).filter(Boolean)
+  }
+  if (Array.isArray(base)) return base
+  return []
+}

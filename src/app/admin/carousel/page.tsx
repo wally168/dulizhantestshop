@@ -29,12 +29,29 @@ interface CarouselItem {
   newTab?: boolean
   order: number
   active: boolean
+  i18n?: any
 }
 
 interface HomeContent {
   carouselEnabled: boolean
   carouselInterval?: number
 }
+
+type I18nCarouselEntry = {
+  title?: string
+  description?: string
+  btnText?: string
+}
+
+const languageOptions = [
+  { value: 'en', label: 'English' },
+  { value: 'zh', label: '中文' },
+  { value: 'ja', label: '日本語' },
+  { value: 'es', label: 'Español' },
+  { value: 'fr', label: 'Français' },
+  { value: 'de', label: 'Deutsch' },
+  { value: 'ko', label: '한국어' },
+]
 
 export default function CarouselAdmin() {
   const router = useRouter()
@@ -56,6 +73,7 @@ export default function CarouselAdmin() {
     newTab: false,
     active: true
   })
+  const [i18n, setI18n] = useState<Record<string, I18nCarouselEntry>>({})
   const [uploading, setUploading] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
 
@@ -142,12 +160,26 @@ export default function CarouselAdmin() {
     if (!formData.imageUrl) return alert('Image is required')
 
     try {
+      const i18nPayload = (() => {
+        const result: Record<string, I18nCarouselEntry> = {}
+        languageOptions.forEach((lang) => {
+          const entry = i18n[lang.value]
+          if (!entry) return
+          const normalized = Object.entries(entry).reduce((acc, [k, v]) => {
+            const value = (v ?? '').toString().trim()
+            if (value) acc[k as keyof I18nCarouselEntry] = value
+            return acc
+          }, {} as I18nCarouselEntry)
+          if (Object.keys(normalized).length > 0) result[lang.value] = normalized
+        })
+        return result
+      })()
       if (editingItem) {
         // Update
         const res = await fetch(`/api/carousel/${editingItem.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(formData)
+          body: JSON.stringify({ ...formData, i18n: i18nPayload })
         })
         if (res.ok) {
           const updated = await res.json()
@@ -158,7 +190,7 @@ export default function CarouselAdmin() {
         const res = await fetch('/api/carousel', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(formData)
+          body: JSON.stringify({ ...formData, i18n: i18nPayload })
         })
         if (res.ok) {
           const created = await res.json()
@@ -301,6 +333,18 @@ export default function CarouselAdmin() {
         newTab: item.newTab ?? false,
         active: item.active
       })
+      const parsedI18n = (() => {
+        if (!item?.i18n) return {}
+        if (typeof item.i18n === 'object') return item.i18n
+        if (typeof item.i18n === 'string') {
+          try {
+            const parsed = JSON.parse(item.i18n)
+            return parsed && typeof parsed === 'object' ? parsed : {}
+          } catch { return {} }
+        }
+        return {}
+      })()
+      setI18n(parsedI18n as Record<string, I18nCarouselEntry>)
     } else {
       setEditingItem(null)
       setFormData({
@@ -312,6 +356,7 @@ export default function CarouselAdmin() {
         newTab: false,
         active: true
       })
+      setI18n({})
     }
     setIsModalOpen(true)
   }
@@ -334,6 +379,13 @@ export default function CarouselAdmin() {
     } else {
       setSelectedIds(new Set(items.map(i => i.id)))
     }
+  }
+
+  const updateI18nField = (lang: string, field: keyof I18nCarouselEntry, value: string) => {
+    setI18n((prev) => {
+      const entry = prev[lang] ?? {}
+      return { ...prev, [lang]: { ...entry, [field]: value } }
+    })
   }
 
   if (loading) return <div className="p-8 flex justify-center"><Loader2 className="animate-spin h-8 w-8 text-blue-600" /></div>
@@ -594,6 +646,43 @@ export default function CarouselAdmin() {
                   rows={3}
                   className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
                 />
+              </div>
+
+              <div className="border rounded-lg p-4">
+                <div className="text-sm font-semibold text-gray-900 mb-3">多语言内容</div>
+                <div className="space-y-4">
+                  {languageOptions.map((lang) => {
+                    const entry = i18n[lang.value] ?? {}
+                    return (
+                      <div key={lang.value} className="border rounded-lg p-3">
+                        <div className="text-sm font-semibold text-gray-900 mb-2">{lang.label}</div>
+                        <div className="space-y-2">
+                          <input
+                            type="text"
+                            value={entry.title ?? ''}
+                            onChange={(e) => updateI18nField(lang.value, 'title', e.target.value)}
+                            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                            placeholder="标题"
+                          />
+                          <textarea
+                            rows={2}
+                            value={entry.description ?? ''}
+                            onChange={(e) => updateI18nField(lang.value, 'description', e.target.value)}
+                            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                            placeholder="描述"
+                          />
+                          <input
+                            type="text"
+                            value={entry.btnText ?? ''}
+                            onChange={(e) => updateI18nField(lang.value, 'btnText', e.target.value)}
+                            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                            placeholder="按钮文字"
+                          />
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
               </div>
 
               {/* Link */}

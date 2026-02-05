@@ -3,12 +3,14 @@ export const dynamic = 'force-dynamic'
 
 import Layout from '@/components/Layout'
 import { useSettings } from '@/lib/settings'
-import { getTranslations, resolveContent } from '@/lib/utils'
+import { getTranslations, parseI18nMap, resolveContent, resolveI18nText } from '@/lib/utils'
 
 export default function TermsPage() {
   const { settings, loading, language } = useSettings()
   const t = getTranslations(language)
-  const content = loading ? resolveContent(undefined, 'termsOfService', language) : resolveContent(settings.termsOfService, 'termsOfService', language)
+  const contentI18n = parseI18nMap((settings as any).contentI18n)
+  const contentBase = loading ? resolveContent(undefined, 'termsOfService', language) : resolveContent(settings.termsOfService, 'termsOfService', language)
+  const content = resolveI18nText(contentBase, contentI18n, language, 'termsOfService')
   const paragraphs = content.split('\n').filter(p => p.trim().length)
 
   return (

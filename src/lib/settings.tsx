@@ -33,6 +33,7 @@ export interface SiteSettings {
   whyChooseUs: string
   privacyPolicy: string
   termsOfService: string
+  contentI18n?: string
   analyticsHeadHtml?: string
   analyticsBodyHtml?: string
   analyticsGoogleHtml?: string
@@ -92,6 +93,7 @@ const defaultSettings: SiteSettings = {
   socialTiktok: '',
   socialTiktokTitle: 'TikTok',
   footerText: '© 2025 Your Brand. All rights reserved.',
+  contentI18n: '',
   aboutText: 'We\'re passionate about bringing you the finest products that combine quality, innovation, and style.',
   ourStory: 'Founded with a vision to make premium products accessible to everyone, Your Brand has been dedicated to curating exceptional items that enhance your daily life. We believe that quality shouldn\'t be compromised, and every product in our collection reflects this commitment.',
   ourMission: 'To provide our customers with carefully selected, high-quality products that offer both functionality and style. We work directly with trusted manufacturers and suppliers to ensure that every item meets our rigorous standards.',
