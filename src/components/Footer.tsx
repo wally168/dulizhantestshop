@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { ShoppingBag } from 'lucide-react'
 import { useSettings } from '@/lib/settings'
 import { useEffect, useState } from 'react'
+import { getTranslations, resolveContent } from '@/lib/utils'
 
 interface NavItem {
   id: string
@@ -13,19 +14,19 @@ interface NavItem {
   isExternal?: boolean
 }
 
-const defaultNav: NavItem[] = [
-  { id: 'home', label: 'Home', href: '/', order: 1 },
-  { id: 'products', label: 'Products', href: '/products', order: 2 },
-  { id: 'about', label: 'About', href: '/about', order: 3 },
-  { id: 'contact', label: 'Contact', href: '/contact', order: 4 },
-]
-
 export default function Footer({ initialNavItems = [] }: { initialNavItems?: NavItem[] }) {
-  const { settings, loading } = useSettings()
+  const { settings, loading, language } = useSettings()
+  const t = getTranslations(language)
   const [navItems, setNavItems] = useState<NavItem[]>(initialNavItems)
   const [navLoading, setNavLoading] = useState(initialNavItems.length === 0)
 
   useEffect(() => {
+    const defaultNav: NavItem[] = [
+      { id: 'home', label: t.nav.home, href: '/', order: 1 },
+      { id: 'products', label: t.nav.products, href: '/products', order: 2 },
+      { id: 'about', label: t.nav.about, href: '/about', order: 3 },
+      { id: 'contact', label: t.nav.contact, href: '/contact', order: 4 },
+    ]
     const load = async () => {
       const shouldShowLoading = initialNavItems.length === 0
       try {
@@ -49,14 +50,14 @@ export default function Footer({ initialNavItems = [] }: { initialNavItems?: Nav
       }
     }
     load()
-  }, [])
+  }, [initialNavItems.length, t.nav.about, t.nav.contact, t.nav.home, t.nav.products])
 
   // 加载站点设置时显示骨架，但导航不再因加载而空白
   if (loading) {
     return (
       <footer className="bg-gray-50 border-t border-gray-200">
         <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-          <div className="text-center text-gray-500">Loading...</div>
+          <div className="text-center text-gray-500">{t.footer.loading}</div>
         </div>
       </footer>
     )
@@ -127,7 +128,7 @@ export default function Footer({ initialNavItems = [] }: { initialNavItems?: Nav
                   <span className="text-xl font-semibold text-gray-900">{settings.siteName}</span>
                 </Link>
                 <p className="text-sm text-gray-600">
-                  {settings.siteDescription}
+                  {resolveContent(settings.siteDescription, 'siteDescription', language)}
                 </p>
               </div>
             </div>
@@ -137,7 +138,7 @@ export default function Footer({ initialNavItems = [] }: { initialNavItems?: Nav
                 <div className="md:table-row">
                   <div className="md:table-cell md:w-1/3 pr-8 pb-8 md:pb-0">
                     <h3 className="text-sm font-semibold text-gray-900 tracking-wider uppercase">
-                      Navigation
+                      {t.footer.navigation}
                     </h3>
                     <ul role="list" className="mt-4 space-y-4">
                       {navItems.map((item) => (
@@ -151,24 +152,24 @@ export default function Footer({ initialNavItems = [] }: { initialNavItems?: Nav
                   </div>
                   <div className="md:table-cell md:w-1/3 pr-8 pb-8 md:pb-0">
                     <h3 className="text-sm font-semibold text-gray-900 tracking-wider uppercase">
-                      Legal
+                      {t.footer.legal}
                     </h3>
                     <ul role="list" className="mt-4 space-y-4">
                       <li>
                         <Link href="/privacy" className="text-sm text-gray-600 hover:text-gray-900">
-                          Privacy Policy
+                          {t.footer.privacyPolicy}
                         </Link>
                       </li>
                       <li>
                         <Link href="/terms" className="text-sm text-gray-600 hover:text-gray-900">
-                          Terms of Service
+                          {t.footer.termsOfService}
                         </Link>
                       </li>
                     </ul>
                   </div>
                   <div className="md:table-cell md:w-1/3">
                     <h3 className="text-sm font-semibold text-gray-900 tracking-wider uppercase">
-                      Follow Us
+                      {t.footer.followUs}
                     </h3>
                     <ul role="list" className="mt-4 space-y-4">
                       {settings.socialFacebook && (

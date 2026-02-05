@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { Menu, X, ShoppingBag, ShoppingCart } from 'lucide-react'
 import { useSettings } from '@/lib/settings'
 import { getCount, onCartChange } from '@/lib/cart'
+import { getTranslations, type SupportedLanguage } from '@/lib/utils'
 
 // 新增：动态导航项类型
 interface NavItem {
@@ -15,16 +16,19 @@ interface NavItem {
   isExternal?: boolean
 }
 
-// 新增：默认导航（用于API为空时降级）
-const defaultNav: NavItem[] = [
-  { id: 'home', label: 'Home', href: '/', order: 1 },
-  { id: 'products', label: 'Products', href: '/products', order: 2 },
-  { id: 'about', label: 'About', href: '/about', order: 3 },
-  { id: 'contact', label: 'Contact', href: '/contact', order: 4 },
+const languageOptions: Array<{ value: SupportedLanguage; label: string }> = [
+  { value: 'en', label: 'English' },
+  { value: 'zh', label: '中文' },
+  { value: 'ja', label: '日本語' },
+  { value: 'es', label: 'Español' },
+  { value: 'fr', label: 'Français' },
+  { value: 'de', label: 'Deutsch' },
+  { value: 'ko', label: '한국어' },
 ]
 
 export default function Navigation({ initialNavItems = [] }: { initialNavItems?: NavItem[] }) {
-  const { settings, loading } = useSettings()
+  const { settings, language, setLanguage } = useSettings()
+  const t = getTranslations(language)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
   const [isHydrated, setIsHydrated] = useState(false)
@@ -52,6 +56,12 @@ export default function Navigation({ initialNavItems = [] }: { initialNavItems?:
 
   // 新增：加载导航数据（如果没有初始数据才显示loading）
   useEffect(() => {
+    const defaultNav: NavItem[] = [
+      { id: 'home', label: t.nav.home, href: '/', order: 1 },
+      { id: 'products', label: t.nav.products, href: '/products', order: 2 },
+      { id: 'about', label: t.nav.about, href: '/about', order: 3 },
+      { id: 'contact', label: t.nav.contact, href: '/contact', order: 4 },
+    ]
     const load = async () => {
       const shouldShowLoading = initialNavItems.length === 0
       try {
@@ -76,7 +86,7 @@ export default function Navigation({ initialNavItems = [] }: { initialNavItems?:
       }
     }
     load()
-  }, [])
+  }, [initialNavItems.length, t.nav.about, t.nav.contact, t.nav.home, t.nav.products])
 
   // 加载分类用于 Products 下拉
   useEffect(() => {
@@ -197,7 +207,7 @@ export default function Navigation({ initialNavItems = [] }: { initialNavItems?:
                     {categories.length > 0 && (
                       <div className="absolute left-0 top-full pt-2 w-48 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all z-50">
                         <div className="bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
-                          <Link href="/products" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">All Products</Link>
+                          <Link href="/products" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">{t.nav.allProducts}</Link>
                           {categories.map((c) => (
                             <Link key={c.id} href={`/products?categoryId=${encodeURIComponent(c.id)}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
                               {c.name}
@@ -219,20 +229,30 @@ export default function Navigation({ initialNavItems = [] }: { initialNavItems?:
           {/* 右侧：搜索框、购物车入口与移动端菜单按钮 */}
           <div className="flex md:flex-1 justify-end items-center gap-2">
             {/* Search */}
+            <select
+              value={language}
+              onChange={(e) => setLanguage(e.target.value as SupportedLanguage)}
+              className="hidden md:block px-2 py-2 rounded-lg border border-gray-200 bg-white text-sm text-gray-700"
+              aria-label="Language"
+            >
+              {languageOptions.map((opt) => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
             <form action="/products" method="get" className="hidden md:flex items-center gap-2 bg-gray-100 rounded-lg px-2 py-1">
               <input
                 type="text"
                 name="q"
-                placeholder="Search Products"
+                placeholder={t.nav.searchProducts}
                 className="bg-transparent px-2 py-1 text-sm focus:outline-none w-40 md:w-48"
               />
-              <button type="submit" className="text-sm px-2 py-1 rounded-md bg-gray-200 text-gray-700 hover:bg-gray-300">Search</button>
+              <button type="submit" className="text-sm px-2 py-1 rounded-md bg-gray-200 text-gray-700 hover:bg-gray-300">{t.nav.search}</button>
             </form>
             {/* Cart link always visible */}
             <Link
               href="/cart"
               className="hidden md:inline-flex items-center px-3 py-2 text-gray-700 hover:text-blue-600 hover:bg-gray-100/50 rounded-lg transition-all duration-200"
-              aria-label="Cart"
+              aria-label={t.nav.cart}
             >
               <span className="relative inline-flex">
                 <ShoppingCart className="h-5 w-5" />
@@ -240,7 +260,7 @@ export default function Navigation({ initialNavItems = [] }: { initialNavItems?:
                   <span className="absolute -top-2 -right-2 min-w-[18px] h-[18px] px-1 rounded-full bg-red-600 text-white text-xs flex items-center justify-center">{cartCount}</span>
                 )}
               </span>
-              <span className="ml-2">Cart</span>
+              <span className="ml-2">{t.nav.cart}</span>
             </Link>
 
             {/* Mobile menu button */}
@@ -285,9 +305,19 @@ export default function Navigation({ initialNavItems = [] }: { initialNavItems?:
           <div className="px-2 pt-2 pb-3 space-y-1 bg-white/95 backdrop-blur-md border-t border-gray-200/50">
             {/* Mobile search */}
             <form action="/products" method="get" className="flex items-center gap-2 bg-gray-100 rounded-lg px-2 py-2 mb-2">
-              <input type="text" name="q" placeholder="Search Products" className="flex-1 bg-transparent px-2 py-1 text-sm focus:outline-none" />
-              <button type="submit" className="text-sm px-2 py-1 rounded-md bg-gray-200 text-gray-700 hover:bg-gray-300">Search</button>
+              <input type="text" name="q" placeholder={t.nav.searchProducts} className="flex-1 bg-transparent px-2 py-1 text-sm focus:outline-none" />
+              <button type="submit" className="text-sm px-2 py-1 rounded-md bg-gray-200 text-gray-700 hover:bg-gray-300">{t.nav.search}</button>
             </form>
+            <select
+              value={language}
+              onChange={(e) => setLanguage(e.target.value as SupportedLanguage)}
+              className="w-full px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm text-gray-700 mb-2"
+              aria-label="Language"
+            >
+              {languageOptions.map((opt) => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
             {showSkeleton ? (
               <div className="space-y-1">
                 <SkeletonRow />
@@ -304,7 +334,7 @@ export default function Navigation({ initialNavItems = [] }: { initialNavItems?:
                 ))}
                 {categories.length > 0 && (
                   <div className="mt-2 bg-white rounded-xl border border-gray-200">
-                    <div className="px-4 py-2 text-xs text-gray-500">Browse by Category</div>
+                    <div className="px-4 py-2 text-xs text-gray-500">{t.nav.browseByCategory}</div>
                     {categories.map((c) => (
                       <Link key={c.id} href={`/products?categoryId=${encodeURIComponent(c.id)}`} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50" onClick={() => setIsMenuOpen(false)}>
                         {c.name}

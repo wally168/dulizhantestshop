@@ -1,9 +1,11 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useState, ReactNode } from 'react'
+import { normalizeLanguage, type SupportedLanguage } from '@/lib/utils'
 
 export interface SiteSettings {
   siteName: string
+  language: string
   logoUrl: string
   logoWidth: string
   logoHeight: string
@@ -60,12 +62,15 @@ export interface SiteSettings {
 
 interface SettingsContextType {
   settings: SiteSettings
+  language: SupportedLanguage
+  setLanguage: (language: SupportedLanguage) => void
   loading: boolean
   refreshSettings: () => Promise<void>
 }
 
 const defaultSettings: SiteSettings = {
   siteName: 'Your Brand',
+  language: 'en',
   logoUrl: '',
   logoWidth: '',
   logoHeight: '',
@@ -128,18 +133,23 @@ export function SettingsProvider({ children, initialSettings }: { children: Reac
   // Initialize with SSR-provided settings if available to prevent flicker
   const mergedInitial = initialSettings ? { ...defaultSettings, ...initialSettings } : defaultSettings
   const [settings, setSettings] = useState<SiteSettings>(mergedInitial)
+  const [language, setLanguageState] = useState<SupportedLanguage>(() => normalizeLanguage(mergedInitial.language))
   const [loading, setLoading] = useState(!initialSettings)
 
   // Fetch settings from API and update cache
-  const fetchSettings = async () => {
+  const fetchSettings = useCallback(async () => {
     try {
       const response = await fetch('/api/settings', { cache: 'no-store' })
       if (response.ok) {
         const data = await response.json()
         setSettings(data)
         if (typeof window !== 'undefined') {
+          const override = window.localStorage.getItem('siteLanguageOverride')
+          if (!override) setLanguageState(normalizeLanguage(data.language))
+        }
+        if (typeof window !== 'undefined') {
           localStorage.setItem('siteSettings', JSON.stringify(data))
-          localStorage.setItem('siteSettingsVersion', '1.5')
+          localStorage.setItem('siteSettingsVersion', '1.6')
         }
       }
     } catch (error) {
@@ -148,21 +158,27 @@ export function SettingsProvider({ children, initialSettings }: { children: Reac
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
   useEffect(() => {
     const init = async () => {
+      if (typeof window !== 'undefined') {
+        const override = window.localStorage.getItem('siteLanguageOverride')
+        if (override) setLanguageState(normalizeLanguage(override))
+      }
       // If no SSR initial settings, use cache first for fast display, then refresh
       if (!initialSettings && typeof window !== 'undefined') {
         try {
           const cached = localStorage.getItem('siteSettings')
           const cacheVersion = localStorage.getItem('siteSettingsVersion')
-          const currentVersion = '1.5'
+          const currentVersion = '1.6'
 
           if (cached && cacheVersion === currentVersion) {
             const parsedSettings = JSON.parse(cached)
             if (parsedSettings.siteName && typeof parsedSettings.siteName === 'string') {
               setSettings(parsedSettings)
+              const override = window.localStorage.getItem('siteLanguageOverride')
+              if (!override && parsedSettings.language) setLanguageState(normalizeLanguage(parsedSettings.language))
             } else {
               localStorage.removeItem('siteSettings')
               localStorage.removeItem('siteSettingsVersion')
@@ -182,15 +198,23 @@ export function SettingsProvider({ children, initialSettings }: { children: Reac
     }
 
     init()
-  }, [])
+  }, [fetchSettings, initialSettings])
 
   const refreshSettings = async () => {
     setLoading(true)
     await fetchSettings()
   }
 
+  const setLanguage = (next: SupportedLanguage) => {
+    setLanguageState(next)
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem('siteLanguageOverride', next)
+      document.cookie = `siteLanguage=${next}; path=/; max-age=31536000; samesite=lax`
+    }
+  }
+
   return (
-    <SettingsContext.Provider value={{ settings, loading, refreshSettings }}>
+    <SettingsContext.Provider value={{ settings, language, setLanguage, loading, refreshSettings }}>
       {children}
     </SettingsContext.Provider>
   )
@@ -202,6 +226,8 @@ export function useSettings() {
     // 安全回退：在未包裹 SettingsProvider 的环境（如部分预览/SSR边界）提供默认值
     return {
       settings: defaultSettings,
+      language: normalizeLanguage(defaultSettings.language),
+      setLanguage: () => {},
       loading: true,
       refreshSettings: async () => {},
     }

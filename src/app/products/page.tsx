@@ -1,12 +1,26 @@
 import Link from 'next/link'
 import Layout from '@/components/Layout'
 import { db } from '@/lib/db'
-import { formatPrice } from '@/lib/utils'
+import { formatPrice, getLocale, getTranslations, normalizeLanguage, type SupportedLanguage } from '@/lib/utils'
+import { cookies } from 'next/headers'
 import AddToCartButton from '@/components/AddToCartButton'
 import FallbackImage from '@/components/FallbackImage'
 import type { Product } from '@prisma/client'
 
 export default async function ProductsPage({ searchParams }: { searchParams?: Promise<{ categoryId?: string; q?: string }> }) {
+  const cookieStore = await cookies()
+  const cookieLang = cookieStore.get('siteLanguage')?.value
+  const language = cookieLang
+    ? normalizeLanguage(cookieLang)
+    : await (async (): Promise<SupportedLanguage> => {
+        try {
+          const row = await db.siteSettings.findFirst({ where: { key: 'language' } })
+          if (row?.value) return normalizeLanguage(row.value)
+        } catch {}
+        return 'en'
+      })()
+  const t = getTranslations(language)
+  const locale = getLocale(language)
   const resolvedParams = searchParams ? await searchParams : {}
   const selectedCategoryId = resolvedParams?.categoryId || ''
   const q = resolvedParams?.q || ''
@@ -73,10 +87,10 @@ export default async function ProductsPage({ searchParams }: { searchParams?: Pr
         <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-24 lg:px-8">
           <div className="text-center">
             <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl">
-              Our Products
+              {t.products.title}
             </h1>
             <p className="mx-auto mt-4 max-w-3xl text-lg text-gray-600">
-              Discover our carefully curated collection of premium products. Each item is selected for its quality, design, and value.
+              {t.products.subtitle}
             </p>
           </div>
 
@@ -84,13 +98,13 @@ export default async function ProductsPage({ searchParams }: { searchParams?: Pr
           <div className="mt-10 flex items-center justify-center">
             <form method="get" action="/products" className="flex items-center gap-3">
               <select name="categoryId" defaultValue={selectedCategoryId} className="px-3 py-2 border border-gray-300 rounded-lg text-sm">
-                <option value="">All Categories</option>
+                <option value="">{t.products.allCategories}</option>
                 {categories.map((c) => (
                   <option key={c.id} value={c.id}>{c.name}</option>
                 ))}
               </select>
               {q && <input type="hidden" name="q" value={q} />}
-              <button type="submit" className="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 text-sm hover:bg-gray-300">Apply</button>
+              <button type="submit" className="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 text-sm hover:bg-gray-300">{t.products.apply}</button>
             </form>
           </div>
 
@@ -110,7 +124,7 @@ export default async function ProductsPage({ searchParams }: { searchParams?: Pr
                   <div className="aspect-square w-full overflow-hidden rounded-lg bg-gray-100">
                     <FallbackImage
                       src={displayImage}
-                      alt={product.title || 'Product image'}
+                      alt={product.title || t.products.productImage}
                       className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                     />
                   </div>
@@ -119,7 +133,7 @@ export default async function ProductsPage({ searchParams }: { searchParams?: Pr
                       <h3 className="relative text-sm text-gray-700">
                         <Link href={`/products/${product.slug}`}>
                           <span aria-hidden="true" className="absolute inset-0" />
-                          {product.title || 'Untitled Product'}
+                          {product.title || t.products.untitledProduct}
                         </Link>
                       </h3>
                       {reviewCount > 0 && (
@@ -135,11 +149,11 @@ export default async function ProductsPage({ searchParams }: { searchParams?: Pr
                       )}
                       <div className="mt-2 flex items-center gap-2">
                         <p className="text-lg font-medium text-gray-900">
-                          {formatPrice(price)}
+                          {formatPrice(price, locale)}
                         </p>
                         {hasOriginal && (
                           <p className="text-sm text-gray-500 line-through">
-                            {formatPrice(Number(product.originalPrice))}
+                            {formatPrice(Number(product.originalPrice), locale)}
                           </p>
                         )}
                       </div>
@@ -148,7 +162,7 @@ export default async function ProductsPage({ searchParams }: { searchParams?: Pr
                           href={`/products/${product.slug}`}
                           className="inline-flex items-center justify-center px-3 py-2 rounded-md bg-orange-600 text-white text-sm font-semibold leading-tight text-center hover:bg-orange-500"
                         >
-                          View Details
+                          {t.common.viewDetails}
                         </Link>
                         {showBuy && (
                           <a
@@ -157,7 +171,7 @@ export default async function ProductsPage({ searchParams }: { searchParams?: Pr
                             rel="noopener noreferrer"
                             className="inline-flex items-center justify-center px-3 py-2 rounded-md bg-blue-600 text-white text-sm font-semibold leading-tight text-center hover:bg-blue-500"
                           >
-                            Buy on Amazon
+                            {t.common.buyOnAmazon}
                           </a>
                         )}
                         {showAdd && (
@@ -182,8 +196,8 @@ export default async function ProductsPage({ searchParams }: { searchParams?: Pr
 
           {products.length === 0 && (
             <div className="text-center py-12">
-              <p className="text-gray-500 text-lg">No products available at the moment.</p>
-              <p className="text-gray-400 text-sm mt-2">Please check back later for new arrivals.</p>
+              <p className="text-gray-500 text-lg">{t.products.emptyTitle}</p>
+              <p className="text-gray-400 text-sm mt-2">{t.products.emptySubtitle}</p>
             </div>
           )}
         </div>

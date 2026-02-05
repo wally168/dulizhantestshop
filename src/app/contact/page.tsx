@@ -4,9 +4,11 @@ import { useState } from 'react'
 import { Mail, Phone, MapPin } from 'lucide-react'
 import Layout from '@/components/Layout'
 import { useSettings } from '@/lib/settings'
+import { getTranslations } from '@/lib/utils'
 
 export default function ContactPage() {
-  const { settings, loading } = useSettings()
+  const { settings, loading, language } = useSettings()
+  const t = getTranslations(language)
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -22,10 +24,10 @@ export default function ContactPage() {
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!email) {
-      return 'Email is required'
+      return t.contact.emailRequired
     }
     if (!emailRegex.test(email)) {
-      return 'Your email format is incorrect. Please enter a valid email address (e.g., user@example.com)'
+      return t.contact.emailInvalid
     }
     return ''
   }
@@ -97,10 +99,10 @@ export default function ContactPage() {
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="text-center">
               <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl">
-                Contact Us
+                {t.contact.title}
               </h1>
               <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-gray-600">
-                Have questions or feedback? We'd love to hear from you. Send us a message and we'll respond as soon as possible.
+                {t.contact.heroText}
               </p>
             </div>
           </div>
@@ -110,10 +112,10 @@ export default function ContactPage() {
         <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-2xl text-center">
             <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-              Send us a Message
+              {t.contact.sendMessage}
             </h2>
             <p className="mt-6 text-lg leading-8 text-gray-600">
-              Fill out the form below and we'll get back to you as soon as possible.
+              {t.contact.sendMessageDesc}
             </p>
           </div>
 
@@ -121,7 +123,7 @@ export default function ContactPage() {
             <form onSubmit={handleSubmit} className="space-y-6" noValidate>
               <div>
                 <label htmlFor="name" className="block text-sm font-medium leading-6 text-gray-900">
-                  Full Name *
+                  {t.contact.fullName} *
                 </label>
                 <div className="mt-2">
                   <input
@@ -138,7 +140,7 @@ export default function ContactPage() {
 
               <div>
                 <label htmlFor="email" className="block text-sm font-medium leading-6 text-gray-900">
-                  Email Address *
+                  {t.contact.emailAddress} *
                 </label>
                 <div className="mt-2">
                   <input
@@ -163,7 +165,7 @@ export default function ContactPage() {
 
               <div>
                 <label htmlFor="subject" className="block text-sm font-medium leading-6 text-gray-900">
-                  Subject
+                  {t.contact.subject}
                 </label>
                 <div className="mt-2">
                   <input
@@ -179,7 +181,7 @@ export default function ContactPage() {
 
               <div>
                 <label htmlFor="country" className="block text-sm font-medium leading-6 text-gray-900">
-                  Country
+                  {t.contact.country}
                 </label>
                 <div className="mt-2">
                   <input
@@ -195,7 +197,7 @@ export default function ContactPage() {
 
               <div>
                 <label htmlFor="orderNo" className="block text-sm font-medium leading-6 text-gray-900">
-                  Order No.
+                  {t.contact.orderNo}
                 </label>
                 <div className="mt-2">
                   <input
@@ -211,7 +213,7 @@ export default function ContactPage() {
 
               <div>
                 <label htmlFor="message" className="block text-sm font-medium leading-6 text-gray-900">
-                  Message *
+                  {t.contact.message} *
                 </label>
                 <div className="mt-2">
                   <textarea
@@ -232,14 +234,14 @@ export default function ContactPage() {
                   disabled={isSubmitting}
                   className="block w-full rounded-md bg-blue-600 px-3.5 py-2.5 text-center text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isSubmitting ? 'Sending...' : 'Send Message'}
+                  {isSubmitting ? t.contact.sending : t.contact.send}
                 </button>
               </div>
 
               {submitStatus === 'success' && (
                 <div className="rounded-md bg-green-50 p-4">
                   <div className="text-sm text-green-800">
-                    Thank you for your message! We'll get back to you soon.
+                    {t.contact.success}
                   </div>
                 </div>
               )}
@@ -247,7 +249,7 @@ export default function ContactPage() {
               {submitStatus === 'error' && (
                 <div className="rounded-md bg-red-50 p-4">
                   <div className="text-sm text-red-800">
-                    There was an error sending your message. Please try again.
+                    {t.contact.error}
                   </div>
                 </div>
               )}
@@ -260,10 +262,10 @@ export default function ContactPage() {
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="mx-auto max-w-2xl text-center">
               <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-                Get in Touch
+                {t.contact.getInTouch}
               </h2>
               <p className="mt-6 text-lg leading-8 text-gray-600">
-                We're here to help and answer any questions you might have.
+                {t.contact.getInTouchDesc}
               </p>
             </div>
 
@@ -275,7 +277,7 @@ export default function ContactPage() {
                     <Mail className="h-5 w-5 text-blue-600" />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-sm font-medium text-gray-900">Email</p>
+                    <p className="text-sm font-medium text-gray-900">{t.contact.email}</p>
                     <p className="text-sm text-gray-600 break-words">
                       {loading ? 'contact@yourstore.com' : settings.contactEmail || 'contact@yourstore.com'}
                     </p>
@@ -287,7 +289,7 @@ export default function ContactPage() {
                     <Phone className="h-5 w-5 text-blue-600" />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-sm font-medium text-gray-900">Phone</p>
+                    <p className="text-sm font-medium text-gray-900">{t.contact.phone}</p>
                     <p className="text-sm text-gray-600 break-words">
                       {loading ? '+1 (555) 123-4567' : settings.contactPhone || '+1 (555) 123-4567'}
                     </p>
@@ -299,7 +301,7 @@ export default function ContactPage() {
                     <MapPin className="h-5 w-5 text-blue-600" />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-sm font-medium text-gray-900">Address</p>
+                    <p className="text-sm font-medium text-gray-900">{t.contact.address}</p>
                     <p className="text-sm text-gray-600 break-words">
                       {loading ? '123 Business St, City, State 12345' : settings.contactAddress || '123 Business St, City, State 12345'}
                     </p>

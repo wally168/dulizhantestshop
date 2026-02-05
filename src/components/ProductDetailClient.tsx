@@ -3,8 +3,9 @@
 import { useMemo, useState, useEffect, useRef } from 'react'
 import type { ReactElement } from 'react'
 import ProductImageGallery from './ProductImageGallery'
-import { formatPrice } from '@/lib/utils'
+import { formatPrice, getLocale, getTranslations } from '@/lib/utils'
 import AddToCartButton from './AddToCartButton'
+import { useSettings } from '@/lib/settings'
 
   type VariantGroup = { name: string; options: string[] }
 
@@ -18,11 +19,11 @@ import AddToCartButton from './AddToCartButton'
       .join('|')
   }
 
- function formatPublishedAt(dt?: string | Date | null): string {
+ function formatPublishedAt(dt?: string | Date | null, locale?: string): string {
    if (!dt) return ''
    try {
      const d = new Date(dt)
-     return d.toLocaleDateString()
+     return d.toLocaleDateString(locale)
    } catch { return '' }
  }
 
@@ -108,7 +109,10 @@ function replaceYoutubeLinks(input: string): string {
   showAddToCart?: boolean
   reviews?: Array<{ id: string; name: string; country: string; title: string; content: string; rating: number; images: string[]; createdAt?: string | Date }>
 }): ReactElement {
-   const [selectedGalleryIndex, setSelectedGalleryIndex] = useState<number>(0)
+  const { language } = useSettings()
+  const t = getTranslations(language)
+  const locale = getLocale(language)
+  const [selectedGalleryIndex, setSelectedGalleryIndex] = useState<number>(0)
    const [selection, setSelection] = useState<Record<string, string>>({})
   const [failedThumb, setFailedThumb] = useState<Record<string, boolean>>({})
   const [lastClickedGroup, setLastClickedGroup] = useState<string | null>(null)
@@ -193,7 +197,7 @@ function replaceYoutubeLinks(input: string): string {
     if (!dt) return ''
     try {
       const d = new Date(dt)
-      return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+      return d.toLocaleDateString(locale, { year: 'numeric', month: 'short', day: 'numeric' })
     } catch { return '' }
   }
 
@@ -260,22 +264,22 @@ function replaceYoutubeLinks(input: string): string {
       <div>
         <h1 className="text-2xl font-bold text-gray-900">{title}</h1>
         {categoryName && (
-          <p className="mt-2 text-gray-600">Category: {categoryName}</p>
+          <p className="mt-2 text-gray-600">{t.productDetail.category}: {categoryName}</p>
         )}
         {brand && (
-          <p className="mt-1 text-gray-600">Brand: {brand}</p>
+          <p className="mt-1 text-gray-600">{t.productDetail.brand}: {brand}</p>
         )}
         {upc && (
-          <p className="mt-1 text-gray-600">UPC: {upc}</p>
+          <p className="mt-1 text-gray-600">{t.productDetail.upc}: {upc}</p>
         )}
         {publishedAt && (
-          <p className="mt-1 text-gray-500 text-sm">Date First Available : {formatPublishedAt(publishedAt)}</p>
+          <p className="mt-1 text-gray-500 text-sm">{t.productDetail.dateFirstAvailable}: {formatPublishedAt(publishedAt, locale)}</p>
         )}
 
         {/* 变体选项挪到价格上方，优先图片显示 */}
         {Array.isArray(variantGroups) && variantGroups.length > 0 && (
           <div className="mt-6">
-            <h3 className="text-md font-semibold text-gray-900">Available Options</h3>
+            <h3 className="text-md font-semibold text-gray-900">{t.productDetail.availableOptions}</h3>
             <div className="mt-3 space-y-4">
               {variantGroups.map((group, gi) => (
                 <div key={gi}>
@@ -330,7 +334,7 @@ function replaceYoutubeLinks(input: string): string {
         rel="noopener noreferrer"
         className="inline-flex items-center px-4 py-2 rounded-md bg-blue-600 text-white font-semibold hover:bg-blue-500"
         >
-        Buy on Amazon
+        {t.common.buyOnAmazon}
         </a>
         )}
         {showAddToCart && (
@@ -348,9 +352,9 @@ function replaceYoutubeLinks(input: string): string {
 
          {/* 价格模块放在选项之后 */}
          <div className="mt-4 flex items-center gap-3">
-           <span className="text-2xl font-semibold text-gray-900">{formatPrice(price)}</span>
+           <span className="text-2xl font-semibold text-gray-900">{formatPrice(price, locale)}</span>
            {originalPrice ? (
-             <span className="text-gray-500 line-through">{formatPrice(originalPrice)}</span>
+             <span className="text-gray-500 line-through">{formatPrice(originalPrice, locale)}</span>
            ) : null}
         </div>
 
@@ -364,7 +368,7 @@ function replaceYoutubeLinks(input: string): string {
     </div>
 
     <div className="mt-10">
-      <h2 className="text-lg font-semibold text-gray-900">Product Description</h2>
+      <h2 className="text-lg font-semibold text-gray-900">{t.productDetail.productDescription}</h2>
       <div 
         className="mt-2 text-gray-700 prose prose-sm max-w-none"
         dangerouslySetInnerHTML={{ __html: replaceYoutubeLinks(description) }}
@@ -373,17 +377,17 @@ function replaceYoutubeLinks(input: string): string {
     </div>
     {Array.isArray(sortedReviews) && sortedReviews.length > 0 && (
       <div className="mt-10">
-        <h2 className="text-lg font-semibold text-gray-900">Customer Reviews</h2>
+        <h2 className="text-lg font-semibold text-gray-900">{t.productDetail.customerReviews}</h2>
         <div className="mt-2 flex items-center gap-3">
           <label className="flex items-center gap-2 text-sm text-gray-700">
             <input type="checkbox" checked={onlyWithImages} onChange={(e) => setOnlyWithImages(e.target.checked)} />
-            Only reviews with images
+            {t.productDetail.onlyReviewsWithImages}
           </label>
           <div className="flex items-center gap-2 text-sm text-gray-700">
-            <span>Sort</span>
+            <span>{t.productDetail.sort}</span>
             <select value={sortBy} onChange={(e) => setSortBy(e.target.value as 'time' | 'rating')} className="border rounded px-2 py-1">
-              <option value="time">Newest</option>
-              <option value="rating">Highest Rating</option>
+              <option value="time">{t.productDetail.newest}</option>
+              <option value="rating">{t.productDetail.highestRating}</option>
             </select>
           </div>
         </div>
@@ -421,7 +425,7 @@ function replaceYoutubeLinks(input: string): string {
     )}
     {previewUrls && (
       <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center" onClick={() => setPreviewUrls(null)}>
-        <button type="button" className="absolute top-3 right-3 bg-black/60 text-white rounded px-3 py-1 text-sm" onClick={(e) => { e.stopPropagation(); setPreviewUrls(null) }}>Close</button>
+        <button type="button" className="absolute top-3 right-3 bg-black/60 text-white rounded px-3 py-1 text-sm" onClick={(e) => { e.stopPropagation(); setPreviewUrls(null) }}>{t.common.close}</button>
         {previewUrls.length > 1 && (
           <>
             <button type="button" className="absolute left-3 top-1/2 -translate-y-1/2 bg-black/60 text-white rounded-full w-9 h-9 flex items-center justify-center text-lg" onClick={(e) => { e.stopPropagation(); setPreviewIndex(i => Math.max(i - 1, 0)) }} disabled={previewIndex <= 0}>‹</button>

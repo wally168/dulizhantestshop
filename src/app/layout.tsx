@@ -3,8 +3,9 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { SettingsProvider, SiteSettings } from "@/lib/settings";
 import AppShell from "@/components/AppShell";
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import Script from "next/script";
+import { normalizeLanguage } from "@/lib/utils";
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -34,6 +35,7 @@ import { db } from "@/lib/db";
 // 默认设置
 const defaultSettings = {
   siteName: 'Your Brand',
+  language: 'en',
   logoUrl: '',
   siteDescription: 'Discover premium products with exceptional quality and design',
   siteKeywords: 'premium products, quality, design, lifestyle',
@@ -133,6 +135,10 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode; }>) {
   const settings = await getSettings();
+  const cookieStore = await cookies();
+  const cookieLang = cookieStore.get('siteLanguage')?.value;
+  const resolvedLanguage = normalizeLanguage(cookieLang || (settings as any).language || 'en');
+  const settingsWithLanguage = { ...settings, language: resolvedLanguage };
   const initialNavItems = await getNavigation();
   function extractScriptsAndRemainder(html: string): { scripts: Array<{ src?: string; content?: string; attrs: Record<string, string> }>, remainder: string } {
     if (!html || typeof html !== 'string') return { scripts: [], remainder: '' }
@@ -165,7 +171,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
     .replace(/<meta[^>]*name=['"]viewport['"][^>]*>/gi, '')
 
   return (
-    <html lang="en">
+    <html lang={resolvedLanguage}>
       <head>
         {headScripts.scripts.concat(googleScripts.scripts).map((s, idx) => (
           s.src ? (
@@ -176,7 +182,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         ))}
       </head>
       <body suppressHydrationWarning className={`${inter.variable} font-sans antialiased bg-white text-gray-900`}>
-        <SettingsProvider initialSettings={settings}>
+        <SettingsProvider initialSettings={settingsWithLanguage}>
           <AppShell initialNavItems={initialNavItems}>
             {children}
           </AppShell>

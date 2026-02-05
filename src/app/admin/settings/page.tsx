@@ -21,6 +21,7 @@ import {
 
 interface SiteSettings {
   siteName: string
+  language: string
   logoUrl: string
   logoWidth: string
   logoHeight: string
@@ -50,12 +51,23 @@ interface SiteSettings {
   termsOfService: string
 }
 
+const languageOptions = [
+  { value: 'en', label: 'English' },
+  { value: 'zh', label: '中文' },
+  { value: 'ja', label: '日本語' },
+  { value: 'es', label: 'Español' },
+  { value: 'fr', label: 'Français' },
+  { value: 'de', label: 'Deutsch' },
+  { value: 'ko', label: '한국어' },
+]
+
 export default function SettingsPage() {
   const [saving, setSaving] = useState(false)
   const [loading, setLoading] = useState(true)
   const [uploadingLogo, setUploadingLogo] = useState(false)
   const [settings, setSettings] = useState<SiteSettings>({
     siteName: '',
+    language: 'en',
     logoUrl: '',
     logoWidth: '',
     logoHeight: '',
@@ -209,6 +221,21 @@ export default function SettingsPage() {
             </div>
             
             <div className="grid grid-cols-1 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  网站语言
+                </label>
+                <select
+                  value={settings.language}
+                  onChange={(e) => handleInputChange('language', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  {languageOptions.map((opt) => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+              </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   网站名称

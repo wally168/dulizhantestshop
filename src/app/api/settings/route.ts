@@ -6,6 +6,7 @@ import { Prisma } from '@prisma/client'
 // 默认设置
 const defaultSettings = {
   siteName: 'Your Brand',
+  language: 'en',
   logoUrl: '',
   logoWidth: '',
   logoHeight: '',

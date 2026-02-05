@@ -1,7 +1,7 @@
 "use client"
 
 import Link from 'next/link'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { ArrowLeft, Tag, Save, Trash2 } from 'lucide-react'
 import { useRouter, useParams } from 'next/navigation'
 
@@ -23,7 +23,7 @@ export default function EditCategoryPage() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true)
     setError(null)
     try {
@@ -36,11 +36,11 @@ export default function EditCategoryPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [id])
 
   useEffect(() => {
     if (id) load()
-  }, [id])
+  }, [id, load])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

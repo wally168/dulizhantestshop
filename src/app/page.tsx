@@ -3,6 +3,8 @@ import { ArrowRight, Shield, Star, Zap, Package } from 'lucide-react'
 import Layout from '@/components/Layout'
 import Carousel from '@/components/Carousel'
 import { db } from '@/lib/db'
+import { cookies } from 'next/headers'
+import { formatPrice, getLocale, getTranslations, normalizeLanguage, type SupportedLanguage, type Translations } from '@/lib/utils'
 
 interface Product {
   id: string
@@ -41,19 +43,27 @@ interface CarouselItem {
   newTab?: boolean | null
 }
 
-const defaultHomeContent: HomeContent = {
-  featuredTitle: 'Featured Products',
-  featuredSubtitle: 'Discover our carefully curated collection of premium products, each selected for exceptional quality and design.',
-  whyChooseTitle: 'Why Choose Your Brand',
-  whyChooseSubtitle: "We're redefining the shopping experience with uncompromising quality, innovative design, and customer-first approach.",
-  feature1Title: 'Premium Quality',
-  feature1Description: 'Every product undergoes rigorous quality testing to ensure it meets our exceptional standards.',
-  feature2Title: 'Secure & Trusted',
-  feature2Description: 'Advanced security measures protect your data with enterprise-grade encryption and privacy.',
-  feature3Title: 'Lightning Fast',
-  feature3Description: 'Optimized delivery network ensures your orders arrive quickly and in perfect condition.',
-  carouselEnabled: true,
-  carouselInterval: 5000,
+function resolveHomeValue(value: string | null, base: string, next: string) {
+  if (!value || value.trim() === '' || value === base) return next
+  return value
+}
+
+function defaultHomeContent(language: SupportedLanguage): HomeContent {
+  const t = getTranslations(language)
+  return {
+    featuredTitle: t.home.featuredTitle,
+    featuredSubtitle: t.home.featuredSubtitle,
+    whyChooseTitle: t.home.whyChooseTitle,
+    whyChooseSubtitle: t.home.whyChooseSubtitle,
+    feature1Title: t.home.feature1Title,
+    feature1Description: t.home.feature1Description,
+    feature2Title: t.home.feature2Title,
+    feature2Description: t.home.feature2Description,
+    feature3Title: t.home.feature3Title,
+    feature3Description: t.home.feature3Description,
+    carouselEnabled: true,
+    carouselInterval: 5000,
+  }
 }
 
 async function getSiteName(): Promise<string> {
@@ -106,26 +116,29 @@ async function getFeaturedProducts(): Promise<Product[]> {
   }
 }
 
-async function getHomeContent(): Promise<HomeContent> {
+async function getHomeContent(language: SupportedLanguage): Promise<HomeContent> {
+  const defaults = defaultHomeContent(language)
+  const base = getTranslations('en')
+  const t = getTranslations(language)
   try {
     const row = await db.homeContent.findFirst()
-    if (!row) return defaultHomeContent
+    if (!row) return defaults
     return {
-      featuredTitle: row.featuredTitle || defaultHomeContent.featuredTitle,
-      featuredSubtitle: row.featuredSubtitle || defaultHomeContent.featuredSubtitle,
-      whyChooseTitle: row.whyChooseTitle || defaultHomeContent.whyChooseTitle,
-      whyChooseSubtitle: row.whyChooseSubtitle || defaultHomeContent.whyChooseSubtitle,
-      feature1Title: row.feature1Title || defaultHomeContent.feature1Title,
-      feature1Description: row.feature1Description || defaultHomeContent.feature1Description,
-      feature2Title: row.feature2Title || defaultHomeContent.feature2Title,
-      feature2Description: row.feature2Description || defaultHomeContent.feature2Description,
-      feature3Title: row.feature3Title || defaultHomeContent.feature3Title,
-      feature3Description: row.feature3Description || defaultHomeContent.feature3Description,
-      carouselEnabled: row.carouselEnabled ?? defaultHomeContent.carouselEnabled,
-      carouselInterval: row.carouselInterval ?? defaultHomeContent.carouselInterval,
+      featuredTitle: resolveHomeValue(row.featuredTitle, base.home.featuredTitle, t.home.featuredTitle),
+      featuredSubtitle: resolveHomeValue(row.featuredSubtitle, base.home.featuredSubtitle, t.home.featuredSubtitle),
+      whyChooseTitle: resolveHomeValue(row.whyChooseTitle, base.home.whyChooseTitle, t.home.whyChooseTitle),
+      whyChooseSubtitle: resolveHomeValue(row.whyChooseSubtitle, base.home.whyChooseSubtitle, t.home.whyChooseSubtitle),
+      feature1Title: resolveHomeValue(row.feature1Title, base.home.feature1Title, t.home.feature1Title),
+      feature1Description: resolveHomeValue(row.feature1Description, base.home.feature1Description, t.home.feature1Description),
+      feature2Title: resolveHomeValue(row.feature2Title, base.home.feature2Title, t.home.feature2Title),
+      feature2Description: resolveHomeValue(row.feature2Description, base.home.feature2Description, t.home.feature2Description),
+      feature3Title: resolveHomeValue(row.feature3Title, base.home.feature3Title, t.home.feature3Title),
+      feature3Description: resolveHomeValue(row.feature3Description, base.home.feature3Description, t.home.feature3Description),
+      carouselEnabled: row.carouselEnabled ?? defaults.carouselEnabled,
+      carouselInterval: row.carouselInterval ?? defaults.carouselInterval,
     }
   } catch {
-    return defaultHomeContent
+    return defaults
   }
 }
 
@@ -150,10 +163,23 @@ async function getCarouselItems(): Promise<CarouselItem[]> {
 }
 
 export default async function Home() {
+  const cookieStore = await cookies()
+  const cookieLang = cookieStore.get('siteLanguage')?.value
+  const language = cookieLang
+    ? normalizeLanguage(cookieLang)
+    : await (async (): Promise<SupportedLanguage> => {
+        try {
+          const row = await db.siteSettings.findFirst({ where: { key: 'language' } })
+          if (row?.value) return normalizeLanguage(row.value)
+        } catch {}
+        return 'en'
+      })()
+  const t = getTranslations(language)
+  const locale = getLocale(language)
   const [siteName, featuredProducts, homeContent, carouselItems] = await Promise.all([
     getSiteName(),
     getFeaturedProducts(),
-    getHomeContent(),
+    getHomeContent(language),
     getCarouselItems(),
   ])
 
@@ -190,13 +216,13 @@ export default async function Home() {
           {featuredProducts.length > 0 ? (
             <div className="grid md:grid-cols-3 gap-8 lg:gap-12">
               {featuredProducts.map((product) => (
-                <ProductCard key={product.id} product={product} />
+                <ProductCard key={product.id} product={product} locale={locale} />
               ))}
             </div>
           ) : (
             <div className="text-center py-12">
               <Package className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500 text-lg">No featured products available</p>
+              <p className="text-gray-500 text-lg">{t.home.noFeaturedProducts}</p>
               {/* Removed Add Products link to avoid redirecting to admin login */}
             </div>
           )}
@@ -207,7 +233,7 @@ export default async function Home() {
                 href="/products"
                 className="btn-apple bg-blue-600 text-white px-8 py-3 rounded-2xl font-semibold hover:bg-blue-700 transition-all inline-flex items-center shadow-lg hover:shadow-xl"
               >
-                View All Products
+                {t.home.viewAllProducts}
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </div>
@@ -220,7 +246,7 @@ export default async function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-20">
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6 tracking-tight">
-              {homeContent.whyChooseTitle || `Why Choose ${siteName}`}
+              {homeContent.whyChooseTitle || t.home.whyChooseTitle || `Why Choose ${siteName}`}
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
               {homeContent.whyChooseSubtitle}
@@ -255,7 +281,7 @@ export default async function Home() {
   )
 }
 
-function ProductCard({ product }: { product: Product }) {
+function ProductCard({ product, locale }: { product: Product; locale: string }) {
   return (
     <Link href={`/products/${product.slug}`} className="group">
       <div className="card-hover bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-1">
@@ -283,11 +309,11 @@ function ProductCard({ product }: { product: Product }) {
           )}
           <div className="flex items-center space-x-2">
             <span className="text-2xl font-bold text-gray-900">
-              ${product.price}
+              {formatPrice(product.price, locale)}
             </span>
             {product.originalPrice && product.originalPrice > product.price && (
               <span className="text-lg text-gray-500 line-through">
-                ${product.originalPrice}
+                {formatPrice(product.originalPrice, locale)}
               </span>
             )}
           </div>

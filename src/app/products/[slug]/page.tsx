@@ -4,12 +4,26 @@ import Layout from '@/components/Layout'
 import ProductDetailClient from '@/components/ProductDetailClient'
 import { db } from '@/lib/db'
 import Link from 'next/link'
+import { cookies } from 'next/headers'
+import { getTranslations, normalizeLanguage, type SupportedLanguage } from '@/lib/utils'
 
 function parseJson<T>(s: string | null | undefined, fallback: T): T {
   try { return s ? JSON.parse(s) as T : fallback } catch { return fallback }
 }
 
 export default async function ProductDetail({ params }: { params: Promise<{ slug?: string | string[] }> }) {
+  const cookieStore = await cookies()
+  const cookieLang = cookieStore.get('siteLanguage')?.value
+  const language = cookieLang
+    ? normalizeLanguage(cookieLang)
+    : await (async (): Promise<SupportedLanguage> => {
+        try {
+          const row = await db.siteSettings.findFirst({ where: { key: 'language' } })
+          if (row?.value) return normalizeLanguage(row.value)
+        } catch {}
+        return 'en'
+      })()
+  const t = getTranslations(language)
   const resolvedParams = await params
   const slugParam = Array.isArray(resolvedParams?.slug) ? resolvedParams.slug[0] : resolvedParams?.slug
   const slug = typeof slugParam === 'string' ? slugParam : undefined
@@ -18,9 +32,9 @@ export default async function ProductDetail({ params }: { params: Promise<{ slug
     return (
       <Layout>
         <div className="max-w-3xl mx-auto px-4 py-16">
-          <p className="text-gray-600">Product not found</p>
+          <p className="text-gray-600">{t.productDetail.notFound}</p>
           <Link href="/products" className="text-blue-600 hover:text-blue-700 mt-2 inline-block">
-            Back to products
+            {t.productDetail.backToProducts}
           </Link>
         </div>
       </Layout>
@@ -47,9 +61,9 @@ export default async function ProductDetail({ params }: { params: Promise<{ slug
     return (
       <Layout>
         <div className="max-w-3xl mx-auto px-4 py-16">
-          <p className="text-gray-600">Product not found</p>
+          <p className="text-gray-600">{t.productDetail.notFound}</p>
           <Link href="/products" className="text-blue-600 hover:text-blue-700 mt-2 inline-block">
-            Back to products
+            {t.productDetail.backToProducts}
           </Link>
         </div>
       </Layout>
