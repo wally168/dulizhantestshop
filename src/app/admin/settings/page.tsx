@@ -21,7 +21,6 @@ import {
 
 interface SiteSettings {
   siteName: string
-  language: string
   logoUrl: string
   logoWidth: string
   logoHeight: string
@@ -49,29 +48,7 @@ interface SiteSettings {
   whyChooseUs: string
   privacyPolicy: string
   termsOfService: string
-  contentI18n?: string
 }
-
-type I18nContentEntry = {
-  siteDescription?: string
-  footerText?: string
-  aboutText?: string
-  ourStory?: string
-  ourMission?: string
-  whyChooseUs?: string[]
-  privacyPolicy?: string
-  termsOfService?: string
-}
-
-const languageOptions = [
-  { value: 'en', label: 'English' },
-  { value: 'zh', label: '中文' },
-  { value: 'ja', label: '日本語' },
-  { value: 'es', label: 'Español' },
-  { value: 'fr', label: 'Français' },
-  { value: 'de', label: 'Deutsch' },
-  { value: 'ko', label: '한국어' },
-]
 
 export default function SettingsPage() {
   const [saving, setSaving] = useState(false)
@@ -79,7 +56,6 @@ export default function SettingsPage() {
   const [uploadingLogo, setUploadingLogo] = useState(false)
   const [settings, setSettings] = useState<SiteSettings>({
     siteName: '',
-    language: 'en',
     logoUrl: '',
     logoWidth: '',
     logoHeight: '',
@@ -108,19 +84,6 @@ export default function SettingsPage() {
     privacyPolicy: '',
     termsOfService: ''
   })
-  const [contentI18n, setContentI18n] = useState<Record<string, I18nContentEntry>>({})
-
-  const parseContentI18n = (raw: any): Record<string, I18nContentEntry> => {
-    if (!raw) return {}
-    if (typeof raw === 'object') return raw as Record<string, I18nContentEntry>
-    if (typeof raw === 'string') {
-      try {
-        const parsed = JSON.parse(raw)
-        if (parsed && typeof parsed === 'object') return parsed as Record<string, I18nContentEntry>
-      } catch {}
-    }
-    return {}
-  }
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -130,7 +93,6 @@ export default function SettingsPage() {
         if (response.ok) {
           const data = await response.json()
           setSettings(data)
-          setContentI18n(parseContentI18n(data?.contentI18n))
         }
       } catch (error) {
         console.error('获取设置失败:', error)
@@ -147,36 +109,12 @@ export default function SettingsPage() {
     setSaving(true)
 
     try {
-      const normalizeI18n = (value: string) => value.split('\n').map((line) => line.trim()).filter(Boolean)
-      const normalizedContentI18n: Record<string, I18nContentEntry> = {}
-      languageOptions.forEach((lang) => {
-        const entry = contentI18n?.[lang.value] || {}
-        const normalizedEntry: I18nContentEntry = {}
-        if (entry.siteDescription?.trim()) normalizedEntry.siteDescription = entry.siteDescription.trim()
-        if (entry.footerText?.trim()) normalizedEntry.footerText = entry.footerText.trim()
-        if (entry.aboutText?.trim()) normalizedEntry.aboutText = entry.aboutText.trim()
-        if (entry.ourStory?.trim()) normalizedEntry.ourStory = entry.ourStory.trim()
-        if (entry.ourMission?.trim()) normalizedEntry.ourMission = entry.ourMission.trim()
-        if (entry.privacyPolicy?.trim()) normalizedEntry.privacyPolicy = entry.privacyPolicy.trim()
-        if (entry.termsOfService?.trim()) normalizedEntry.termsOfService = entry.termsOfService.trim()
-        const whyChooseUsText = Array.isArray(entry.whyChooseUs)
-          ? entry.whyChooseUs.join('\n')
-          : typeof entry.whyChooseUs === 'string'
-            ? entry.whyChooseUs
-            : ''
-        const whyChooseUs = normalizeI18n(whyChooseUsText)
-        if (whyChooseUs.length) normalizedEntry.whyChooseUs = whyChooseUs
-        if (Object.keys(normalizedEntry).length > 0) normalizedContentI18n[lang.value] = normalizedEntry
-      })
       const response = await fetch('/api/settings', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          ...settings,
-          contentI18n: JSON.stringify(normalizedContentI18n)
-        }),
+        body: JSON.stringify(settings),
       })
 
       if (response.ok) {
@@ -196,18 +134,6 @@ export default function SettingsPage() {
     setSettings(prev => ({
       ...prev,
       [field]: value
-    }))
-  }
-
-  const updateContentI18nField = (lang: string, field: keyof I18nContentEntry, value: string) => {
-    setContentI18n((prev) => ({
-      ...prev,
-      [lang]: {
-        ...prev[lang],
-        [field]: field === 'whyChooseUs'
-          ? value.split('\n').map((line) => line.trim()).filter(Boolean)
-          : value
-      }
     }))
   }
 
@@ -283,21 +209,6 @@ export default function SettingsPage() {
             </div>
             
             <div className="grid grid-cols-1 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  网站语言
-                </label>
-                <select
-                  value={settings.language}
-                  onChange={(e) => handleInputChange('language', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  {languageOptions.map((opt) => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
-              </div>
-
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   网站名称
@@ -469,103 +380,6 @@ export default function SettingsPage() {
                   提示：每行输入一个要点，系统会自动格式化为列表
                 </p>
               </div>
-            </div>
-          </div>
-
-          {/* 多语言文案 */}
-          <div className="bg-white p-6 rounded-xl shadow-sm border">
-            <div className="flex items-center mb-6">
-              <Globe className="h-6 w-6 text-blue-600 mr-2" />
-              <h2 className="text-lg font-semibold text-gray-900">多语言文案</h2>
-            </div>
-
-            <div className="space-y-6">
-              {languageOptions.map((lang) => {
-                const entry = contentI18n?.[lang.value] || {}
-                const whyChooseUsText = Array.isArray(entry.whyChooseUs)
-                  ? entry.whyChooseUs.join('\n')
-                  : entry.whyChooseUs || ''
-                return (
-                  <div key={lang.value} className="border rounded-lg p-4">
-                    <div className="text-sm font-semibold text-gray-900 mb-4">{lang.label}</div>
-                    <div className="grid grid-cols-1 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">网站描述</label>
-                        <textarea
-                          rows={3}
-                          value={entry.siteDescription || ''}
-                          onChange={(e) => updateContentI18nField(lang.value, 'siteDescription', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">关于我们文本</label>
-                        <textarea
-                          rows={4}
-                          value={entry.aboutText || ''}
-                          onChange={(e) => updateContentI18nField(lang.value, 'aboutText', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">我们的故事</label>
-                        <textarea
-                          rows={5}
-                          value={entry.ourStory || ''}
-                          onChange={(e) => updateContentI18nField(lang.value, 'ourStory', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">我们的使命</label>
-                        <textarea
-                          rows={4}
-                          value={entry.ourMission || ''}
-                          onChange={(e) => updateContentI18nField(lang.value, 'ourMission', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">为什么选择我们</label>
-                        <textarea
-                          rows={6}
-                          value={whyChooseUsText}
-                          onChange={(e) => updateContentI18nField(lang.value, 'whyChooseUs', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          placeholder="每行一个要点"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">页脚文案</label>
-                        <textarea
-                          rows={3}
-                          value={entry.footerText || ''}
-                          onChange={(e) => updateContentI18nField(lang.value, 'footerText', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">隐私政策</label>
-                        <textarea
-                          rows={6}
-                          value={entry.privacyPolicy || ''}
-                          onChange={(e) => updateContentI18nField(lang.value, 'privacyPolicy', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">服务条款</label>
-                        <textarea
-                          rows={6}
-                          value={entry.termsOfService || ''}
-                          onChange={(e) => updateContentI18nField(lang.value, 'termsOfService', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                )
-              })}
             </div>
           </div>
 

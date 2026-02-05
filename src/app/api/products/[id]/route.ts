@@ -41,7 +41,6 @@ export async function GET(
       variantImageMap: parseObj((product as any).variantImageMap),
       variantOptionImages: parseObj((product as any).variantOptionImages),
       variantOptionLinks: parseObj((product as any).variantOptionLinks),
-      i18n: (() => { try { return (product as any).i18n ? JSON.parse((product as any).i18n) : {} } catch { return {} } })(),
     }
     return NextResponse.json(normalized)
   } catch (error) {
@@ -82,7 +81,6 @@ export async function PUT(
       variantOptionLinks,
       youtubeUrl,
       youtubeIndex,
-      i18n,
       // 新增字段：前台按钮显示控制
       showBuyOnAmazon,
       showAddToCart,
@@ -178,14 +176,6 @@ export async function PUT(
           return undefined
         } catch { return undefined }
       })(),
-      i18n: (() => {
-        try {
-          if (!i18n) return undefined
-          if (typeof i18n === 'string') return i18n
-          if (typeof i18n === 'object') return JSON.stringify(i18n)
-          return undefined
-        } catch { return undefined }
-      })(),
       // 新增：按钮显示控制
       showBuyOnAmazon: showBuyOnAmazon !== false,
       showAddToCart: showAddToCart !== false,
@@ -217,7 +207,6 @@ export async function PUT(
       variantImageMap: parseObj((product as any).variantImageMap),
       variantOptionImages: parseObj((product as any).variantOptionImages),
       variantOptionLinks: parseObj((product as any).variantOptionLinks),
-      i18n: (() => { try { return (product as any).i18n ? JSON.parse((product as any).i18n) : {} } catch { return {} } })(),
     }
     return NextResponse.json(normalized)
   } catch (error) {

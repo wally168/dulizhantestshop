@@ -2,20 +2,9 @@
 
 import Layout from '@/components/Layout'
 import { useSettings } from '@/lib/settings'
-import { getTranslations, parseI18nMap, resolveContent, resolveContentList, resolveI18nList, resolveI18nText } from '@/lib/utils'
 
 export default function AboutPage() {
-  const { settings, loading, language } = useSettings()
-  const t = getTranslations(language)
-  const contentI18n = parseI18nMap((settings as any).contentI18n)
-  const aboutTextBase = loading ? resolveContent(undefined, 'aboutText', language) : resolveContent(settings.aboutText, 'aboutText', language)
-  const ourStoryBase = loading ? resolveContent(undefined, 'ourStory', language) : resolveContent(settings.ourStory, 'ourStory', language)
-  const ourMissionBase = loading ? resolveContent(undefined, 'ourMission', language) : resolveContent(settings.ourMission, 'ourMission', language)
-  const whyChooseBase = loading ? resolveContentList(undefined, language) : resolveContentList(settings.whyChooseUs, language)
-  const aboutText = resolveI18nText(aboutTextBase, contentI18n, language, 'aboutText')
-  const ourStory = resolveI18nText(ourStoryBase, contentI18n, language, 'ourStory')
-  const ourMission = resolveI18nText(ourMissionBase, contentI18n, language, 'ourMission')
-  const whyChooseUs = resolveI18nList(whyChooseBase, contentI18n, language, 'whyChooseUs')
+  const { settings, loading } = useSettings()
 
   return (
     <Layout>
@@ -25,10 +14,10 @@ export default function AboutPage() {
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="text-center">
               <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl">
-                {t.about.title} {loading ? 'Your Brand' : settings.siteName}
+                About {loading ? 'Your Brand' : settings.siteName}
               </h1>
               <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-gray-600">
-                {aboutText}
+                {loading ? 'We\'re passionate about bringing you the finest products that combine quality, innovation, and style.' : settings.aboutText}
               </p>
             </div>
           </div>
@@ -38,21 +27,37 @@ export default function AboutPage() {
         <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-3xl">
             <div className="prose prose-lg prose-blue mx-auto">
-              <h2>{t.about.ourStory}</h2>
+              <h2>Our Story</h2>
               <p>
-                {ourStory}
+                {loading ? 
+                  'Founded with a vision to make premium products accessible to everyone, Your Brand has been dedicated to curating exceptional items that enhance your daily life. We believe that quality shouldn\'t be compromised, and every product in our collection reflects this commitment.' 
+                  : settings.ourStory
+                }
               </p>
               
-              <h2>{t.about.ourMission}</h2>
+              <h2>Our Mission</h2>
               <p>
-                {ourMission}
+                {loading ? 
+                  'To provide our customers with carefully selected, high-quality products that offer both functionality and style. We work directly with trusted manufacturers and suppliers to ensure that every item meets our rigorous standards.' 
+                  : settings.ourMission
+                }
               </p>
 
-              <h2>{t.about.whyChooseUs}</h2>
+              <h2>Why Choose Us</h2>
               <ul>
-                {whyChooseUs.map((item, index) => (
-                  <li key={index}>{item.trim()}</li>
-                ))}
+                {loading ? (
+                  <>
+                    <li>Rigorous quality control and product testing</li>
+                    <li>Competitive pricing with transparent policies</li>
+                    <li>Excellent customer service and support</li>
+                    <li>Fast and reliable shipping</li>
+                    <li>Satisfaction guarantee on all products</li>
+                  </>
+                ) : (
+                  settings.whyChooseUs.split('\n').filter(item => item.trim()).map((item, index) => (
+                    <li key={index}>{item.trim()}</li>
+                  ))
+                )}
               </ul>
             </div>
           </div>

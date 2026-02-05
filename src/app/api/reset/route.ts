@@ -5,7 +5,6 @@ import { SESSION_COOKIE, getSessionByToken, ensureDefaultAdmin, hashPassword } f
 // 站点默认设置（与 /api/settings 保持一致）
 const defaultSettings: Record<string, string> = {
   siteName: 'Your Brand',
-  language: 'en',
   logoUrl: '',
   siteDescription: 'Discover premium products with exceptional quality and design',
   siteKeywords: 'premium products, quality, design, lifestyle',

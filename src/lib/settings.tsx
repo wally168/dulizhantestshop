@@ -1,11 +1,9 @@
 'use client'
 
-import { createContext, useCallback, useContext, useEffect, useState, ReactNode } from 'react'
-import { normalizeLanguage, type SupportedLanguage } from '@/lib/utils'
+import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
 
 export interface SiteSettings {
   siteName: string
-  language: string
   logoUrl: string
   logoWidth: string
   logoHeight: string
@@ -33,7 +31,6 @@ export interface SiteSettings {
   whyChooseUs: string
   privacyPolicy: string
   termsOfService: string
-  contentI18n?: string
   analyticsHeadHtml?: string
   analyticsBodyHtml?: string
   analyticsGoogleHtml?: string
@@ -63,15 +60,12 @@ export interface SiteSettings {
 
 interface SettingsContextType {
   settings: SiteSettings
-  language: SupportedLanguage
-  setLanguage: (language: SupportedLanguage) => void
   loading: boolean
   refreshSettings: () => Promise<void>
 }
 
 const defaultSettings: SiteSettings = {
   siteName: 'Your Brand',
-  language: 'en',
   logoUrl: '',
   logoWidth: '',
   logoHeight: '',
@@ -93,7 +87,6 @@ const defaultSettings: SiteSettings = {
   socialTiktok: '',
   socialTiktokTitle: 'TikTok',
   footerText: '© 2025 Your Brand. All rights reserved.',
-  contentI18n: '',
   aboutText: 'We\'re passionate about bringing you the finest products that combine quality, innovation, and style.',
   ourStory: 'Founded with a vision to make premium products accessible to everyone, Your Brand has been dedicated to curating exceptional items that enhance your daily life. We believe that quality shouldn\'t be compromised, and every product in our collection reflects this commitment.',
   ourMission: 'To provide our customers with carefully selected, high-quality products that offer both functionality and style. We work directly with trusted manufacturers and suppliers to ensure that every item meets our rigorous standards.',
@@ -135,23 +128,18 @@ export function SettingsProvider({ children, initialSettings }: { children: Reac
   // Initialize with SSR-provided settings if available to prevent flicker
   const mergedInitial = initialSettings ? { ...defaultSettings, ...initialSettings } : defaultSettings
   const [settings, setSettings] = useState<SiteSettings>(mergedInitial)
-  const [language, setLanguageState] = useState<SupportedLanguage>(() => normalizeLanguage(mergedInitial.language))
   const [loading, setLoading] = useState(!initialSettings)
 
   // Fetch settings from API and update cache
-  const fetchSettings = useCallback(async () => {
+  const fetchSettings = async () => {
     try {
       const response = await fetch('/api/settings', { cache: 'no-store' })
       if (response.ok) {
         const data = await response.json()
         setSettings(data)
         if (typeof window !== 'undefined') {
-          const override = window.localStorage.getItem('siteLanguageOverride')
-          if (!override) setLanguageState(normalizeLanguage(data.language))
-        }
-        if (typeof window !== 'undefined') {
           localStorage.setItem('siteSettings', JSON.stringify(data))
-          localStorage.setItem('siteSettingsVersion', '1.6')
+          localStorage.setItem('siteSettingsVersion', '1.5')
         }
       }
     } catch (error) {
@@ -160,27 +148,21 @@ export function SettingsProvider({ children, initialSettings }: { children: Reac
     } finally {
       setLoading(false)
     }
-  }, [])
+  }
 
   useEffect(() => {
     const init = async () => {
-      if (typeof window !== 'undefined') {
-        const override = window.localStorage.getItem('siteLanguageOverride')
-        if (override) setLanguageState(normalizeLanguage(override))
-      }
       // If no SSR initial settings, use cache first for fast display, then refresh
       if (!initialSettings && typeof window !== 'undefined') {
         try {
           const cached = localStorage.getItem('siteSettings')
           const cacheVersion = localStorage.getItem('siteSettingsVersion')
-          const currentVersion = '1.6'
+          const currentVersion = '1.5'
 
           if (cached && cacheVersion === currentVersion) {
             const parsedSettings = JSON.parse(cached)
             if (parsedSettings.siteName && typeof parsedSettings.siteName === 'string') {
               setSettings(parsedSettings)
-              const override = window.localStorage.getItem('siteLanguageOverride')
-              if (!override && parsedSettings.language) setLanguageState(normalizeLanguage(parsedSettings.language))
             } else {
               localStorage.removeItem('siteSettings')
               localStorage.removeItem('siteSettingsVersion')
@@ -200,23 +182,15 @@ export function SettingsProvider({ children, initialSettings }: { children: Reac
     }
 
     init()
-  }, [fetchSettings, initialSettings])
+  }, [])
 
   const refreshSettings = async () => {
     setLoading(true)
     await fetchSettings()
   }
 
-  const setLanguage = (next: SupportedLanguage) => {
-    setLanguageState(next)
-    if (typeof window !== 'undefined') {
-      window.localStorage.setItem('siteLanguageOverride', next)
-      document.cookie = `siteLanguage=${next}; path=/; max-age=31536000; samesite=lax`
-    }
-  }
-
   return (
-    <SettingsContext.Provider value={{ settings, language, setLanguage, loading, refreshSettings }}>
+    <SettingsContext.Provider value={{ settings, loading, refreshSettings }}>
       {children}
     </SettingsContext.Provider>
   )
@@ -228,8 +202,6 @@ export function useSettings() {
     // 安全回退：在未包裹 SettingsProvider 的环境（如部分预览/SSR边界）提供默认值
     return {
       settings: defaultSettings,
-      language: normalizeLanguage(defaultSettings.language),
-      setLanguage: () => {},
       loading: true,
       refreshSettings: async () => {},
     }

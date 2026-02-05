@@ -1,26 +1,12 @@
 import Link from 'next/link'
 import Layout from '@/components/Layout'
 import { db } from '@/lib/db'
-import { formatPrice, getLocale, getTranslations, normalizeLanguage, resolveI18nText, type SupportedLanguage } from '@/lib/utils'
-import { cookies } from 'next/headers'
+import { formatPrice } from '@/lib/utils'
 import AddToCartButton from '@/components/AddToCartButton'
 import FallbackImage from '@/components/FallbackImage'
 import type { Product } from '@prisma/client'
 
 export default async function ProductsPage({ searchParams }: { searchParams?: Promise<{ categoryId?: string; q?: string }> }) {
-  const cookieStore = await cookies()
-  const cookieLang = cookieStore.get('siteLanguage')?.value
-  const language = cookieLang
-    ? normalizeLanguage(cookieLang)
-    : await (async (): Promise<SupportedLanguage> => {
-        try {
-          const row = await db.siteSettings.findFirst({ where: { key: 'language' } })
-          if (row?.value) return normalizeLanguage(row.value)
-        } catch {}
-        return 'en'
-      })()
-  const t = getTranslations(language)
-  const locale = getLocale(language)
   const resolvedParams = searchParams ? await searchParams : {}
   const selectedCategoryId = resolvedParams?.categoryId || ''
   const q = resolvedParams?.q || ''
@@ -87,10 +73,10 @@ export default async function ProductsPage({ searchParams }: { searchParams?: Pr
         <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-24 lg:px-8">
           <div className="text-center">
             <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl">
-              {t.products.title}
+              Our Products
             </h1>
             <p className="mx-auto mt-4 max-w-3xl text-lg text-gray-600">
-              {t.products.subtitle}
+              Discover our carefully curated collection of premium products. Each item is selected for its quality, design, and value.
             </p>
           </div>
 
@@ -98,20 +84,19 @@ export default async function ProductsPage({ searchParams }: { searchParams?: Pr
           <div className="mt-10 flex items-center justify-center">
             <form method="get" action="/products" className="flex items-center gap-3">
               <select name="categoryId" defaultValue={selectedCategoryId} className="px-3 py-2 border border-gray-300 rounded-lg text-sm">
-                <option value="">{t.products.allCategories}</option>
+                <option value="">All Categories</option>
                 {categories.map((c) => (
-                  <option key={c.id} value={c.id}>{resolveI18nText(c.name, (c as any).i18n, language, 'name')}</option>
+                  <option key={c.id} value={c.id}>{c.name}</option>
                 ))}
               </select>
               {q && <input type="hidden" name="q" value={q} />}
-              <button type="submit" className="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 text-sm hover:bg-gray-300">{t.products.apply}</button>
+              <button type="submit" className="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 text-sm hover:bg-gray-300">Apply</button>
             </form>
           </div>
 
           <div className="mt-8 grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 xl:gap-x-8">
             {products.map((product) => {
               const displayImage = resolveImage(product)
-              const resolvedTitle = resolveI18nText(product.title, (product as any).i18n, language, 'title')
               const price = Number(product?.price ?? 0)
               const hasOriginal = typeof product?.originalPrice === 'number' && Number(product.originalPrice) > price
               const amazonUrl = typeof product?.amazonUrl === 'string' ? product.amazonUrl : ''
@@ -123,18 +108,18 @@ export default async function ProductsPage({ searchParams }: { searchParams?: Pr
               return (
                 <div key={product.id} className="group relative">
                   <div className="aspect-square w-full overflow-hidden rounded-lg bg-gray-100">
-                      <FallbackImage
-                        src={displayImage}
-                        alt={resolvedTitle || t.products.productImage}
-                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                      />
+                    <FallbackImage
+                      src={displayImage}
+                      alt={product.title || 'Product image'}
+                      className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
                   </div>
                   <div className="mt-4 flex justify-between">
                     <div className="flex-1">
                       <h3 className="relative text-sm text-gray-700">
                         <Link href={`/products/${product.slug}`}>
                           <span aria-hidden="true" className="absolute inset-0" />
-                          {resolvedTitle || t.products.untitledProduct}
+                          {product.title || 'Untitled Product'}
                         </Link>
                       </h3>
                       {reviewCount > 0 && (
@@ -150,11 +135,11 @@ export default async function ProductsPage({ searchParams }: { searchParams?: Pr
                       )}
                       <div className="mt-2 flex items-center gap-2">
                         <p className="text-lg font-medium text-gray-900">
-                          {formatPrice(price, locale)}
+                          {formatPrice(price)}
                         </p>
                         {hasOriginal && (
                           <p className="text-sm text-gray-500 line-through">
-                            {formatPrice(Number(product.originalPrice), locale)}
+                            {formatPrice(Number(product.originalPrice))}
                           </p>
                         )}
                       </div>
@@ -163,7 +148,7 @@ export default async function ProductsPage({ searchParams }: { searchParams?: Pr
                           href={`/products/${product.slug}`}
                           className="inline-flex items-center justify-center px-3 py-2 rounded-md bg-orange-600 text-white text-sm font-semibold leading-tight text-center hover:bg-orange-500"
                         >
-                          {t.common.viewDetails}
+                          View Details
                         </Link>
                         {showBuy && (
                           <a
@@ -172,7 +157,7 @@ export default async function ProductsPage({ searchParams }: { searchParams?: Pr
                             rel="noopener noreferrer"
                             className="inline-flex items-center justify-center px-3 py-2 rounded-md bg-blue-600 text-white text-sm font-semibold leading-tight text-center hover:bg-blue-500"
                           >
-                            {t.common.buyOnAmazon}
+                            Buy on Amazon
                           </a>
                         )}
                         {showAdd && (
@@ -180,7 +165,7 @@ export default async function ProductsPage({ searchParams }: { searchParams?: Pr
                             <AddToCartButton
                               id={product.id}
                               slug={product.slug}
-                              title={resolvedTitle}
+                              title={product.title}
                               price={price}
                               imageUrl={resolveImage(product)}
                               size="sm"
@@ -197,8 +182,8 @@ export default async function ProductsPage({ searchParams }: { searchParams?: Pr
 
           {products.length === 0 && (
             <div className="text-center py-12">
-              <p className="text-gray-500 text-lg">{t.products.emptyTitle}</p>
-              <p className="text-gray-400 text-sm mt-2">{t.products.emptySubtitle}</p>
+              <p className="text-gray-500 text-lg">No products available at the moment.</p>
+              <p className="text-gray-400 text-sm mt-2">Please check back later for new arrivals.</p>
             </div>
           )}
         </div>
@@ -207,8 +192,8 @@ export default async function ProductsPage({ searchParams }: { searchParams?: Pr
   )
 }
   // 类别列表
-  let categories: Array<{ id: string; name: string; i18n?: string | null }> = []
+  let categories: Array<{ id: string; name: string }> = []
   try {
-    const rows = await db.category.findMany({ orderBy: { name: 'asc' }, select: { id: true, name: true, i18n: true } })
+    const rows = await db.category.findMany({ orderBy: { name: 'asc' }, select: { id: true, name: true } })
     categories = rows
   } catch {}

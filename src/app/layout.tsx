@@ -3,9 +3,8 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { SettingsProvider, SiteSettings } from "@/lib/settings";
 import AppShell from "@/components/AppShell";
-import { cookies, headers } from "next/headers";
+import { headers } from "next/headers";
 import Script from "next/script";
-import { normalizeLanguage } from "@/lib/utils";
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -35,7 +34,6 @@ import { db } from "@/lib/db";
 // 默认设置
 const defaultSettings = {
   siteName: 'Your Brand',
-  language: 'en',
   logoUrl: '',
   siteDescription: 'Discover premium products with exceptional quality and design',
   siteKeywords: 'premium products, quality, design, lifestyle',
@@ -49,7 +47,6 @@ const defaultSettings = {
   socialInstagram: 'https://instagram.com/yourbrand',
   socialYoutube: 'https://youtube.com/yourbrand',
   footerText: '© 2025 Your Brand. All rights reserved.',
-  contentI18n: '',
   aboutText: 'We\'re passionate about bringing you the finest products that combine quality, innovation, and style.',
   ourStory: 'Founded with a vision to make premium products accessible to everyone, Your Brand has been dedicated to curating exceptional items that enhance your daily life. We believe that quality shouldn\'t be compromised, and every product in our collection reflects this commitment.',
   ourMission: 'To provide our customers with carefully selected, high-quality products that offer both functionality and style. We work directly with trusted manufacturers and suppliers to ensure that every item meets our rigorous standards.',
@@ -136,10 +133,6 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode; }>) {
   const settings = await getSettings();
-  const cookieStore = await cookies();
-  const cookieLang = cookieStore.get('siteLanguage')?.value;
-  const resolvedLanguage = normalizeLanguage(cookieLang || (settings as any).language || 'en');
-  const settingsWithLanguage = { ...settings, language: resolvedLanguage };
   const initialNavItems = await getNavigation();
   function extractScriptsAndRemainder(html: string): { scripts: Array<{ src?: string; content?: string; attrs: Record<string, string> }>, remainder: string } {
     if (!html || typeof html !== 'string') return { scripts: [], remainder: '' }
@@ -172,7 +165,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
     .replace(/<meta[^>]*name=['"]viewport['"][^>]*>/gi, '')
 
   return (
-    <html lang={resolvedLanguage}>
+    <html lang="en">
       <head>
         {headScripts.scripts.concat(googleScripts.scripts).map((s, idx) => (
           s.src ? (
@@ -183,7 +176,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         ))}
       </head>
       <body suppressHydrationWarning className={`${inter.variable} font-sans antialiased bg-white text-gray-900`}>
-        <SettingsProvider initialSettings={settingsWithLanguage}>
+        <SettingsProvider initialSettings={settings}>
           <AppShell initialNavItems={initialNavItems}>
             {children}
           </AppShell>

@@ -4,26 +4,12 @@ import Layout from '@/components/Layout'
 import ProductDetailClient from '@/components/ProductDetailClient'
 import { db } from '@/lib/db'
 import Link from 'next/link'
-import { cookies } from 'next/headers'
-import { getTranslations, normalizeLanguage, resolveI18nList, resolveI18nText, type SupportedLanguage } from '@/lib/utils'
 
 function parseJson<T>(s: string | null | undefined, fallback: T): T {
   try { return s ? JSON.parse(s) as T : fallback } catch { return fallback }
 }
 
 export default async function ProductDetail({ params }: { params: Promise<{ slug?: string | string[] }> }) {
-  const cookieStore = await cookies()
-  const cookieLang = cookieStore.get('siteLanguage')?.value
-  const language = cookieLang
-    ? normalizeLanguage(cookieLang)
-    : await (async (): Promise<SupportedLanguage> => {
-        try {
-          const row = await db.siteSettings.findFirst({ where: { key: 'language' } })
-          if (row?.value) return normalizeLanguage(row.value)
-        } catch {}
-        return 'en'
-      })()
-  const t = getTranslations(language)
   const resolvedParams = await params
   const slugParam = Array.isArray(resolvedParams?.slug) ? resolvedParams.slug[0] : resolvedParams?.slug
   const slug = typeof slugParam === 'string' ? slugParam : undefined
@@ -32,9 +18,9 @@ export default async function ProductDetail({ params }: { params: Promise<{ slug
     return (
       <Layout>
         <div className="max-w-3xl mx-auto px-4 py-16">
-          <p className="text-gray-600">{t.productDetail.notFound}</p>
+          <p className="text-gray-600">Product not found</p>
           <Link href="/products" className="text-blue-600 hover:text-blue-700 mt-2 inline-block">
-            {t.productDetail.backToProducts}
+            Back to products
           </Link>
         </div>
       </Layout>
@@ -61,9 +47,9 @@ export default async function ProductDetail({ params }: { params: Promise<{ slug
     return (
       <Layout>
         <div className="max-w-3xl mx-auto px-4 py-16">
-          <p className="text-gray-600">{t.productDetail.notFound}</p>
+          <p className="text-gray-600">Product not found</p>
           <Link href="/products" className="text-blue-600 hover:text-blue-700 mt-2 inline-block">
-            {t.productDetail.backToProducts}
+            Back to products
           </Link>
         </div>
       </Layout>
@@ -74,10 +60,6 @@ export default async function ProductDetail({ params }: { params: Promise<{ slug
   const images = Array.isArray(parsedImages) ? parsedImages : [product.mainImage]
   const parsedBullets = parseJson<string[]>(product.bulletPoints, [])
   const bullets = Array.isArray(parsedBullets) ? parsedBullets : []
-  const resolvedTitle = resolveI18nText(product.title, (product as any).i18n, language, 'title')
-  const resolvedDescription = resolveI18nText(product.description, (product as any).i18n, language, 'description')
-  const resolvedBullets = resolveI18nList(bullets, (product as any).i18n, language, 'bulletPoints')
-  const resolvedCategoryName = resolveI18nText(product.category?.name ?? null, (product as any).category?.i18n, language, 'name')
 
   type VariantGroup = { name: string; options: string[] }
   // 优先使用关联品牌的名称，回退到旧字段
@@ -138,12 +120,12 @@ export default async function ProductDetail({ params }: { params: Promise<{ slug
           <ProductDetailClient
             id={product.id}
             slug={product.slug}
-            title={resolvedTitle}
-            categoryName={resolvedCategoryName || 'Uncategorized'}
+            title={product.title}
+            categoryName={product.category?.name ?? 'Uncategorized'}
             brand={brand ?? null}
             upc={upc ?? null}
             publishedAt={publishedAt ?? null}
-            description={resolvedDescription}
+            description={product.description}
             amazonUrl={product.amazonUrl}
             price={product.price}
             originalPrice={product.originalPrice ?? null}
@@ -151,7 +133,7 @@ export default async function ProductDetail({ params }: { params: Promise<{ slug
             mainImage={product.mainImage}
             youtubeUrl={youtubeUrl}
             youtubeIndex={youtubeIndex}
-            bullets={resolvedBullets}
+            bullets={bullets}
             variantGroups={Array.isArray(variantGroups) ? variantGroups : []}
             variantImageMap={variantImageMap}
             variantOptionImages={variantOptionImages}

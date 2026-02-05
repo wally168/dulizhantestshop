@@ -9,7 +9,6 @@ interface NavItemInput {
   order: number
   isExternal?: boolean
   active?: boolean
-  i18n?: string | Record<string, any> | null
 }
 
 // GET - 获取所有导航项
@@ -32,7 +31,6 @@ export async function GET(request: NextRequest) {
       // 目前schema没有isExternal字段，默认false
       isExternal: false,
       active: item.active,
-      i18n: item.i18n ?? null,
     }))
 
     return NextResponse.json(result, {
@@ -79,14 +77,6 @@ export async function PUT(request: NextRequest) {
             href: item.href,
             order: item.order,
             active: item.active ?? true,
-            i18n: (() => {
-              try {
-                if (!item.i18n) return null
-                if (typeof item.i18n === 'string') return item.i18n
-                if (typeof item.i18n === 'object') return JSON.stringify(item.i18n)
-                return null
-              } catch { return null }
-            })(),
           },
           create: {
             id: item.id,
@@ -94,14 +84,6 @@ export async function PUT(request: NextRequest) {
             href: item.href,
             order: item.order,
             active: item.active ?? true,
-            i18n: (() => {
-              try {
-                if (!item.i18n) return null
-                if (typeof item.i18n === 'string') return item.i18n
-                if (typeof item.i18n === 'object') return JSON.stringify(item.i18n)
-                return null
-              } catch { return null }
-            })(),
           }
         })
       )

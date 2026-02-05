@@ -12,7 +12,6 @@ export async function GET() {
       id: c.id,
       name: c.name,
       slug: c.slug,
-      i18n: (() => { try { return c.i18n ? JSON.parse(c.i18n) : {} } catch { return {} } })(),
     }))
 
     return NextResponse.json(result, {
@@ -32,7 +31,6 @@ export async function POST(request: Request) {
     const slugInput: string = (payload?.slug || '').trim()
     const description: string | null = payload?.description ?? null
     const image: string | null = payload?.image ?? null
-    const i18n = payload?.i18n
 
     if (!name) {
       return NextResponse.json({ error: '分类名称不能为空' }, { status: 400 })
@@ -50,23 +48,10 @@ export async function POST(request: Request) {
     }
 
     const created = await db.category.create({
-      data: {
-        name,
-        slug,
-        description,
-        image,
-        i18n: (() => {
-          try {
-            if (!i18n) return null
-            if (typeof i18n === 'string') return i18n
-            if (typeof i18n === 'object') return JSON.stringify(i18n)
-            return null
-          } catch { return null }
-        })(),
-      },
+      data: { name, slug, description, image },
     })
 
-    return NextResponse.json({ id: created.id, name: created.name, slug: created.slug, i18n: (() => { try { return created.i18n ? JSON.parse(created.i18n) : {} } catch { return {} } })() }, { status: 201 })
+    return NextResponse.json({ id: created.id, name: created.name, slug: created.slug }, { status: 201 })
   } catch (error) {
     console.error('创建分类失败:', error)
     return NextResponse.json({ error: '创建分类失败' }, { status: 500 })

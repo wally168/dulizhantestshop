@@ -16,22 +16,10 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         btnText: data.btnText,
         newTab: data.newTab,
         active: data.active,
-        i18n: (() => {
-          try {
-            if (!data.i18n) return null
-            if (typeof data.i18n === 'string') return data.i18n
-            if (typeof data.i18n === 'object') return JSON.stringify(data.i18n)
-            return null
-          } catch { return null }
-        })(),
         // order is usually handled by reorder endpoint, but can be here too if needed
       },
     })
-    const normalized = {
-      ...item,
-      i18n: (() => { try { return item.i18n ? JSON.parse(item.i18n) : {} } catch { return {} } })(),
-    }
-    return NextResponse.json(normalized)
+    return NextResponse.json(item)
   } catch (error) {
     console.error('Failed to update carousel item:', error)
     return NextResponse.json({ error: 'Failed to update item' }, { status: 500 })

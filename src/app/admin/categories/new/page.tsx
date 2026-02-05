@@ -5,63 +5,24 @@ import { useState } from 'react'
 import { ArrowLeft, Tag, Save } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
-type I18nCategoryEntry = {
-  name?: string
-  description?: string
-}
-
-const languageOptions = [
-  { value: 'en', label: 'English' },
-  { value: 'zh', label: '中文' },
-  { value: 'ja', label: '日本語' },
-  { value: 'es', label: 'Español' },
-  { value: 'fr', label: 'Français' },
-  { value: 'de', label: 'Deutsch' },
-  { value: 'ko', label: '한국어' },
-]
-
 export default function NewCategoryPage() {
   const router = useRouter()
   const [name, setName] = useState('')
   const [slug, setSlug] = useState('')
   const [description, setDescription] = useState('')
   const [image, setImage] = useState('')
-  const [i18n, setI18n] = useState<Record<string, I18nCategoryEntry>>({})
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
-
-  const updateI18nField = (lang: string, field: keyof I18nCategoryEntry, value: string) => {
-    setI18n((prev) => {
-      const entry = prev[lang] ?? {}
-      return { ...prev, [lang]: { ...entry, [field]: value } }
-    })
-  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setSaving(true)
     setError(null)
     try {
-      const i18nPayload = (() => {
-        const result: Record<string, I18nCategoryEntry> = {}
-        languageOptions.forEach((lang) => {
-          const entry = i18n[lang.value]
-          if (!entry) return
-          const nameValue = (entry.name ?? '').trim()
-          const descValue = (entry.description ?? '').trim()
-          if (nameValue || descValue) {
-            result[lang.value] = {
-              ...(nameValue ? { name: nameValue } : {}),
-              ...(descValue ? { description: descValue } : {}),
-            }
-          }
-        })
-        return result
-      })()
       const res = await fetch('/api/categories', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, slug, description: description || null, image: image || null, i18n: i18nPayload }),
+        body: JSON.stringify({ name, slug, description: description || null, image: image || null }),
       })
       if (!res.ok) {
         const err = await res.json().catch(() => ({}))
@@ -147,40 +108,6 @@ export default function NewCategoryPage() {
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
               placeholder="可选"
             />
-          </div>
-
-          <div className="border rounded-lg p-4">
-            <div className="text-sm font-semibold text-gray-900 mb-4">多语言内容</div>
-            <div className="space-y-4">
-              {languageOptions.map((lang) => {
-                const entry = i18n[lang.value] ?? {}
-                return (
-                  <div key={lang.value} className="border rounded-lg p-4">
-                    <div className="text-sm font-semibold text-gray-900 mb-3">{lang.label}</div>
-                    <div className="space-y-3">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">分类名称</label>
-                        <input
-                          type="text"
-                          value={entry.name ?? ''}
-                          onChange={(e) => updateI18nField(lang.value, 'name', e.target.value)}
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">分类描述</label>
-                        <textarea
-                          rows={3}
-                          value={entry.description ?? ''}
-                          onChange={(e) => updateI18nField(lang.value, 'description', e.target.value)}
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
           </div>
 
           <div className="flex justify-end">

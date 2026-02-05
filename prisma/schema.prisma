@@ -26,7 +26,6 @@ model Category {
   slug        String    @unique
   description String?
   image       String?
-  i18n        String?
   products    Product[]
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
@@ -60,7 +59,6 @@ model Product {
   brandId         String?
   bulletPoints    String   // JSON string of 5 bullet points, 每点限制500字符
   description     String   // 统一的产品描述，支持HTML，限制3000字符
-  i18n            String?
   featured        Boolean  @default(false)
   active          Boolean  @default(true)
   brand           String?
@@ -123,7 +121,6 @@ model Navigation {
   href     String
   order    Int
   active   Boolean @default(true)
-  i18n     String?
   parentId String?
   parent   Navigation? @relation("NavigationHierarchy", fields: [parentId], references: [id])
   children Navigation[] @relation("NavigationHierarchy")
@@ -170,7 +167,6 @@ model HomeContent {
   
   carouselEnabled       Boolean  @default(true)
   carouselInterval      Int      @default(5000)
-  i18n                  String?
   
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
@@ -186,7 +182,6 @@ model CarouselItem {
   newTab      Boolean  @default(false)
   order       Int      @default(0)
   active      Boolean  @default(true)
-  i18n        String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
