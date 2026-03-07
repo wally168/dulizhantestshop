@@ -1,4 +1,5 @@
 import { db } from '@/lib/db'
+import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'crypto'
 
 export const SESSION_COOKIE = 'admin_session'
@@ -18,9 +19,11 @@ export function verifyPassword(password: string, hash: string, salt: string): bo
 export async function ensureDefaultAdmin() {
   const existing = await db.adminUser.findFirst()
   if (!existing) {
-    const { hash, salt } = hashPassword('dage168')
+    const defaultUsername = process.env.DEFAULT_ADMIN_USERNAME || 'dage666'
+    const defaultPassword = process.env.DEFAULT_ADMIN_PASSWORD || 'dage168'
+    const { hash, salt } = hashPassword(defaultPassword)
     await db.adminUser.create({
-      data: { username: 'dage666', passwordHash: hash, passwordSalt: salt }
+      data: { username: defaultUsername, passwordHash: hash, passwordSalt: salt }
     })
   }
 }
@@ -61,5 +64,42 @@ export function buildCookieOptions(expiresAt: Date) {
     secure: process.env.NODE_ENV === 'production',
     path: '/',
     expires: expiresAt,
+  }
+}
+
+export function clearSessionCookie(res: NextResponse) {
+  res.cookies.set(SESSION_COOKIE, '', {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+    path: '/',
+    expires: new Date(0)
+  })
+}
+
+export async function requireAdminSession(request: NextRequest) {
+  const token = request.cookies.get(SESSION_COOKIE)?.value
+  if (!token) {
+    return { response: NextResponse.json({ error: '未登录' }, { status: 401 }) }
+  }
+
+  const session = await getSessionByToken(token)
+  if (!session) {
+    const res = NextResponse.json({ error: '会话无效或已过期' }, { status: 401 })
+    clearSessionCookie(res)
+    return { response: res }
+  }
+
+  return { session }
+}
+
+export function isSameOrigin(request: NextRequest) {
+  const origin = request.headers.get('origin')
+  const host = request.headers.get('host')
+  if (!origin || !host) return false
+  try {
+    return new URL(origin).host === host
+  } catch {
+    return false
   }
 }
