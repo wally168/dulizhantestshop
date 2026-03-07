@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import { SESSION_COOKIE, ensureDefaultAdmin, hashPassword, isSameOrigin, requireAdminSession } from '@/lib/auth'
+import { SESSION_COOKIE, ensureDefaultAdmin, getDefaultAdminCredentials, hashPassword, isSameOrigin, requireAdminSession } from '@/lib/auth'
 
 // 站点默认设置（与 /api/settings 保持一致）
 const defaultSettings: Record<string, string> = {
@@ -141,7 +141,12 @@ export async function POST(request: NextRequest) {
 
     // 新增：仅重置密码模式，保留所有数据与当前会话
     if (mode === 'password') {
-      const defaultPassword = process.env.DEFAULT_ADMIN_PASSWORD || 'dage168'
+      let defaultPassword = ''
+      try {
+        defaultPassword = getDefaultAdminCredentials().password
+      } catch {
+        return NextResponse.json({ error: '生产环境必须配置默认管理员账号密码' }, { status: 400 })
+      }
       const { hash, salt } = hashPassword(defaultPassword)
       await db.adminUser.update({
         where: { id: session.userId },

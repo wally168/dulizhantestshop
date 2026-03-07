@@ -16,14 +16,27 @@ export function verifyPassword(password: string, hash: string, salt: string): bo
   return crypto.timingSafeEqual(Buffer.from(hashed, 'hex'), Buffer.from(hash, 'hex'))
 }
 
+export function getDefaultAdminCredentials() {
+  const username = String(process.env.DEFAULT_ADMIN_USERNAME || '').trim()
+  const password = String(process.env.DEFAULT_ADMIN_PASSWORD || '').trim()
+  if (process.env.NODE_ENV === 'production') {
+    if (!username || !password) {
+      throw new Error('DEFAULT_ADMIN_USERNAME and DEFAULT_ADMIN_PASSWORD are required in production')
+    }
+  }
+  return {
+    username: username || 'dage666',
+    password: password || 'dage168',
+  }
+}
+
 export async function ensureDefaultAdmin() {
   const existing = await db.adminUser.findFirst()
   if (!existing) {
-    const defaultUsername = process.env.DEFAULT_ADMIN_USERNAME || 'dage666'
-    const defaultPassword = process.env.DEFAULT_ADMIN_PASSWORD || 'dage168'
-    const { hash, salt } = hashPassword(defaultPassword)
+    const { username, password } = getDefaultAdminCredentials()
+    const { hash, salt } = hashPassword(password)
     await db.adminUser.create({
-      data: { username: defaultUsername, passwordHash: hash, passwordSalt: salt }
+      data: { username, passwordHash: hash, passwordSalt: salt }
     })
   }
 }
