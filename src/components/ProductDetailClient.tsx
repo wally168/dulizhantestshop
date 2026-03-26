@@ -118,7 +118,9 @@ function replaceYoutubeLinks(input: string): string {
   const [previewIndex, setPreviewIndex] = useState<number>(0)
   const [sortBy, setSortBy] = useState<'time' | 'rating'>('time')
   const [onlyWithImages, setOnlyWithImages] = useState<boolean>(false)
+  const [currentReviewPage, setCurrentReviewPage] = useState<number>(1)
   const touchStartXRef = useRef<number | null>(null)
+  const REVIEWS_PER_PAGE = 10
  
    const safeImages = useMemo(() => {
      const arr = Array.isArray(images) && images.length > 0 ? images : [mainImage]
@@ -190,6 +192,26 @@ function replaceYoutubeLinks(input: string): string {
     }
     return arr
   }, [reviews, sortBy, onlyWithImages])
+
+  useEffect(() => {
+    setCurrentReviewPage(1)
+  }, [sortBy, onlyWithImages, reviews])
+
+  const totalReviewPages = useMemo(() => {
+    return Math.max(1, Math.ceil(sortedReviews.length / REVIEWS_PER_PAGE))
+  }, [sortedReviews.length, REVIEWS_PER_PAGE])
+
+  useEffect(() => {
+    if (currentReviewPage > totalReviewPages) {
+      setCurrentReviewPage(totalReviewPages)
+    }
+  }, [currentReviewPage, totalReviewPages])
+
+  const pagedReviews = useMemo(() => {
+    const start = (currentReviewPage - 1) * REVIEWS_PER_PAGE
+    const end = start + REVIEWS_PER_PAGE
+    return sortedReviews.slice(start, end)
+  }, [sortedReviews, currentReviewPage, REVIEWS_PER_PAGE])
 
   const formatReviewDate = (dt?: string | Date) => {
     if (!dt) return ''
@@ -393,7 +415,7 @@ function replaceYoutubeLinks(input: string): string {
           </div>
         </div>
         <div className="mt-4 divide-y divide-gray-200">
-          {sortedReviews.map((r) => (
+          {pagedReviews.map((r) => (
             <div key={r.id} className="py-4">
               <div className="flex items-center gap-2">
                 {Array.from({ length: 5 }).map((_, i) => (
@@ -421,6 +443,32 @@ function replaceYoutubeLinks(input: string): string {
               )}
             </div>
           ))}
+        </div>
+        <div className="mt-4 flex items-center justify-between text-sm text-gray-600">
+          <span>
+            {sortedReviews.length > 0
+              ? `Showing ${(currentReviewPage - 1) * REVIEWS_PER_PAGE + 1}-${Math.min(currentReviewPage * REVIEWS_PER_PAGE, sortedReviews.length)} of ${sortedReviews.length}`
+              : 'Showing 0 of 0'}
+          </span>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              className="px-3 py-1 rounded border disabled:opacity-50"
+              onClick={() => setCurrentReviewPage((p) => Math.max(1, p - 1))}
+              disabled={currentReviewPage <= 1}
+            >
+              Prev
+            </button>
+            <span>{currentReviewPage} / {totalReviewPages}</span>
+            <button
+              type="button"
+              className="px-3 py-1 rounded border disabled:opacity-50"
+              onClick={() => setCurrentReviewPage((p) => Math.min(totalReviewPages, p + 1))}
+              disabled={currentReviewPage >= totalReviewPages}
+            >
+              Next
+            </button>
+          </div>
         </div>
       </div>
     )}
