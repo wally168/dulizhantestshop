@@ -66,6 +66,7 @@ function replaceYoutubeLinks(input: string): string {
    categoryName,
    brand,
    upc,
+  asin,
    publishedAt,
    description,
    amazonUrl,
@@ -90,6 +91,7 @@ function replaceYoutubeLinks(input: string): string {
   categoryName?: string
   brand?: string | null
   upc?: string | null
+  asin?: string | null
   publishedAt?: string | Date | null
   description: string
   amazonUrl: string
@@ -267,6 +269,9 @@ function replaceYoutubeLinks(input: string): string {
         )}
         {upc && (
           <p className="mt-1 text-gray-600">UPC: {upc}</p>
+        )}
+        {asin && (
+          <p className="mt-1 text-gray-600">ASIN: {asin}</p>
         )}
         {publishedAt && (
           <p className="mt-1 text-gray-500 text-sm">Date First Available : {formatPublishedAt(publishedAt)}</p>

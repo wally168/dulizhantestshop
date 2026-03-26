@@ -46,6 +46,8 @@ model Product {
   id              String   @id @default(cuid())
   title           String   // 标题限制200字符
   slug            String   @unique
+  asin            String?  @unique
+  showAsinOnFrontend Boolean @default(false)
   mainImage       String
   images          String   // JSON string of image URLs
   youtubeUrl      String?

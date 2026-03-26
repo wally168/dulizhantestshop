@@ -27,3 +27,14 @@ export function parseJsonField<T>(field: string | null): T[] {
     return [] as T[]
   }
 }
+
+export function normalizeAsin(asin?: string | null): string | null {
+  if (!asin || typeof asin !== 'string') return null
+  const normalized = asin.trim().toUpperCase()
+  if (!normalized) return null
+  return normalized
+}
+
+export function getProductUrlSegment(product: { asin?: string | null; slug: string }): string {
+  return normalizeAsin(product.asin) || product.slug
+}

@@ -3,11 +3,13 @@ import { ArrowRight, Shield, Star, Zap, Package } from 'lucide-react'
 import Layout from '@/components/Layout'
 import Carousel from '@/components/Carousel'
 import { db } from '@/lib/db'
+import { getProductUrlSegment } from '@/lib/utils'
 
 interface Product {
   id: string
   title: string
   slug: string
+  asin?: string | null
   mainImage: string
   price: number
   originalPrice?: number
@@ -256,8 +258,9 @@ export default async function Home() {
 }
 
 function ProductCard({ product }: { product: Product }) {
+  const productPath = `/products/${getProductUrlSegment(product)}`
   return (
-    <Link href={`/products/${product.slug}`} className="group">
+    <Link href={productPath} className="group">
       <div className="card-hover bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-1">
         <div className="aspect-square overflow-hidden bg-gray-100">
           <img 

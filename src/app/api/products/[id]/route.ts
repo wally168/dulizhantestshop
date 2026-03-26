@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { isSameOrigin, requireAdminSession } from '@/lib/auth'
+import { normalizeAsin } from '@/lib/utils'
 
 export async function GET(
   request: NextRequest,
@@ -91,6 +92,8 @@ export async function PUT(
       variantOptionLinks,
       youtubeUrl,
       youtubeIndex,
+      asin,
+      showAsinOnFrontend,
       // 新增字段：前台按钮显示控制
       showBuyOnAmazon,
       showAddToCart,
@@ -110,8 +113,38 @@ export async function PUT(
       return Math.max(0, Math.min(raw, imageList.length))
     })()
 
+    const normalizedAsin = normalizeAsin(asin)
+    if (normalizedAsin) {
+      const asinConflict = await db.product.findFirst({
+        where: {
+          id: { not: id },
+          asin: normalizedAsin,
+        },
+      })
+      if (asinConflict) {
+        return NextResponse.json(
+          { error: 'ASIN 已存在，请填写唯一值' },
+          { status: 400 }
+        )
+      }
+      const asinConflictBySlug = await db.product.findFirst({
+        where: {
+          id: { not: id },
+          slug: normalizedAsin,
+        },
+      })
+      if (asinConflictBySlug) {
+        return NextResponse.json(
+          { error: 'ASIN 与现有产品链接冲突，请更换 ASIN' },
+          { status: 400 }
+        )
+      }
+    }
+
     const updateData: any = {
       title: name,
+      asin: normalizedAsin,
+      showAsinOnFrontend: showAsinOnFrontend === true,
       // 将长描述或简短描述存入 description 字段
       description: longDescription || description || '',
       price: parseFloat(price),

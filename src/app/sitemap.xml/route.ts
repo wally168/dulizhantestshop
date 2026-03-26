@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { headers } from 'next/headers'
+import { getProductUrlSegment } from '@/lib/utils'
 
 async function getBaseUrl(): Promise<string> {
   try {
@@ -59,8 +60,8 @@ export async function GET() {
 
   if (settings.sitemapIncludeProducts === 'true') {
     try {
-      const products = await db.product.findMany({ where: { active: true }, select: { slug: true, updatedAt: true } })
-      for (const p of products) add(`/products/${p.slug}`, p.updatedAt)
+      const products = await db.product.findMany({ where: { active: true }, select: { slug: true, asin: true, updatedAt: true } })
+      for (const p of products) add(`/products/${getProductUrlSegment(p)}`, p.updatedAt)
     } catch {}
   }
 

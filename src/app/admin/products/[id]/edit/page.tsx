@@ -12,6 +12,7 @@ import {
   X, 
   Upload,
   ExternalLink,
+  CircleHelp,
   Star,
   Package,
   Home,
@@ -29,6 +30,8 @@ interface Product {
   images: string[]
   bulletPoints: string[]
   amazonUrl: string
+  asin?: string
+  showAsinOnFrontend?: boolean
   youtubeUrl?: string
   youtubeIndex?: number | null
   categoryId?: string
@@ -52,6 +55,8 @@ interface ProductForm {
   images: string[]
   bulletPoints: string[]
   amazonUrl: string
+  asin?: string
+  showAsinOnFrontend: boolean
   youtubeUrl: string
   youtubeIndex?: number | null
   categoryId: string
@@ -179,6 +184,8 @@ export default function EditProduct() {
     images: [''],
     bulletPoints: ['', '', '', '', '', '', '', ''],
     amazonUrl: '',
+    asin: '',
+    showAsinOnFrontend: false,
     youtubeUrl: '',
     youtubeIndex: null,
     categoryId: '',
@@ -463,6 +470,8 @@ export default function EditProduct() {
             ? Array.from({ length: 8 }, (_, i) => (data.bulletPoints[i] ?? ''))
             : ['', '', '', '', '', '', '', ''],
           amazonUrl: data.amazonUrl || '',
+          asin: (data.asin ?? '') || '',
+          showAsinOnFrontend: data.showAsinOnFrontend === true,
           youtubeUrl: (data as any).youtubeUrl || '',
           youtubeIndex: typeof (data as any).youtubeIndex === 'number' ? (data as any).youtubeIndex : null,
           categoryId: toId(data.categoryId),
@@ -832,6 +841,8 @@ export default function EditProduct() {
         body: JSON.stringify({
           ...form,
           amazonUrl: form.amazonUrl,
+          asin: (form.asin ?? '').trim().toUpperCase() || null,
+          showAsinOnFrontend: form.showAsinOnFrontend === true,
           youtubeUrl: (form.youtubeUrl ?? '').trim() || null,
           youtubeIndex: safeYoutubeIndex,
           price: parseFloat(form.price),
@@ -1097,6 +1108,38 @@ export default function EditProduct() {
                 <p className={`text-xs mt-1 ${((form.variants || []).length > 0) ? 'text-gray-500' : (urlError ? 'text-red-600' : 'text-gray-500')}`}>
                   {((form.variants || []).length > 0) ? '已添加变体：主链接不可编辑但作为兜底；若选项未填写购买链接，将默认跳转主链接。' : (urlError || '请输入有效链接（http/https），我们不会自动改写')}
                 </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                  ASIN（可选）
+                  <span
+                    className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-gray-100 text-gray-600 text-xs"
+                    title="已填写 ASIN 时，产品链接使用 /products/ASIN；未填写时使用 /products/标题slug"
+                  >
+                    ?
+                  </span>
+                </label>
+                <input
+                  type="text"
+                  value={form.asin || ''}
+                  maxLength={20}
+                  onChange={(e) => setForm(prev => ({ ...prev, asin: e.target.value.toUpperCase().replace(/\s+/g, '') }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="例如：B0CJZMP7L1"
+                />
+                <label className="mt-3 inline-flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={form.showAsinOnFrontend === true}
+                    onChange={(e) => setForm(prev => ({ ...prev, showAsinOnFrontend: e.target.checked }))}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                  <span className="ml-2 text-sm text-gray-700 inline-flex items-center gap-1">
+                    前台显示 ASIN
+                    <CircleHelp className="h-4 w-4 text-gray-400" />
+                  </span>
+                </label>
               </div>
 
               <div>

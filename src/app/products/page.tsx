@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import Layout from '@/components/Layout'
 import { db } from '@/lib/db'
-import { formatPrice } from '@/lib/utils'
+import { formatPrice, getProductUrlSegment } from '@/lib/utils'
 import AddToCartButton from '@/components/AddToCartButton'
 import FallbackImage from '@/components/FallbackImage'
 import type { Product } from '@prisma/client'
@@ -96,6 +96,7 @@ export default async function ProductsPage({ searchParams }: { searchParams?: Pr
 
           <div className="mt-8 grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 xl:gap-x-8">
             {products.map((product) => {
+              const productPath = `/products/${getProductUrlSegment(product as Product & { asin?: string | null })}`
               const displayImage = resolveImage(product)
               const price = Number(product?.price ?? 0)
               const hasOriginal = typeof product?.originalPrice === 'number' && Number(product.originalPrice) > price
@@ -117,7 +118,7 @@ export default async function ProductsPage({ searchParams }: { searchParams?: Pr
                   <div className="mt-4 flex justify-between">
                     <div className="flex-1">
                       <h3 className="relative text-sm text-gray-700">
-                        <Link href={`/products/${product.slug}`}>
+                        <Link href={productPath}>
                           <span aria-hidden="true" className="absolute inset-0" />
                           {product.title || 'Untitled Product'}
                         </Link>
@@ -145,7 +146,7 @@ export default async function ProductsPage({ searchParams }: { searchParams?: Pr
                       </div>
                       <div className="mt-4 flex items-center gap-2">
                         <Link
-                          href={`/products/${product.slug}`}
+                          href={productPath}
                           className="inline-flex items-center justify-center px-3 py-2 rounded-md bg-orange-600 text-white text-sm font-semibold leading-tight text-center hover:bg-orange-500"
                         >
                           View Details
@@ -164,7 +165,7 @@ export default async function ProductsPage({ searchParams }: { searchParams?: Pr
                           <div className="flex items-center">
                             <AddToCartButton
                               id={product.id}
-                              slug={product.slug}
+                              slug={getProductUrlSegment(product as Product & { asin?: string | null })}
                               title={product.title}
                               price={price}
                               imageUrl={resolveImage(product)}
