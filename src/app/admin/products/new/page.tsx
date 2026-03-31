@@ -43,6 +43,7 @@ interface ProductForm {
   variantOptionImages?: Record<string, Record<string, string>>
   variantOptionLinks?: Record<string, Record<string, string>>
   variantOptionPrices?: Record<string, Record<string, string>>
+  variantOptionOriginalPrices?: Record<string, Record<string, string>>
 }
 
 interface VariantGroup { name: string; options: string[] }
@@ -152,6 +153,7 @@ export default function NewProduct() {
     variantOptionImages: {},
     variantOptionLinks: {},
     variantOptionPrices: {},
+    variantOptionOriginalPrices: {},
     showBuyOnAmazon: true,
     showAddToCart: true,
   })
@@ -397,6 +399,7 @@ export default function NewProduct() {
           variantOptionImages: form.variantOptionImages || null,
           variantOptionLinks: form.variantOptionLinks || null,
           variantOptionPrices: form.variantOptionPrices || null,
+          variantOptionOriginalPrices: form.variantOptionOriginalPrices || null,
           showBuyOnAmazon: form.showBuyOnAmazon !== false,
           showAddToCart: form.showAddToCart !== false,
         }),
@@ -453,11 +456,13 @@ export default function NewProduct() {
 
   const hasVariantPricing = (() => {
     const map = form.variantOptionPrices || {}
-    return Object.values(map).some(group => group && Object.keys(group).length > 0)
+    const originalMap = form.variantOptionOriginalPrices || {}
+    return [...Object.values(map), ...Object.values(originalMap)].some(group => group && Object.keys(group).length > 0)
   })()
   const comboLinkMap = (form.variantOptionLinks?.[COMBO_KEY] || {}) as Record<string, string>
   const comboPriceMap = (form.variantOptionPrices?.[COMBO_KEY] || {}) as Record<string, string>
-  const comboKeys = Array.from(new Set([...Object.keys(comboLinkMap), ...Object.keys(comboPriceMap)]))
+  const comboOriginalPriceMap = (form.variantOptionOriginalPrices?.[COMBO_KEY] || {}) as Record<string, string>
+  const comboKeys = Array.from(new Set([...Object.keys(comboLinkMap), ...Object.keys(comboPriceMap), ...Object.keys(comboOriginalPriceMap)]))
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -944,6 +949,35 @@ export default function NewProduct() {
                                 className="px-2 py-1 border border-gray-300 rounded-md text-sm w-40"
                               />
                             </div>
+                            <div className="flex items-center space-x-2">
+                              <label className="text-sm text-gray-700">选项原价</label>
+                              <input
+                                type="number"
+                                step="0.01"
+                                value={(form.variantOptionOriginalPrices?.[group.name]?.[opt] ?? '')}
+                                onChange={(e) => {
+                                  const v = e.target.value
+                                  setForm(prev => {
+                                    const next = { ...(prev.variantOptionOriginalPrices || {}) } as Record<string, Record<string, string>>
+                                    const gm = { ...(next[group.name] || {}) } as Record<string, string>
+                                    if (v.trim() === '') {
+                                      delete gm[opt]
+                                    } else {
+                                      gm[opt] = v
+                                    }
+                                    if (Object.keys(gm).length === 0) {
+                                      delete next[group.name]
+                                    } else {
+                                      next[group.name] = gm
+                                    }
+                                    return { ...prev, variantOptionOriginalPrices: next }
+                                  })
+                                  setHasChanges(true)
+                                }}
+                                placeholder="例如：49.99"
+                                className="px-2 py-1 border border-gray-300 rounded-md text-sm w-40"
+                              />
+                            </div>
 
                             {(group.options || []).length > 1 && (
                               <button
@@ -1007,7 +1041,11 @@ export default function NewProduct() {
                       const pm = { ...(nextPrice[COMBO_KEY] || {}) } as Record<string, string>
                       pm[key] = pm[key] ?? ''
                       nextPrice[COMBO_KEY] = pm
-                      return { ...prev, variantOptionLinks: next, variantOptionPrices: nextPrice }
+                      const nextOriginalPrice = { ...(prev.variantOptionOriginalPrices || {}) } as Record<string, Record<string, string>>
+                      const opm = { ...(nextOriginalPrice[COMBO_KEY] || {}) } as Record<string, string>
+                      opm[key] = opm[key] ?? ''
+                      nextOriginalPrice[COMBO_KEY] = opm
+                      return { ...prev, variantOptionLinks: next, variantOptionPrices: nextPrice, variantOptionOriginalPrices: nextOriginalPrice }
                     })
                     setHasChanges(true)
                   }}
@@ -1026,6 +1064,7 @@ export default function NewProduct() {
                     const selections = parseComboKey(key)
                     const url = comboLinkMap[key] || ''
                     const price = comboPriceMap[key] || ''
+                    const originalPrice = comboOriginalPriceMap[key] || ''
                     return (
                       <div key={key} className="border rounded-lg p-4">
                         <div className="flex items-center gap-3 flex-wrap">
@@ -1046,12 +1085,18 @@ export default function NewProduct() {
                                     const pm = { ...(nextPrice[COMBO_KEY] || {}) } as Record<string, string>
                                     const oldPrice = pm[key] ?? ''
                                     delete pm[key]
+                                    const nextOriginalPrice = { ...(prev.variantOptionOriginalPrices || {}) } as Record<string, Record<string, string>>
+                                    const opm = { ...(nextOriginalPrice[COMBO_KEY] || {}) } as Record<string, string>
+                                    const oldOriginalPrice = opm[key] ?? ''
+                                    delete opm[key]
                                     const newKey = buildComboKey(prev.variants, newSel)
                                     gm[newKey] = oldUrl
                                     pm[newKey] = oldPrice
+                                    opm[newKey] = oldOriginalPrice
                                     next[COMBO_KEY] = gm
                                     nextPrice[COMBO_KEY] = pm
-                                    return { ...prev, variantOptionLinks: next, variantOptionPrices: nextPrice }
+                                    nextOriginalPrice[COMBO_KEY] = opm
+                                    return { ...prev, variantOptionLinks: next, variantOptionPrices: nextPrice, variantOptionOriginalPrices: nextOriginalPrice }
                                   })
                                   setHasChanges(true)
                                 }}
@@ -1100,6 +1145,24 @@ export default function NewProduct() {
                               placeholder="组合价格"
                               className="px-2 py-1 border border-gray-300 rounded-md text-sm w-40"
                             />
+                            <input
+                              type="number"
+                              step="0.01"
+                              value={originalPrice}
+                              onChange={(e) => {
+                                const v = e.target.value
+                                setForm(prev => {
+                                  const next = { ...(prev.variantOptionOriginalPrices || {}) } as Record<string, Record<string, string>>
+                                  const opm = { ...(next[COMBO_KEY] || {}) } as Record<string, string>
+                                  opm[key] = v
+                                  next[COMBO_KEY] = opm
+                                  return { ...prev, variantOptionOriginalPrices: next }
+                                })
+                                setHasChanges(true)
+                              }}
+                              placeholder="组合原价"
+                              className="px-2 py-1 border border-gray-300 rounded-md text-sm w-40"
+                            />
                             <button
                               type="button"
                               onClick={() => {
@@ -1114,7 +1177,12 @@ export default function NewProduct() {
                                   delete pm[key]
                                   if (Object.keys(pm).length === 0) delete nextPrice[COMBO_KEY]
                                   else nextPrice[COMBO_KEY] = pm
-                                  return { ...prev, variantOptionLinks: next, variantOptionPrices: nextPrice }
+                                  const nextOriginalPrice = { ...(prev.variantOptionOriginalPrices || {}) } as Record<string, Record<string, string>>
+                                  const opm = { ...(nextOriginalPrice[COMBO_KEY] || {}) } as Record<string, string>
+                                  delete opm[key]
+                                  if (Object.keys(opm).length === 0) delete nextOriginalPrice[COMBO_KEY]
+                                  else nextOriginalPrice[COMBO_KEY] = opm
+                                  return { ...prev, variantOptionLinks: next, variantOptionPrices: nextPrice, variantOptionOriginalPrices: nextOriginalPrice }
                                 })
                                 setHasChanges(true)
                               }}

@@ -82,6 +82,7 @@ function replaceYoutubeLinks(input: string): string {
    variantOptionImages,
   variantOptionLinks,
   variantOptionPrices,
+  variantOptionOriginalPrices,
   showBuyOnAmazon = true,
   showAddToCart = true,
   reviews = [],
@@ -108,6 +109,7 @@ function replaceYoutubeLinks(input: string): string {
   variantOptionImages?: Record<string, Record<string, string>> | null
   variantOptionLinks?: Record<string, Record<string, string>> | null
   variantOptionPrices?: Record<string, Record<string, string>> | null
+  variantOptionOriginalPrices?: Record<string, Record<string, string>> | null
   showBuyOnAmazon?: boolean
   showAddToCart?: boolean
   reviews?: Array<{ id: string; name: string; country: string; title: string; content: string; rating: number; images: string[]; createdAt?: string | Date }>
@@ -168,6 +170,27 @@ function replaceYoutubeLinks(input: string): string {
      const idx = resolveIndex(groupName, opt)
     setSelectedGalleryIndex(toGalleryIndex(idx))
   }
+
+  useEffect(() => {
+    if (!Array.isArray(variantGroups) || variantGroups.length === 0) return
+    setSelection(prev => {
+      const hasInvalid = variantGroups.some(g => !prev[g.name] || !(g.options || []).includes(prev[g.name]))
+      if (!hasInvalid && Object.keys(prev).length > 0) return prev
+      const initial: Record<string, string> = {}
+      for (const g of variantGroups) {
+        const first = (g.options || []).find(Boolean)
+        if (g.name && first) initial[g.name] = first
+      }
+      return initial
+    })
+    const firstGroup = variantGroups[0]
+    const firstOption = (firstGroup?.options || []).find(Boolean)
+    if (firstGroup?.name && firstOption) {
+      setLastClickedGroup(firstGroup.name)
+      const idx = resolveIndex(firstGroup.name, firstOption)
+      setSelectedGalleryIndex(toGalleryIndex(idx))
+    }
+  }, [variantGroups, variantImageMap, safeImages.length, hasGalleryVideo, normalizedYoutubeIndex])
 
   // 构造缩略图URL
   const getThumbUrl = (groupName: string, opt: string): string | null => {
@@ -266,13 +289,14 @@ function replaceYoutubeLinks(input: string): string {
     return amazonUrl
   })()
 
+  const toNumber = (v?: string | null): number | null => {
+    if (typeof v !== 'string') return null
+    const n = Number(v)
+    if (!Number.isFinite(n)) return null
+    return n
+  }
+
   const currentVariantPrice = (() => {
-    const toNumber = (v?: string | null): number | null => {
-      if (typeof v !== 'string') return null
-      const n = Number(v)
-      if (!Number.isFinite(n)) return null
-      return n
-    }
     if (Array.isArray(variantGroups) && variantGroups.length > 1) {
       const allSelected = variantGroups.every(g => !!selection[g.name])
       if (allSelected) {
@@ -291,8 +315,27 @@ function replaceYoutubeLinks(input: string): string {
     }
     return null
   })()
+  const currentVariantOriginalPrice = (() => {
+    if (Array.isArray(variantGroups) && variantGroups.length > 1) {
+      const allSelected = variantGroups.every(g => !!selection[g.name])
+      if (allSelected) {
+        const key = buildComboKey(variantGroups, selection)
+        const comboOriginalPrice = toNumber(variantOptionOriginalPrices?.[COMBO_KEY]?.[key])
+        if (comboOriginalPrice !== null) return comboOriginalPrice
+      }
+    }
+    if (lastClickedGroup && selection[lastClickedGroup]) {
+      const p = toNumber(variantOptionOriginalPrices?.[lastClickedGroup]?.[selection[lastClickedGroup]])
+      if (p !== null) return p
+    }
+    for (const [g, opt] of Object.entries(selection)) {
+      const p = toNumber(variantOptionOriginalPrices?.[g]?.[opt])
+      if (p !== null) return p
+    }
+    return null
+  })()
   const displayPrice = currentVariantPrice ?? price
-  const hasVariantPrice = currentVariantPrice !== null
+  const displayOriginalPrice = currentVariantOriginalPrice ?? (currentVariantPrice === null ? (originalPrice ?? null) : null)
 
   return (
     <>
@@ -406,8 +449,8 @@ function replaceYoutubeLinks(input: string): string {
          {/* 价格模块放在选项之后 */}
          <div className="mt-4 flex items-center gap-3">
            <span className="text-2xl font-semibold text-gray-900">{formatPrice(displayPrice)}</span>
-           {(!hasVariantPrice && originalPrice) ? (
-             <span className="text-gray-500 line-through">{formatPrice(originalPrice)}</span>
+           {(typeof displayOriginalPrice === 'number' && displayOriginalPrice > displayPrice) ? (
+             <span className="text-gray-500 line-through">{formatPrice(displayOriginalPrice)}</span>
            ) : null}
         </div>
 

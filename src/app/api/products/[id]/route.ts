@@ -46,6 +46,8 @@ export async function GET(
       variantImageMap: parseObj((product as any).variantImageMap),
       variantOptionImages: parseObj((product as any).variantOptionImages),
       variantOptionLinks: parseObj((product as any).variantOptionLinks),
+      variantOptionPrices: parseObj((product as any).variantOptionPrices),
+      variantOptionOriginalPrices: parseObj((product as any).variantOptionOriginalPrices),
     }
     return NextResponse.json(normalized)
   } catch (error) {
@@ -91,6 +93,7 @@ export async function PUT(
       variantOptionImages,
       variantOptionLinks,
       variantOptionPrices,
+      variantOptionOriginalPrices,
       youtubeUrl,
       youtubeIndex,
       asin,
@@ -233,6 +236,19 @@ export async function PUT(
           return undefined
         } catch { return undefined }
       })(),
+      variantOptionOriginalPrices: (() => {
+        try {
+          if (!variantOptionOriginalPrices) return undefined
+          if (typeof variantOptionOriginalPrices === 'string') {
+            const obj = JSON.parse(variantOptionOriginalPrices)
+            return obj && typeof obj === 'object' ? JSON.stringify(obj) : undefined
+          }
+          if (typeof variantOptionOriginalPrices === 'object') {
+            return JSON.stringify(variantOptionOriginalPrices)
+          }
+          return undefined
+        } catch { return undefined }
+      })(),
       // 新增：按钮显示控制
       showBuyOnAmazon: showBuyOnAmazon !== false,
       showAddToCart: showAddToCart !== false,
@@ -265,6 +281,7 @@ export async function PUT(
       variantOptionImages: parseObj((product as any).variantOptionImages),
       variantOptionLinks: parseObj((product as any).variantOptionLinks),
       variantOptionPrices: parseObj((product as any).variantOptionPrices),
+      variantOptionOriginalPrices: parseObj((product as any).variantOptionOriginalPrices),
     }
     return NextResponse.json(normalized)
   } catch (error) {

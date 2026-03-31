@@ -85,6 +85,7 @@ export async function GET(request: NextRequest) {
       variantOptionImages: (() => { try { return p.variantOptionImages ? JSON.parse(p.variantOptionImages) : null } catch { return null } })(),
       variantOptionLinks: (() => { try { return p.variantOptionLinks ? JSON.parse(p.variantOptionLinks) : null } catch { return null } })(),
       variantOptionPrices: (() => { try { return p.variantOptionPrices ? JSON.parse(p.variantOptionPrices) : null } catch { return null } })(),
+      variantOptionOriginalPrices: (() => { try { return p.variantOptionOriginalPrices ? JSON.parse(p.variantOptionOriginalPrices) : null } catch { return null } })(),
       avgRating: (aggMap[p.id]?.avgRating ?? 0),
       reviewCount: (aggMap[p.id]?.reviewCount ?? 0),
     }))
@@ -133,6 +134,7 @@ export async function POST(request: NextRequest) {
       variantOptionImages,
       variantOptionLinks,
       variantOptionPrices,
+      variantOptionOriginalPrices,
       youtubeUrl,
       youtubeIndex,
       asin,
@@ -298,6 +300,20 @@ export async function POST(request: NextRequest) {
       } catch { return null }
     })()
 
+    const variantOptionOriginalPricesJson: string | null = (() => {
+      try {
+        if (!variantOptionOriginalPrices) return null
+        if (typeof variantOptionOriginalPrices === 'string') {
+          const obj = JSON.parse(variantOptionOriginalPrices)
+          return obj && typeof obj === 'object' ? JSON.stringify(obj) : null
+        }
+        if (typeof variantOptionOriginalPrices === 'object') {
+          return JSON.stringify(variantOptionOriginalPrices)
+        }
+        return null
+      } catch { return null }
+    })()
+
     const createData: any = {
       title: name,
       slug,
@@ -326,6 +342,7 @@ export async function POST(request: NextRequest) {
       variantOptionImages: variantOptionImagesJson,
       variantOptionLinks: variantOptionLinksJson,
       variantOptionPrices: variantOptionPricesJson,
+      variantOptionOriginalPrices: variantOptionOriginalPricesJson,
       // 新增：按钮显示控制
       showBuyOnAmazon: showBuyOnAmazon !== false,
       showAddToCart: showAddToCart !== false,
@@ -353,6 +370,7 @@ export async function POST(request: NextRequest) {
       variantOptionImages: parseObj((product as any).variantOptionImages),
       variantOptionLinks: parseObj((product as any).variantOptionLinks),
       variantOptionPrices: parseObj((product as any).variantOptionPrices),
+      variantOptionOriginalPrices: parseObj((product as any).variantOptionOriginalPrices),
     }
     return NextResponse.json(normalized, { status: 201 })
   } catch (error: any) {
