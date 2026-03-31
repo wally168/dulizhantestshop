@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && next build",
-    "vercel-build": "prisma generate && prisma db push --accept-data-loss && prisma db seed && next build",
+    "vercel-build": "prisma generate && (prisma db push --accept-data-loss && prisma db seed || echo \"skip prisma db ops on unreachable database\") && next build",
     "start": "next start",
     "lint": "eslint",
     "db:push": "prisma db push",
