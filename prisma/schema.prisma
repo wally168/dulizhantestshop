@@ -71,6 +71,8 @@ model Product {
   variantOptionImages String? // JSON: { [groupName]: { [option]: imageUrl } }
   variantOptionLinks String? // JSON: { [groupName]: { [option]: url } }
   variantOptionPrices String? // JSON: { [groupName]: { [option]: price } }, 组合使用 __combo__ key
+  variantOptionOriginalPrices String? // JSON: { [groupName]: { [option]: originalPrice } }, 组合使用 __combo__ key
+  variantOptionTitles String? // JSON: { [groupName]: { [option]: title } }, 组合使用 __combo__ key
   
   // 新增：按钮显示控制
   showBuyOnAmazon   Boolean  @default(true)

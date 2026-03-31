@@ -4,6 +4,7 @@ import { isSameOrigin, requireAdminSession } from '@/lib/auth'
 import { normalizeAsin } from '@/lib/utils'
 
 const ORIGINAL_PRICE_FALLBACK_KEY = '__original_price_map__'
+const TITLE_FALLBACK_KEY = '__title_map__'
 
 function parseJsonObj(input: string | null | undefined): any {
   try {
@@ -38,6 +39,31 @@ function splitVariantPriceMaps(
   }
 }
 
+function splitVariantTitleMaps(
+  variantOptionPricesRaw: string | null | undefined,
+  variantOptionTitlesRaw: string | null | undefined
+): { variantOptionPrices: any; variantOptionTitles: any } {
+  const pricesObj = parseJsonObj(variantOptionPricesRaw)
+  const titleObj = parseJsonObj(variantOptionTitlesRaw)
+  if (titleObj && typeof titleObj === 'object') {
+    if (pricesObj && typeof pricesObj === 'object' && pricesObj[TITLE_FALLBACK_KEY]) {
+      delete pricesObj[TITLE_FALLBACK_KEY]
+    }
+    return {
+      variantOptionPrices: pricesObj && typeof pricesObj === 'object' ? pricesObj : null,
+      variantOptionTitles: titleObj,
+    }
+  }
+  const fallbackTitle = pricesObj?.[TITLE_FALLBACK_KEY]
+  if (pricesObj && typeof pricesObj === 'object' && pricesObj[TITLE_FALLBACK_KEY]) {
+    delete pricesObj[TITLE_FALLBACK_KEY]
+  }
+  return {
+    variantOptionPrices: pricesObj && typeof pricesObj === 'object' ? pricesObj : null,
+    variantOptionTitles: fallbackTitle && typeof fallbackTitle === 'object' ? fallbackTitle : null,
+  }
+}
+
 function mergeVariantPricesWithOriginal(
   variantOptionPricesRaw: string | null | undefined,
   variantOptionOriginalPricesRaw: string | null | undefined
@@ -48,6 +74,19 @@ function mergeVariantPricesWithOriginal(
     return variantOptionPricesRaw ?? undefined
   }
   pricesObj[ORIGINAL_PRICE_FALLBACK_KEY] = originalObj
+  return JSON.stringify(pricesObj)
+}
+
+function mergeVariantPricesWithTitle(
+  variantOptionPricesRaw: string | null | undefined,
+  variantOptionTitlesRaw: string | null | undefined
+): string | undefined {
+  const pricesObj = parseJsonObj(variantOptionPricesRaw) || {}
+  const titleObj = parseJsonObj(variantOptionTitlesRaw)
+  if (!titleObj || typeof titleObj !== 'object') {
+    return variantOptionPricesRaw ?? undefined
+  }
+  pricesObj[TITLE_FALLBACK_KEY] = titleObj
   return JSON.stringify(pricesObj)
 }
 
@@ -84,10 +123,15 @@ export async function GET(
     const parseObj = (s: string | null | undefined) => {
       try { return s ? JSON.parse(s) : null } catch { return null }
     }
-    const priceMaps = splitVariantPriceMaps(
+    let priceMaps = splitVariantPriceMaps(
       (product as any).variantOptionPrices,
       (product as any).variantOptionOriginalPrices
     )
+    const titleMaps = splitVariantTitleMaps(
+      (product as any).variantOptionPrices,
+      (product as any).variantOptionTitles
+    )
+    priceMaps = { ...priceMaps, variantOptionPrices: titleMaps.variantOptionPrices }
     const normalized = {
       ...(product as any),
       name: (product as any).title,
@@ -100,6 +144,7 @@ export async function GET(
       variantOptionLinks: parseObj((product as any).variantOptionLinks),
       variantOptionPrices: priceMaps.variantOptionPrices,
       variantOptionOriginalPrices: priceMaps.variantOptionOriginalPrices,
+      variantOptionTitles: titleMaps.variantOptionTitles,
     }
     return NextResponse.json(normalized)
   } catch (error) {
@@ -146,6 +191,7 @@ export async function PUT(
       variantOptionLinks,
       variantOptionPrices,
       variantOptionOriginalPrices,
+      variantOptionTitles,
       youtubeUrl,
       youtubeIndex,
       asin,
@@ -301,6 +347,19 @@ export async function PUT(
           return undefined
         } catch { return undefined }
       })(),
+      variantOptionTitles: (() => {
+        try {
+          if (!variantOptionTitles) return undefined
+          if (typeof variantOptionTitles === 'string') {
+            const obj = JSON.parse(variantOptionTitles)
+            return obj && typeof obj === 'object' ? JSON.stringify(obj) : undefined
+          }
+          if (typeof variantOptionTitles === 'object') {
+            return JSON.stringify(variantOptionTitles)
+          }
+          return undefined
+        } catch { return undefined }
+      })(),
       // 新增：按钮显示控制
       showBuyOnAmazon: showBuyOnAmazon !== false,
       showAddToCart: showAddToCart !== false,
@@ -310,7 +369,8 @@ export async function PUT(
       e?.code === 'P2022' ||
       e?.code === 'P2009' ||
       e?.code === 'P2010' ||
-      String(e?.message || '').includes('variantOptionOriginalPrices')
+      String(e?.message || '').includes('variantOptionOriginalPrices') ||
+      String(e?.message || '').includes('variantOptionTitles')
 
     let product: any
     try {
@@ -326,11 +386,14 @@ export async function PUT(
     } catch (innerError: any) {
       if (!isVariantOriginalPriceFieldError(innerError)) throw innerError
       const fallbackData = { ...updateData }
-      fallbackData.variantOptionPrices = mergeVariantPricesWithOriginal(
+      let mergedPrice = mergeVariantPricesWithOriginal(
         updateData.variantOptionPrices,
         updateData.variantOptionOriginalPrices
       )
+      mergedPrice = mergeVariantPricesWithTitle(mergedPrice, updateData.variantOptionTitles)
+      fallbackData.variantOptionPrices = mergedPrice
       delete fallbackData.variantOptionOriginalPrices
+      delete fallbackData.variantOptionTitles
       product = await db.product.update({
         where: {
           id,
@@ -348,10 +411,15 @@ export async function PUT(
     const parseObj = (s: string | null | undefined) => {
       try { return s ? JSON.parse(s) : null } catch { return null }
     }
-    const priceMaps = splitVariantPriceMaps(
+    let priceMaps = splitVariantPriceMaps(
       (product as any).variantOptionPrices,
       (product as any).variantOptionOriginalPrices
     )
+    const titleMaps = splitVariantTitleMaps(
+      (product as any).variantOptionPrices,
+      (product as any).variantOptionTitles
+    )
+    priceMaps = { ...priceMaps, variantOptionPrices: titleMaps.variantOptionPrices }
     const normalized = {
       ...(product as any), 
       name: (product as any).title, 
@@ -364,6 +432,7 @@ export async function PUT(
       variantOptionLinks: parseObj((product as any).variantOptionLinks),
       variantOptionPrices: priceMaps.variantOptionPrices,
       variantOptionOriginalPrices: priceMaps.variantOptionOriginalPrices,
+      variantOptionTitles: titleMaps.variantOptionTitles,
     }
     return NextResponse.json(normalized)
   } catch (error: any) {

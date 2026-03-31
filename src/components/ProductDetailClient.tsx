@@ -93,6 +93,7 @@ function replaceYoutubeLinks(input: string): string {
   variantOptionLinks,
   variantOptionPrices,
   variantOptionOriginalPrices,
+  variantOptionTitles,
   showBuyOnAmazon = true,
   showAddToCart = true,
   reviews = [],
@@ -120,6 +121,7 @@ function replaceYoutubeLinks(input: string): string {
   variantOptionLinks?: Record<string, Record<string, string>> | null
   variantOptionPrices?: Record<string, Record<string, string | number>> | null
   variantOptionOriginalPrices?: Record<string, Record<string, string | number>> | null
+  variantOptionTitles?: Record<string, Record<string, string>> | null
   showBuyOnAmazon?: boolean
   showAddToCart?: boolean
   reviews?: Array<{ id: string; name: string; country: string; title: string; content: string; rating: number; images: string[]; createdAt?: string | Date }>
@@ -340,8 +342,33 @@ function replaceYoutubeLinks(input: string): string {
     }
     return null
   })()
+  const currentVariantTitle = (() => {
+    const normalizeTitle = (v?: string | null): string | null => {
+      if (!v || typeof v !== 'string') return null
+      const t = v.trim()
+      return t || null
+    }
+    if (Array.isArray(variantGroups) && variantGroups.length > 1) {
+      const allSelected = variantGroups.every(g => !!selection[g.name])
+      if (allSelected) {
+        const key = buildComboKey(variantGroups, selection)
+        const comboTitle = normalizeTitle(variantOptionTitles?.[COMBO_KEY]?.[key])
+        if (comboTitle) return comboTitle
+      }
+    }
+    if (lastClickedGroup && selection[lastClickedGroup]) {
+      const t = normalizeTitle(variantOptionTitles?.[lastClickedGroup]?.[selection[lastClickedGroup]])
+      if (t) return t
+    }
+    for (const [g, opt] of Object.entries(selection)) {
+      const t = normalizeTitle(variantOptionTitles?.[g]?.[opt])
+      if (t) return t
+    }
+    return null
+  })()
   const displayPrice = currentVariantPrice ?? price
   const displayOriginalPrice = currentVariantOriginalPrice ?? (currentVariantPrice === null ? (originalPrice ?? null) : null)
+  const displayTitle = currentVariantTitle ?? title
 
   return (
     <>
@@ -361,7 +388,7 @@ function replaceYoutubeLinks(input: string): string {
 
       {/* 右侧：详情 */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">{title}</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{displayTitle}</h1>
         {categoryName && (
           <p className="mt-2 text-gray-600">Category: {categoryName}</p>
         )}
@@ -443,7 +470,7 @@ function replaceYoutubeLinks(input: string): string {
         <AddToCartButton
         id={id}
         slug={slug}
-        title={title}
+        title={displayTitle}
         price={displayPrice}
         imageUrl={primaryImageUrl}
         selectedOptions={selection}

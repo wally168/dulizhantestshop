@@ -45,6 +45,7 @@ interface Product {
   variantImageMap?: Record<string, Record<string, number>>
   variantOptionPrices?: Record<string, Record<string, string>>
   variantOptionOriginalPrices?: Record<string, Record<string, string>>
+  variantOptionTitles?: Record<string, Record<string, string>>
   showBuyOnAmazon?: boolean
   showAddToCart?: boolean
 }
@@ -76,6 +77,7 @@ interface ProductForm {
   variantOptionLinks?: Record<string, Record<string, string>>
   variantOptionPrices?: Record<string, Record<string, string>>
   variantOptionOriginalPrices?: Record<string, Record<string, string>>
+  variantOptionTitles?: Record<string, Record<string, string>>
 }
 
 interface VariantGroup { name: string; options: string[] }
@@ -207,6 +209,7 @@ export default function EditProduct() {
     variantOptionLinks: {},
     variantOptionPrices: {},
     variantOptionOriginalPrices: {},
+    variantOptionTitles: {},
   })
   // 新增：分类状态
   const [categories, setCategories] = useState<Category[]>([])
@@ -495,6 +498,7 @@ export default function EditProduct() {
           variantOptionLinks: (data.variantOptionLinks ?? {}) as Record<string, Record<string, string>>, 
           variantOptionPrices: (data.variantOptionPrices ?? {}) as Record<string, Record<string, string>>,
           variantOptionOriginalPrices: (data.variantOptionOriginalPrices ?? {}) as Record<string, Record<string, string>>,
+          variantOptionTitles: (data.variantOptionTitles ?? {}) as Record<string, Record<string, string>>,
         })
       } else {
         alert('获取产品信息失败')
@@ -871,6 +875,7 @@ export default function EditProduct() {
           variantOptionLinks: form.variantOptionLinks || null,
           variantOptionPrices: form.variantOptionPrices || null,
           variantOptionOriginalPrices: form.variantOptionOriginalPrices || null,
+          variantOptionTitles: form.variantOptionTitles || null,
         }),
       })
 
@@ -931,7 +936,8 @@ export default function EditProduct() {
   const comboLinkMap = (form.variantOptionLinks?.[COMBO_KEY] || {}) as Record<string, string>
   const comboPriceMap = (form.variantOptionPrices?.[COMBO_KEY] || {}) as Record<string, string>
   const comboOriginalPriceMap = (form.variantOptionOriginalPrices?.[COMBO_KEY] || {}) as Record<string, string>
-  const comboKeys = Array.from(new Set([...Object.keys(comboLinkMap), ...Object.keys(comboPriceMap), ...Object.keys(comboOriginalPriceMap)]))
+  const comboTitleMap = (form.variantOptionTitles?.[COMBO_KEY] || {}) as Record<string, string>
+  const comboKeys = Array.from(new Set([...Object.keys(comboLinkMap), ...Object.keys(comboPriceMap), ...Object.keys(comboOriginalPriceMap), ...Object.keys(comboTitleMap)]))
   const hasComboVariantPricing = [...Object.values(comboPriceMap), ...Object.values(comboOriginalPriceMap)].some(v => String(v ?? '').trim() !== '')
   const hasOptionVariantPricing = [...Object.entries(form.variantOptionPrices || {}), ...Object.entries(form.variantOptionOriginalPrices || {})]
     .filter(([k]) => k !== COMBO_KEY)
@@ -1268,6 +1274,7 @@ export default function EditProduct() {
               多维度链接支持：已支持“组合链接”（如颜色+尺寸）。当所有维度均选择且存在匹配的组合链接时，将优先跳转组合链接；否则优先使用选项链接，最后回退主链接。可在下方“组合链接（可选）”中添加。
             </p>
             <p className="text-xs text-gray-500 mb-2">价格优先级：组合价格 ＞ 选项价格 ＞ 基础售价。填写任意变体价格后，基础售价与原价将禁用。</p>
+            <p className="text-xs text-gray-500 mb-2">标题优先级：组合标题 ＞ 选项标题 ＞ 基础标题。</p>
 
             {(form.variants || []).length === 0 ? (
               <p className="text-sm text-gray-500">暂无变体，可点击上方“添加变体组”。</p>
@@ -1484,6 +1491,34 @@ export default function EditProduct() {
                                 className="px-2 py-1 border border-gray-300 rounded-md text-sm w-40 disabled:bg-gray-100 disabled:cursor-not-allowed"
                               />
                             </div>
+                            <div className="flex items-center space-x-2">
+                              <label className="text-sm text-gray-700">选项标题</label>
+                              <input
+                                type="text"
+                                value={(form.variantOptionTitles?.[group.name]?.[opt] ?? '')}
+                                onChange={(e) => {
+                                  const v = e.target.value
+                                  setForm(prev => {
+                                    const next = { ...(prev.variantOptionTitles || {}) } as Record<string, Record<string, string>>
+                                    const gm = { ...(next[group.name] || {}) } as Record<string, string>
+                                    if (v.trim() === '') {
+                                      delete gm[opt]
+                                    } else {
+                                      gm[opt] = v
+                                    }
+                                    if (Object.keys(gm).length === 0) {
+                                      delete next[group.name]
+                                    } else {
+                                      next[group.name] = gm
+                                    }
+                                    return { ...prev, variantOptionTitles: next }
+                                  })
+                                  setHasChanges(true)
+                                }}
+                                placeholder="例如：MacBook Pro 14寸 银色"
+                                className="px-2 py-1 border border-gray-300 rounded-md text-sm w-56"
+                              />
+                            </div>
 
                             {(group.options || []).length > 1 && (
                               <button
@@ -1552,7 +1587,11 @@ export default function EditProduct() {
                       const opm = { ...(nextOriginalPrice[COMBO_KEY] || {}) } as Record<string, string>
                       opm[key] = opm[key] ?? ''
                       nextOriginalPrice[COMBO_KEY] = opm
-                      return { ...prev, variantOptionLinks: next, variantOptionPrices: nextPrice, variantOptionOriginalPrices: nextOriginalPrice }
+                      const nextTitle = { ...(prev.variantOptionTitles || {}) } as Record<string, Record<string, string>>
+                      const tm = { ...(nextTitle[COMBO_KEY] || {}) } as Record<string, string>
+                      tm[key] = tm[key] ?? ''
+                      nextTitle[COMBO_KEY] = tm
+                      return { ...prev, variantOptionLinks: next, variantOptionPrices: nextPrice, variantOptionOriginalPrices: nextOriginalPrice, variantOptionTitles: nextTitle }
                     })
                     setHasChanges(true)
                   }}
@@ -1574,6 +1613,7 @@ export default function EditProduct() {
                     const url = comboLinkMap[key] || ''
                     const price = comboPriceMap[key] || ''
                     const originalPrice = comboOriginalPriceMap[key] || ''
+                    const dynamicTitle = comboTitleMap[key] || ''
                     return (
                       <div key={key} className="border rounded-lg p-4">
                         <div className="flex items-center gap-3 flex-wrap">
@@ -1598,14 +1638,20 @@ export default function EditProduct() {
                                     const opm = { ...(nextOriginalPrice[COMBO_KEY] || {}) } as Record<string, string>
                                     const oldOriginalPrice = opm[key] ?? ''
                                     delete opm[key]
+                                    const nextTitle = { ...(prev.variantOptionTitles || {}) } as Record<string, Record<string, string>>
+                                    const tm = { ...(nextTitle[COMBO_KEY] || {}) } as Record<string, string>
+                                    const oldTitle = tm[key] ?? ''
+                                    delete tm[key]
                                     const newKey = buildComboKey(prev.variants, newSel)
                                     gm[newKey] = oldUrl
                                     pm[newKey] = oldPrice
                                     opm[newKey] = oldOriginalPrice
+                                    tm[newKey] = oldTitle
                                     next[COMBO_KEY] = gm
                                     nextPrice[COMBO_KEY] = pm
                                     nextOriginalPrice[COMBO_KEY] = opm
-                                    return { ...prev, variantOptionLinks: next, variantOptionPrices: nextPrice, variantOptionOriginalPrices: nextOriginalPrice }
+                                    nextTitle[COMBO_KEY] = tm
+                                    return { ...prev, variantOptionLinks: next, variantOptionPrices: nextPrice, variantOptionOriginalPrices: nextOriginalPrice, variantOptionTitles: nextTitle }
                                   })
                                   setHasChanges(true)
                                 }}
@@ -1674,6 +1720,23 @@ export default function EditProduct() {
                               placeholder="组合原价"
                               className="px-2 py-1 border border-gray-300 rounded-md text-sm w-40 disabled:bg-gray-100 disabled:cursor-not-allowed"
                             />
+                            <input
+                              type="text"
+                              value={dynamicTitle}
+                              onChange={(e) => {
+                                const v = e.target.value
+                                setForm(prev => {
+                                  const next = { ...(prev.variantOptionTitles || {}) } as Record<string, Record<string, string>>
+                                  const tm = { ...(next[COMBO_KEY] || {}) } as Record<string, string>
+                                  tm[key] = v
+                                  next[COMBO_KEY] = tm
+                                  return { ...prev, variantOptionTitles: next }
+                                })
+                                setHasChanges(true)
+                              }}
+                              placeholder="组合标题"
+                              className="px-2 py-1 border border-gray-300 rounded-md text-sm w-56"
+                            />
                             <button
                               type="button"
                               onClick={() => {
@@ -1693,7 +1756,12 @@ export default function EditProduct() {
                                   delete opm[key]
                                   if (Object.keys(opm).length === 0) delete nextOriginalPrice[COMBO_KEY]
                                   else nextOriginalPrice[COMBO_KEY] = opm
-                                  return { ...prev, variantOptionLinks: next, variantOptionPrices: nextPrice, variantOptionOriginalPrices: nextOriginalPrice }
+                                  const nextTitle = { ...(prev.variantOptionTitles || {}) } as Record<string, Record<string, string>>
+                                  const tm = { ...(nextTitle[COMBO_KEY] || {}) } as Record<string, string>
+                                  delete tm[key]
+                                  if (Object.keys(tm).length === 0) delete nextTitle[COMBO_KEY]
+                                  else nextTitle[COMBO_KEY] = tm
+                                  return { ...prev, variantOptionLinks: next, variantOptionPrices: nextPrice, variantOptionOriginalPrices: nextOriginalPrice, variantOptionTitles: nextTitle }
                                 })
                                 setHasChanges(true)
                               }}

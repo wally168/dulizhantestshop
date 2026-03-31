@@ -115,6 +115,9 @@ export default async function ProductDetail({ params }: { params: Promise<{ slug
       if (obj && typeof obj === 'object' && (obj as any).__original_price_map__) {
         delete (obj as any).__original_price_map__
       }
+      if (obj && typeof obj === 'object' && (obj as any).__title_map__) {
+        delete (obj as any).__title_map__
+      }
       return obj && typeof obj === 'object' ? obj : null
     } catch { return null }
   })()
@@ -129,6 +132,20 @@ export default async function ProductDetail({ params }: { params: Promise<{ slug
       if (!pricesRaw) return null
       const pricesObj = JSON.parse(pricesRaw)
       const fallback = pricesObj?.__original_price_map__
+      return fallback && typeof fallback === 'object' ? fallback : null
+    } catch { return null }
+  })()
+  const variantOptionTitles = (() => {
+    try {
+      const raw = (product as { variantOptionTitles?: string | null }).variantOptionTitles
+      if (raw) {
+        const obj = JSON.parse(raw)
+        return obj && typeof obj === 'object' ? obj : null
+      }
+      const pricesRaw = (product as { variantOptionPrices?: string | null }).variantOptionPrices
+      if (!pricesRaw) return null
+      const pricesObj = JSON.parse(pricesRaw)
+      const fallback = pricesObj?.__title_map__
       return fallback && typeof fallback === 'object' ? fallback : null
     } catch { return null }
   })()
@@ -180,6 +197,7 @@ export default async function ProductDetail({ params }: { params: Promise<{ slug
             variantOptionLinks={variantOptionLinks}
             variantOptionPrices={variantOptionPrices}
             variantOptionOriginalPrices={variantOptionOriginalPrices}
+            variantOptionTitles={variantOptionTitles}
             showBuyOnAmazon={(product.showBuyOnAmazon !== false)}
             showAddToCart={(product.showAddToCart !== false)}
             reviews={reviews}
