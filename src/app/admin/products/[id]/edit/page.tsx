@@ -1297,7 +1297,7 @@ export default function EditProduct() {
                             })
                             setHasChanges(true)
                           }}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          className="w-full md:max-w-md px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           placeholder="例如：Color、Size"
                         />
                       </div>
@@ -1335,7 +1335,7 @@ export default function EditProduct() {
                                 })
                                 setHasChanges(true)
                               }}
-                              className="w-full md:flex-1 md:min-w-[180px] px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              className="w-full md:w-80 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                               placeholder={group.name ? `输入 ${group.name} 选项` : '输入选项值'}
                             />
                             {/* 变体主图URL/上传 */}
