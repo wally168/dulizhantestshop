@@ -9,6 +9,7 @@ import type { Product } from '@prisma/client'
 type ProductWithVariantPrice = Product & {
   variantOptionPrices?: string | null
   variantOptionOriginalPrices?: string | null
+  variantOptionTitles?: string | null
 }
 
 export default async function ProductsPage({ searchParams }: { searchParams?: Promise<{ categoryId?: string; q?: string }> }) {
@@ -106,6 +107,34 @@ export default async function ProductsPage({ searchParams }: { searchParams?: Pr
     }
   }
 
+  const resolveListTitle = (p: ProductWithVariantPrice): string => {
+    const baseTitle = (p?.title || '').trim() || 'Untitled Product'
+    try {
+      const pricesObj = p?.variantOptionPrices ? JSON.parse(p.variantOptionPrices) : null
+      const titleObj = p?.variantOptionTitles
+        ? JSON.parse(p.variantOptionTitles)
+        : (pricesObj?.__title_map__ ?? null)
+      const pickFirstTitle = (obj: any): string | null => {
+        if (!obj || typeof obj !== 'object') return null
+        const combo = obj.__combo__
+        if (combo && typeof combo === 'object') {
+          const comboValue = Object.values(combo).find((v) => typeof v === 'string' && v.trim())
+          if (typeof comboValue === 'string') return comboValue.trim()
+        }
+        for (const [k, group] of Object.entries(obj)) {
+          if (k === '__combo__' || k === '__title_map__') continue
+          if (!group || typeof group !== 'object') continue
+          const v = Object.values(group).find((x) => typeof x === 'string' && x.trim())
+          if (typeof v === 'string') return v.trim()
+        }
+        return null
+      }
+      return pickFirstTitle(titleObj) || baseTitle
+    } catch {
+      return baseTitle
+    }
+  }
+
   return (
     <Layout>
       <div className="bg-white">
@@ -138,6 +167,7 @@ export default async function ProductsPage({ searchParams }: { searchParams?: Pr
               const productPath = `/products/${getProductUrlSegment(product as Product & { asin?: string | null })}`
               const displayImage = resolveImage(product)
               const resolvedPrice = resolveListPrices(product)
+              const resolvedTitle = resolveListTitle(product)
               const price = resolvedPrice.price
               const hasOriginal = typeof resolvedPrice.originalPrice === 'number' && Number(resolvedPrice.originalPrice) > price
               const amazonUrl = typeof product?.amazonUrl === 'string' ? product.amazonUrl : ''
@@ -160,7 +190,7 @@ export default async function ProductsPage({ searchParams }: { searchParams?: Pr
                       <h3 className="relative text-sm text-gray-700">
                         <Link href={productPath}>
                           <span aria-hidden="true" className="absolute inset-0" />
-                          {product.title || 'Untitled Product'}
+                          {resolvedTitle}
                         </Link>
                       </h3>
                       {reviewCount > 0 && (
@@ -206,7 +236,7 @@ export default async function ProductsPage({ searchParams }: { searchParams?: Pr
                             <AddToCartButton
                               id={product.id}
                               slug={getProductUrlSegment(product as Product & { asin?: string | null })}
-                              title={product.title}
+                              title={resolvedTitle}
                               price={price}
                               imageUrl={resolveImage(product)}
                               size="sm"

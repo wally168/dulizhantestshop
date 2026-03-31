@@ -1320,7 +1320,7 @@ export default function EditProduct() {
                       <label className="block text-sm font-medium text-gray-700 mb-2">选项值</label>
                       <div className="space-y-3">
                         {(group.options || []).map((opt, oi) => (
-                          <div key={oi} className="flex items-center gap-3 flex-wrap">
+                          <div key={oi} className="flex items-start gap-3 flex-wrap">
                             <input
                               type="text"
                               value={opt}
@@ -1335,11 +1335,11 @@ export default function EditProduct() {
                                 })
                                 setHasChanges(true)
                               }}
-                              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              className="w-full md:flex-1 md:min-w-[180px] px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                               placeholder={group.name ? `输入 ${group.name} 选项` : '输入选项值'}
                             />
                             {/* 变体主图URL/上传 */}
-                            <div className="flex items-center space-x-2">
+                            <div className="flex items-center space-x-2 min-w-0">
                               <label className="text-sm text-gray-700">变体主图</label>
                               <input
                                 type="url"
@@ -1364,7 +1364,7 @@ export default function EditProduct() {
                                   setHasChanges(true)
                                 }}
                                 placeholder="该选项主图URL"
-                                className="px-2 py-1 border border-gray-300 rounded-md text-sm w-48"
+                                className="px-2 py-1 border border-gray-300 rounded-md text-sm w-48 max-w-full"
                               />
                               <label className="inline-flex items-center px-2 py-1 text-xs bg-gray-100 border rounded cursor-pointer hover:bg-gray-200">
                                 <Upload className="h-3 w-3 mr-1" /> 上传
@@ -1403,7 +1403,7 @@ export default function EditProduct() {
                               </label>
                             </div>
                             {/* 选项购买链接 */}
-                            <div className="flex items-center space-x-2">
+                            <div className="flex items-center space-x-2 min-w-0">
                               <label className="text-sm text-gray-700">选项购买链接</label>
                               <input
                                 type="url"
@@ -1428,10 +1428,10 @@ export default function EditProduct() {
                                   setHasChanges(true)
                                 }}
                                 placeholder="该选项购买链接URL"
-                                className="px-2 py-1 border border-gray-300 rounded-md text-sm w-64"
+                                className="px-2 py-1 border border-gray-300 rounded-md text-sm w-56 max-w-full"
                               />
                             </div>
-                            <div className="flex items-center space-x-2">
+                            <div className="flex items-center space-x-2 min-w-0">
                               <label className="text-sm text-gray-700">选项价格</label>
                               <input
                                 type="number"
@@ -1461,7 +1461,7 @@ export default function EditProduct() {
                                 className="px-2 py-1 border border-gray-300 rounded-md text-sm w-40 disabled:bg-gray-100 disabled:cursor-not-allowed"
                               />
                             </div>
-                            <div className="flex items-center space-x-2">
+                            <div className="flex items-center space-x-2 min-w-0">
                               <label className="text-sm text-gray-700">选项原价</label>
                               <input
                                 type="number"
@@ -1491,7 +1491,7 @@ export default function EditProduct() {
                                 className="px-2 py-1 border border-gray-300 rounded-md text-sm w-40 disabled:bg-gray-100 disabled:cursor-not-allowed"
                               />
                             </div>
-                            <div className="flex items-center space-x-2">
+                            <div className="flex items-center space-x-2 min-w-0">
                               <label className="text-sm text-gray-700">选项标题</label>
                               <input
                                 type="text"
@@ -1516,7 +1516,7 @@ export default function EditProduct() {
                                   setHasChanges(true)
                                 }}
                                 placeholder="例如：MacBook Pro 14寸 银色"
-                                className="px-2 py-1 border border-gray-300 rounded-md text-sm w-56"
+                                className="px-2 py-1 border border-gray-300 rounded-md text-sm w-48 max-w-full"
                               />
                             </div>
 
@@ -1663,7 +1663,7 @@ export default function EditProduct() {
                             </div>
                           ))}
 
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 flex-wrap w-full">
                             <label className="text-sm text-gray-700">组合购买链接</label>
                             <input
                               type="url"
@@ -1680,7 +1680,7 @@ export default function EditProduct() {
                                 setHasChanges(true)
                               }}
                               placeholder="该组合购买链接URL"
-                              className="px-2 py-1 border border-gray-300 rounded-md text-sm w-64"
+                              className="px-2 py-1 border border-gray-300 rounded-md text-sm w-56 max-w-full"
                             />
                             <input
                               type="number"
@@ -1735,7 +1735,7 @@ export default function EditProduct() {
                                 setHasChanges(true)
                               }}
                               placeholder="组合标题"
-                              className="px-2 py-1 border border-gray-300 rounded-md text-sm w-56"
+                              className="px-2 py-1 border border-gray-300 rounded-md text-sm w-64 max-w-full"
                             />
                             <button
                               type="button"
