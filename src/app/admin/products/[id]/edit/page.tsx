@@ -1297,7 +1297,7 @@ export default function EditProduct() {
                             })
                             setHasChanges(true)
                           }}
-                          className="w-full md:max-w-md px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          className="w-full md:max-w-xs px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           placeholder="例如：Color、Size"
                         />
                       </div>
@@ -1335,7 +1335,7 @@ export default function EditProduct() {
                                 })
                                 setHasChanges(true)
                               }}
-                              className="w-full md:w-80 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              className="w-full md:w-64 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                               placeholder={group.name ? `输入 ${group.name} 选项` : '输入选项值'}
                             />
                             {/* 变体主图URL/上传 */}
@@ -1491,7 +1491,7 @@ export default function EditProduct() {
                                 className="px-2 py-1 border border-gray-300 rounded-md text-sm w-40 disabled:bg-gray-100 disabled:cursor-not-allowed"
                               />
                             </div>
-                            <div className="flex items-center space-x-2 min-w-0">
+                            <div className="flex items-center space-x-2 min-w-0 w-full">
                               <label className="text-sm text-gray-700">选项标题</label>
                               <input
                                 type="text"
@@ -1516,7 +1516,7 @@ export default function EditProduct() {
                                   setHasChanges(true)
                                 }}
                                 placeholder="例如：MacBook Pro 14寸 银色"
-                                className="px-2 py-1 border border-gray-300 rounded-md text-sm w-48 max-w-full"
+                                className="px-2 py-1 border border-gray-300 rounded-md text-sm w-full"
                               />
                             </div>
 
@@ -1720,6 +1720,8 @@ export default function EditProduct() {
                               placeholder="组合原价"
                               className="px-2 py-1 border border-gray-300 rounded-md text-sm w-40 disabled:bg-gray-100 disabled:cursor-not-allowed"
                             />
+                          </div>
+                          <div className="flex items-center gap-2 w-full">
                             <input
                               type="text"
                               value={dynamicTitle}
@@ -1735,7 +1737,7 @@ export default function EditProduct() {
                                 setHasChanges(true)
                               }}
                               placeholder="组合标题"
-                              className="px-2 py-1 border border-gray-300 rounded-md text-sm w-full md:w-[560px]"
+                              className="px-2 py-1 border border-gray-300 rounded-md text-sm w-full"
                             />
                             <button
                               type="button"
