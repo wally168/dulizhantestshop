@@ -862,7 +862,7 @@ export default function NewProduct() {
                                   setHasChanges(true)
                                 }}
                                 placeholder="该选项主图URL"
-                                className="px-2 py-1 border border-gray-300 rounded-md text-sm w-48 max-w-full"
+                                className="px-2 py-1 border border-gray-300 rounded-md text-sm w-full md:w-[560px]"
                               />
                               <label className="inline-flex items-center px-2 py-1 text-xs bg-gray-100 border rounded cursor-pointer hover:bg-gray-200">
                                 <Upload className="h-3 w-3 mr-1" /> 上传
@@ -1233,7 +1233,7 @@ export default function NewProduct() {
                                 setHasChanges(true)
                               }}
                               placeholder="组合标题"
-                              className="px-2 py-1 border border-gray-300 rounded-md text-sm w-64 max-w-full"
+                              className="px-2 py-1 border border-gray-300 rounded-md text-sm w-full md:w-[560px]"
                             />
                             <button
                               type="button"
