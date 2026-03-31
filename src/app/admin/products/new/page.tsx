@@ -460,7 +460,8 @@ export default function NewProduct() {
   const hasVariantPricing = (() => {
     const map = form.variantOptionPrices || {}
     const originalMap = form.variantOptionOriginalPrices || {}
-    return [...Object.values(map), ...Object.values(originalMap)].some(group => group && Object.keys(group).length > 0)
+    return [...Object.values(map), ...Object.values(originalMap)]
+      .some(group => Object.values(group || {}).some(v => String(v ?? '').trim() !== ''))
   })()
   const comboLinkMap = (form.variantOptionLinks?.[COMBO_KEY] || {}) as Record<string, string>
   const comboPriceMap = (form.variantOptionPrices?.[COMBO_KEY] || {}) as Record<string, string>
@@ -471,9 +472,8 @@ export default function NewProduct() {
   const hasOptionVariantPricing = [...Object.entries(form.variantOptionPrices || {}), ...Object.entries(form.variantOptionOriginalPrices || {})]
     .filter(([k]) => k !== COMBO_KEY)
     .some(([, group]) => Object.values(group || {}).some(v => String(v ?? '').trim() !== ''))
-  const hasPricingConflict = hasComboVariantPricing && hasOptionVariantPricing
-  const disableOptionPricingInputs = hasComboVariantPricing && !hasOptionVariantPricing
-  const disableComboPricingInputs = hasOptionVariantPricing && !hasComboVariantPricing
+  const disableOptionPricingInputs = hasComboVariantPricing
+  const disableComboPricingInputs = false
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -1071,7 +1071,7 @@ export default function NewProduct() {
                 <h2 className="text-lg font-semibold text-gray-900">组合链接（可选）</h2>
                 <button
                   type="button"
-                  disabled={disableComboPricingInputs}
+                  disabled={false}
                   onClick={() => {
                     const key = getFirstMissingComboKey(form.variants, form.variantOptionLinks?.[COMBO_KEY])
                     if (!key) return
@@ -1102,9 +1102,8 @@ export default function NewProduct() {
                 </button>
               </div>
               <p className="text-xs text-gray-500 mb-2">当所有维度均选择且存在匹配的组合链接时，将优先跳转该链接；否则回退到选项链接或主链接。</p>
-              {hasPricingConflict && <p className="text-xs text-amber-600 mb-2">检测到选项价格与组合价格同时存在，当前已允许两侧编辑，请清理为单侧以避免冲突。</p>}
-              {!hasPricingConflict && hasOptionVariantPricing && <p className="text-xs text-amber-600 mb-2">已填写选项价格/原价，组合价格输入已禁用。</p>}
-              {!hasPricingConflict && hasComboVariantPricing && <p className="text-xs text-amber-600 mb-2">已填写组合价格/原价，选项价格输入已禁用。</p>}
+              {hasOptionVariantPricing && !hasComboVariantPricing && <p className="text-xs text-amber-600 mb-2">当前使用选项价格模式；当组合价格填写后将自动切换并禁用选项价格。</p>}
+              {hasComboVariantPricing && <p className="text-xs text-amber-600 mb-2">已填写组合价格/原价，选项价格输入已禁用。</p>}
 
               {comboKeys.length === 0 ? (
                 <p className="text-sm text-gray-500">尚未添加组合链接。</p>
