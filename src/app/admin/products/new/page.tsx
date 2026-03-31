@@ -42,6 +42,7 @@ interface ProductForm {
   variantImageMap?: Record<string, Record<string, number>>
   variantOptionImages?: Record<string, Record<string, string>>
   variantOptionLinks?: Record<string, Record<string, string>>
+  variantOptionPrices?: Record<string, Record<string, string>>
 }
 
 interface VariantGroup { name: string; options: string[] }
@@ -150,6 +151,7 @@ export default function NewProduct() {
     variantImageMap: {},
     variantOptionImages: {},
     variantOptionLinks: {},
+    variantOptionPrices: {},
     showBuyOnAmazon: true,
     showAddToCart: true,
   })
@@ -394,6 +396,7 @@ export default function NewProduct() {
           variantImageMap: form.variantImageMap || null,
           variantOptionImages: form.variantOptionImages || null,
           variantOptionLinks: form.variantOptionLinks || null,
+          variantOptionPrices: form.variantOptionPrices || null,
           showBuyOnAmazon: form.showBuyOnAmazon !== false,
           showAddToCart: form.showAddToCart !== false,
         }),
@@ -447,6 +450,14 @@ export default function NewProduct() {
     }))
     setHasChanges(true)
   }
+
+  const hasVariantPricing = (() => {
+    const map = form.variantOptionPrices || {}
+    return Object.values(map).some(group => group && Object.keys(group).length > 0)
+  })()
+  const comboLinkMap = (form.variantOptionLinks?.[COMBO_KEY] || {}) as Record<string, string>
+  const comboPriceMap = (form.variantOptionPrices?.[COMBO_KEY] || {}) as Record<string, string>
+  const comboKeys = Array.from(new Set([...Object.keys(comboLinkMap), ...Object.keys(comboPriceMap)]))
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -658,9 +669,11 @@ export default function NewProduct() {
                   required
                   value={form.price}
                   onChange={(e) => setForm(prev => ({ ...prev, price: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  disabled={hasVariantPricing}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                   placeholder="0.00"
                 />
+                {hasVariantPricing && <p className="text-xs text-amber-600 mt-1">已启用变体价格，基础售价已禁用。</p>}
               </div>
 
               <div>
@@ -672,9 +685,11 @@ export default function NewProduct() {
                   step="0.01"
                   value={form.originalPrice}
                   onChange={(e) => setForm(prev => ({ ...prev, originalPrice: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  disabled={hasVariantPricing}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                   placeholder="0.00"
                 />
+                {hasVariantPricing && <p className="text-xs text-amber-600 mt-1">已启用变体价格，原价已禁用。</p>}
               </div>
             </div>
 
@@ -743,6 +758,7 @@ export default function NewProduct() {
             <p className="text-xs text-gray-500 mb-2">
               多维度链接支持：已支持“组合链接”（如颜色+尺寸）。当所有维度均选择且存在匹配的组合链接时，将优先跳转组合链接；否则优先使用选项链接，最后回退主链接。可在下方“组合链接（可选）”中添加。
             </p>
+            <p className="text-xs text-gray-500 mb-2">价格优先级：组合价格 ＞ 选项价格 ＞ 基础售价。填写任意变体价格后，基础售价与原价将禁用。</p>
 
             {(form.variants || []).length === 0 ? (
               <p className="text-sm text-gray-500">暂无变体，可点击上方“添加变体组”。</p>
@@ -899,6 +915,35 @@ export default function NewProduct() {
                                 className="px-2 py-1 border border-gray-300 rounded-md text-sm w-64"
                               />
                             </div>
+                            <div className="flex items-center space-x-2">
+                              <label className="text-sm text-gray-700">选项价格</label>
+                              <input
+                                type="number"
+                                step="0.01"
+                                value={(form.variantOptionPrices?.[group.name]?.[opt] ?? '')}
+                                onChange={(e) => {
+                                  const v = e.target.value
+                                  setForm(prev => {
+                                    const next = { ...(prev.variantOptionPrices || {}) } as Record<string, Record<string, string>>
+                                    const gm = { ...(next[group.name] || {}) } as Record<string, string>
+                                    if (v.trim() === '') {
+                                      delete gm[opt]
+                                    } else {
+                                      gm[opt] = v
+                                    }
+                                    if (Object.keys(gm).length === 0) {
+                                      delete next[group.name]
+                                    } else {
+                                      next[group.name] = gm
+                                    }
+                                    return { ...prev, variantOptionPrices: next }
+                                  })
+                                  setHasChanges(true)
+                                }}
+                                placeholder="例如：39.99"
+                                className="px-2 py-1 border border-gray-300 rounded-md text-sm w-40"
+                              />
+                            </div>
 
                             {(group.options || []).length > 1 && (
                               <button
@@ -958,7 +1003,11 @@ export default function NewProduct() {
                       const gm = { ...(next[COMBO_KEY] || {}) } as Record<string, string>
                       gm[key] = gm[key] ?? ''
                       next[COMBO_KEY] = gm
-                      return { ...prev, variantOptionLinks: next }
+                      const nextPrice = { ...(prev.variantOptionPrices || {}) } as Record<string, Record<string, string>>
+                      const pm = { ...(nextPrice[COMBO_KEY] || {}) } as Record<string, string>
+                      pm[key] = pm[key] ?? ''
+                      nextPrice[COMBO_KEY] = pm
+                      return { ...prev, variantOptionLinks: next, variantOptionPrices: nextPrice }
                     })
                     setHasChanges(true)
                   }}
@@ -969,12 +1018,14 @@ export default function NewProduct() {
               </div>
               <p className="text-xs text-gray-500 mb-2">当所有维度均选择且存在匹配的组合链接时，将优先跳转该链接；否则回退到选项链接或主链接。</p>
 
-              {Object.entries(form.variantOptionLinks?.[COMBO_KEY] || {}).length === 0 ? (
+              {comboKeys.length === 0 ? (
                 <p className="text-sm text-gray-500">尚未添加组合链接。</p>
               ) : (
                 <div className="space-y-4">
-                  {Object.entries(form.variantOptionLinks?.[COMBO_KEY] || {}).map(([key, url]) => {
+                  {comboKeys.map((key) => {
                     const selections = parseComboKey(key)
+                    const url = comboLinkMap[key] || ''
+                    const price = comboPriceMap[key] || ''
                     return (
                       <div key={key} className="border rounded-lg p-4">
                         <div className="flex items-center gap-3 flex-wrap">
@@ -991,10 +1042,16 @@ export default function NewProduct() {
                                     const gm = { ...(next[COMBO_KEY] || {}) } as Record<string, string>
                                     const oldUrl = gm[key] ?? ''
                                     delete gm[key]
+                                    const nextPrice = { ...(prev.variantOptionPrices || {}) } as Record<string, Record<string, string>>
+                                    const pm = { ...(nextPrice[COMBO_KEY] || {}) } as Record<string, string>
+                                    const oldPrice = pm[key] ?? ''
+                                    delete pm[key]
                                     const newKey = buildComboKey(prev.variants, newSel)
                                     gm[newKey] = oldUrl
+                                    pm[newKey] = oldPrice
                                     next[COMBO_KEY] = gm
-                                    return { ...prev, variantOptionLinks: next }
+                                    nextPrice[COMBO_KEY] = pm
+                                    return { ...prev, variantOptionLinks: next, variantOptionPrices: nextPrice }
                                   })
                                   setHasChanges(true)
                                 }}
@@ -1016,22 +1073,32 @@ export default function NewProduct() {
                                 setForm(prev => {
                                   const next = { ...(prev.variantOptionLinks || {}) } as Record<string, Record<string, string>>
                                   const gm = { ...(next[COMBO_KEY] || {}) } as Record<string, string>
-                                  if (v.trim() === '') {
-                                    delete gm[key]
-                                  } else {
-                                    gm[key] = v
-                                  }
-                                  if (Object.keys(gm).length === 0) {
-                                    delete next[COMBO_KEY]
-                                  } else {
-                                    next[COMBO_KEY] = gm
-                                  }
+                                  gm[key] = v
+                                  next[COMBO_KEY] = gm
                                   return { ...prev, variantOptionLinks: next }
                                 })
                                 setHasChanges(true)
                               }}
                               placeholder="该组合购买链接URL"
                               className="px-2 py-1 border border-gray-300 rounded-md text-sm w-64"
+                            />
+                            <input
+                              type="number"
+                              step="0.01"
+                              value={price}
+                              onChange={(e) => {
+                                const v = e.target.value
+                                setForm(prev => {
+                                  const next = { ...(prev.variantOptionPrices || {}) } as Record<string, Record<string, string>>
+                                  const pm = { ...(next[COMBO_KEY] || {}) } as Record<string, string>
+                                  pm[key] = v
+                                  next[COMBO_KEY] = pm
+                                  return { ...prev, variantOptionPrices: next }
+                                })
+                                setHasChanges(true)
+                              }}
+                              placeholder="组合价格"
+                              className="px-2 py-1 border border-gray-300 rounded-md text-sm w-40"
                             />
                             <button
                               type="button"
@@ -1042,7 +1109,12 @@ export default function NewProduct() {
                                   delete gm[key]
                                   if (Object.keys(gm).length === 0) delete next[COMBO_KEY]
                                   else next[COMBO_KEY] = gm
-                                  return { ...prev, variantOptionLinks: next }
+                                  const nextPrice = { ...(prev.variantOptionPrices || {}) } as Record<string, Record<string, string>>
+                                  const pm = { ...(nextPrice[COMBO_KEY] || {}) } as Record<string, string>
+                                  delete pm[key]
+                                  if (Object.keys(pm).length === 0) delete nextPrice[COMBO_KEY]
+                                  else nextPrice[COMBO_KEY] = pm
+                                  return { ...prev, variantOptionLinks: next, variantOptionPrices: nextPrice }
                                 })
                                 setHasChanges(true)
                               }}

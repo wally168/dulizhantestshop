@@ -107,6 +107,14 @@ export default async function ProductDetail({ params }: { params: Promise<{ slug
       return obj && typeof obj === 'object' ? obj : null
     } catch { return null }
   })()
+  const variantOptionPrices = (() => {
+    try {
+      const raw = (product as { variantOptionPrices?: string | null }).variantOptionPrices
+      if (!raw) return null
+      const obj = JSON.parse(raw)
+      return obj && typeof obj === 'object' ? obj : null
+    } catch { return null }
+  })()
 
   const reviews = await (async () => {
     try {
@@ -153,6 +161,7 @@ export default async function ProductDetail({ params }: { params: Promise<{ slug
             variantImageMap={variantImageMap}
             variantOptionImages={variantOptionImages}
             variantOptionLinks={variantOptionLinks}
+            variantOptionPrices={variantOptionPrices}
             showBuyOnAmazon={(product.showBuyOnAmazon !== false)}
             showAddToCart={(product.showAddToCart !== false)}
             reviews={reviews}

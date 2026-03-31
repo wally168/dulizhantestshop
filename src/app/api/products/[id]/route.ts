@@ -90,6 +90,7 @@ export async function PUT(
       variantImageMap,
       variantOptionImages,
       variantOptionLinks,
+      variantOptionPrices,
       youtubeUrl,
       youtubeIndex,
       asin,
@@ -219,6 +220,19 @@ export async function PUT(
           return undefined
         } catch { return undefined }
       })(),
+      variantOptionPrices: (() => {
+        try {
+          if (!variantOptionPrices) return undefined
+          if (typeof variantOptionPrices === 'string') {
+            const obj = JSON.parse(variantOptionPrices)
+            return obj && typeof obj === 'object' ? JSON.stringify(obj) : undefined
+          }
+          if (typeof variantOptionPrices === 'object') {
+            return JSON.stringify(variantOptionPrices)
+          }
+          return undefined
+        } catch { return undefined }
+      })(),
       // 新增：按钮显示控制
       showBuyOnAmazon: showBuyOnAmazon !== false,
       showAddToCart: showAddToCart !== false,
@@ -250,6 +264,7 @@ export async function PUT(
       variantImageMap: parseObj((product as any).variantImageMap),
       variantOptionImages: parseObj((product as any).variantOptionImages),
       variantOptionLinks: parseObj((product as any).variantOptionLinks),
+      variantOptionPrices: parseObj((product as any).variantOptionPrices),
     }
     return NextResponse.json(normalized)
   } catch (error) {

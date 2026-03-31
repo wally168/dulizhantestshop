@@ -81,6 +81,7 @@ function replaceYoutubeLinks(input: string): string {
    variantImageMap,
    variantOptionImages,
   variantOptionLinks,
+  variantOptionPrices,
   showBuyOnAmazon = true,
   showAddToCart = true,
   reviews = [],
@@ -106,6 +107,7 @@ function replaceYoutubeLinks(input: string): string {
   variantImageMap?: Record<string, Record<string, number>> | null
   variantOptionImages?: Record<string, Record<string, string>> | null
   variantOptionLinks?: Record<string, Record<string, string>> | null
+  variantOptionPrices?: Record<string, Record<string, string>> | null
   showBuyOnAmazon?: boolean
   showAddToCart?: boolean
   reviews?: Array<{ id: string; name: string; country: string; title: string; content: string; rating: number; images: string[]; createdAt?: string | Date }>
@@ -264,6 +266,34 @@ function replaceYoutubeLinks(input: string): string {
     return amazonUrl
   })()
 
+  const currentVariantPrice = (() => {
+    const toNumber = (v?: string | null): number | null => {
+      if (typeof v !== 'string') return null
+      const n = Number(v)
+      if (!Number.isFinite(n)) return null
+      return n
+    }
+    if (Array.isArray(variantGroups) && variantGroups.length > 1) {
+      const allSelected = variantGroups.every(g => !!selection[g.name])
+      if (allSelected) {
+        const key = buildComboKey(variantGroups, selection)
+        const comboPrice = toNumber(variantOptionPrices?.[COMBO_KEY]?.[key])
+        if (comboPrice !== null) return comboPrice
+      }
+    }
+    if (lastClickedGroup && selection[lastClickedGroup]) {
+      const p = toNumber(variantOptionPrices?.[lastClickedGroup]?.[selection[lastClickedGroup]])
+      if (p !== null) return p
+    }
+    for (const [g, opt] of Object.entries(selection)) {
+      const p = toNumber(variantOptionPrices?.[g]?.[opt])
+      if (p !== null) return p
+    }
+    return null
+  })()
+  const displayPrice = currentVariantPrice ?? price
+  const hasVariantPrice = currentVariantPrice !== null
+
   return (
     <>
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
@@ -365,7 +395,7 @@ function replaceYoutubeLinks(input: string): string {
         id={id}
         slug={slug}
         title={title}
-        price={price}
+        price={displayPrice}
         imageUrl={primaryImageUrl}
         selectedOptions={selection}
         showQuantitySelector={true}
@@ -375,8 +405,8 @@ function replaceYoutubeLinks(input: string): string {
 
          {/* 价格模块放在选项之后 */}
          <div className="mt-4 flex items-center gap-3">
-           <span className="text-2xl font-semibold text-gray-900">{formatPrice(price)}</span>
-           {originalPrice ? (
+           <span className="text-2xl font-semibold text-gray-900">{formatPrice(displayPrice)}</span>
+           {(!hasVariantPrice && originalPrice) ? (
              <span className="text-gray-500 line-through">{formatPrice(originalPrice)}</span>
            ) : null}
         </div>

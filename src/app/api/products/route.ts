@@ -84,6 +84,7 @@ export async function GET(request: NextRequest) {
       variantImageMap: (() => { try { return p.variantImageMap ? JSON.parse(p.variantImageMap) : null } catch { return null } })(),
       variantOptionImages: (() => { try { return p.variantOptionImages ? JSON.parse(p.variantOptionImages) : null } catch { return null } })(),
       variantOptionLinks: (() => { try { return p.variantOptionLinks ? JSON.parse(p.variantOptionLinks) : null } catch { return null } })(),
+      variantOptionPrices: (() => { try { return p.variantOptionPrices ? JSON.parse(p.variantOptionPrices) : null } catch { return null } })(),
       avgRating: (aggMap[p.id]?.avgRating ?? 0),
       reviewCount: (aggMap[p.id]?.reviewCount ?? 0),
     }))
@@ -131,6 +132,7 @@ export async function POST(request: NextRequest) {
       variantImageMap,
       variantOptionImages,
       variantOptionLinks,
+      variantOptionPrices,
       youtubeUrl,
       youtubeIndex,
       asin,
@@ -282,6 +284,20 @@ export async function POST(request: NextRequest) {
       } catch { return null }
     })()
 
+    const variantOptionPricesJson: string | null = (() => {
+      try {
+        if (!variantOptionPrices) return null
+        if (typeof variantOptionPrices === 'string') {
+          const obj = JSON.parse(variantOptionPrices)
+          return obj && typeof obj === 'object' ? JSON.stringify(obj) : null
+        }
+        if (typeof variantOptionPrices === 'object') {
+          return JSON.stringify(variantOptionPrices)
+        }
+        return null
+      } catch { return null }
+    })()
+
     const createData: any = {
       title: name,
       slug,
@@ -309,6 +325,7 @@ export async function POST(request: NextRequest) {
       variantImageMap: variantImageMapJson,
       variantOptionImages: variantOptionImagesJson,
       variantOptionLinks: variantOptionLinksJson,
+      variantOptionPrices: variantOptionPricesJson,
       // 新增：按钮显示控制
       showBuyOnAmazon: showBuyOnAmazon !== false,
       showAddToCart: showAddToCart !== false,
@@ -335,6 +352,7 @@ export async function POST(request: NextRequest) {
       variantImageMap: parseObj((product as any).variantImageMap),
       variantOptionImages: parseObj((product as any).variantOptionImages),
       variantOptionLinks: parseObj((product as any).variantOptionLinks),
+      variantOptionPrices: parseObj((product as any).variantOptionPrices),
     }
     return NextResponse.json(normalized, { status: 201 })
   } catch (error: any) {
