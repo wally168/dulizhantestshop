@@ -47,6 +47,16 @@ function extractYoutubeId(value?: string | null): string | null {
   return null
 }
 
+function getInitialVariantSelection(groups: VariantGroup[]): Record<string, string> {
+  const initial: Record<string, string> = {}
+  if (!Array.isArray(groups)) return initial
+  for (const g of groups) {
+    const first = (g?.options || []).find(Boolean)
+    if (g?.name && first) initial[g.name] = first
+  }
+  return initial
+}
+
 function replaceYoutubeLinks(input: string): string {
   if (!input) return ''
   if (input.includes('<iframe')) return input
@@ -108,16 +118,16 @@ function replaceYoutubeLinks(input: string): string {
   variantImageMap?: Record<string, Record<string, number>> | null
   variantOptionImages?: Record<string, Record<string, string>> | null
   variantOptionLinks?: Record<string, Record<string, string>> | null
-  variantOptionPrices?: Record<string, Record<string, string>> | null
-  variantOptionOriginalPrices?: Record<string, Record<string, string>> | null
+  variantOptionPrices?: Record<string, Record<string, string | number>> | null
+  variantOptionOriginalPrices?: Record<string, Record<string, string | number>> | null
   showBuyOnAmazon?: boolean
   showAddToCart?: boolean
   reviews?: Array<{ id: string; name: string; country: string; title: string; content: string; rating: number; images: string[]; createdAt?: string | Date }>
 }): ReactElement {
-   const [selectedGalleryIndex, setSelectedGalleryIndex] = useState<number>(0)
-   const [selection, setSelection] = useState<Record<string, string>>({})
+  const [selectedGalleryIndex, setSelectedGalleryIndex] = useState<number>(0)
+  const [selection, setSelection] = useState<Record<string, string>>(() => getInitialVariantSelection(variantGroups))
   const [failedThumb, setFailedThumb] = useState<Record<string, boolean>>({})
-  const [lastClickedGroup, setLastClickedGroup] = useState<string | null>(null)
+  const [lastClickedGroup, setLastClickedGroup] = useState<string | null>(variantGroups?.[0]?.name || null)
   const [previewUrls, setPreviewUrls] = useState<string[] | null>(null)
   const [previewIndex, setPreviewIndex] = useState<number>(0)
   const [sortBy, setSortBy] = useState<'time' | 'rating'>('time')
@@ -176,12 +186,7 @@ function replaceYoutubeLinks(input: string): string {
     setSelection(prev => {
       const hasInvalid = variantGroups.some(g => !prev[g.name] || !(g.options || []).includes(prev[g.name]))
       if (!hasInvalid && Object.keys(prev).length > 0) return prev
-      const initial: Record<string, string> = {}
-      for (const g of variantGroups) {
-        const first = (g.options || []).find(Boolean)
-        if (g.name && first) initial[g.name] = first
-      }
-      return initial
+      return getInitialVariantSelection(variantGroups)
     })
     const firstGroup = variantGroups[0]
     const firstOption = (firstGroup?.options || []).find(Boolean)
@@ -289,7 +294,8 @@ function replaceYoutubeLinks(input: string): string {
     return amazonUrl
   })()
 
-  const toNumber = (v?: string | null): number | null => {
+  const toNumber = (v?: string | number | null): number | null => {
+    if (typeof v === 'number') return Number.isFinite(v) ? v : null
     if (typeof v !== 'string') return null
     const n = Number(v)
     if (!Number.isFinite(n)) return null
