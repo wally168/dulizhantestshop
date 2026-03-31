@@ -13,6 +13,8 @@ interface Product {
   mainImage: string
   price: number
   originalPrice?: number
+  variantOptionPrices?: string | null
+  variantOptionOriginalPrices?: string | null
   featured: boolean
   avgRating?: number
   reviewCount?: number
@@ -259,6 +261,40 @@ export default async function Home() {
 
 function ProductCard({ product }: { product: Product }) {
   const productPath = `/products/${getProductUrlSegment(product)}`
+  const resolveCardPrices = (p: Product): { price: number; originalPrice: number | null } => {
+    const basePrice = Number(p?.price ?? 0)
+    const baseOriginal = typeof p?.originalPrice === 'number' ? Number(p.originalPrice) : null
+    try {
+      const pricesObj = p?.variantOptionPrices ? JSON.parse(p.variantOptionPrices) : null
+      const originalObj = p?.variantOptionOriginalPrices
+        ? JSON.parse(p.variantOptionOriginalPrices)
+        : (pricesObj?.__original_price_map__ ?? null)
+      const pickFirstNumber = (obj: any): number | null => {
+        if (!obj || typeof obj !== 'object') return null
+        const combo = obj.__combo__
+        if (combo && typeof combo === 'object') {
+          const comboValue = Object.values(combo).find((v) => Number.isFinite(Number(v)))
+          if (comboValue !== undefined) return Number(comboValue)
+        }
+        for (const [k, group] of Object.entries(obj)) {
+          if (k === '__combo__' || k === '__original_price_map__') continue
+          if (!group || typeof group !== 'object') continue
+          const v = Object.values(group).find((x) => Number.isFinite(Number(x)))
+          if (v !== undefined) return Number(v)
+        }
+        return null
+      }
+      const variantPrice = pickFirstNumber(pricesObj)
+      const variantOriginal = pickFirstNumber(originalObj)
+      return {
+        price: variantPrice ?? basePrice,
+        originalPrice: variantOriginal ?? (variantPrice === null ? baseOriginal : null),
+      }
+    } catch {
+      return { price: basePrice, originalPrice: baseOriginal }
+    }
+  }
+  const resolvedPrice = resolveCardPrices(product)
   return (
     <Link href={productPath} className="group">
       <div className="card-hover bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-1">
@@ -286,11 +322,11 @@ function ProductCard({ product }: { product: Product }) {
           )}
           <div className="flex items-center space-x-2">
             <span className="text-2xl font-bold text-gray-900">
-              ${product.price}
+              ${resolvedPrice.price}
             </span>
-            {product.originalPrice && product.originalPrice > product.price && (
+            {typeof resolvedPrice.originalPrice === 'number' && resolvedPrice.originalPrice > resolvedPrice.price && (
               <span className="text-lg text-gray-500 line-through">
-                ${product.originalPrice}
+                ${resolvedPrice.originalPrice}
               </span>
             )}
           </div>
