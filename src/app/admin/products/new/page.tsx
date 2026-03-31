@@ -463,6 +463,10 @@ export default function NewProduct() {
   const comboPriceMap = (form.variantOptionPrices?.[COMBO_KEY] || {}) as Record<string, string>
   const comboOriginalPriceMap = (form.variantOptionOriginalPrices?.[COMBO_KEY] || {}) as Record<string, string>
   const comboKeys = Array.from(new Set([...Object.keys(comboLinkMap), ...Object.keys(comboPriceMap), ...Object.keys(comboOriginalPriceMap)]))
+  const hasComboVariantPricing = [...Object.values(comboPriceMap), ...Object.values(comboOriginalPriceMap)].some(v => String(v ?? '').trim() !== '')
+  const hasOptionVariantPricing = [...Object.entries(form.variantOptionPrices || {}), ...Object.entries(form.variantOptionOriginalPrices || {})]
+    .filter(([k]) => k !== COMBO_KEY)
+    .some(([, group]) => Object.values(group || {}).some(v => String(v ?? '').trim() !== ''))
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -926,6 +930,7 @@ export default function NewProduct() {
                                 type="number"
                                 step="0.01"
                                 value={(form.variantOptionPrices?.[group.name]?.[opt] ?? '')}
+                                disabled={hasComboVariantPricing}
                                 onChange={(e) => {
                                   const v = e.target.value
                                   setForm(prev => {
@@ -946,7 +951,7 @@ export default function NewProduct() {
                                   setHasChanges(true)
                                 }}
                                 placeholder="例如：39.99"
-                                className="px-2 py-1 border border-gray-300 rounded-md text-sm w-40"
+                                className="px-2 py-1 border border-gray-300 rounded-md text-sm w-40 disabled:bg-gray-100 disabled:cursor-not-allowed"
                               />
                             </div>
                             <div className="flex items-center space-x-2">
@@ -955,6 +960,7 @@ export default function NewProduct() {
                                 type="number"
                                 step="0.01"
                                 value={(form.variantOptionOriginalPrices?.[group.name]?.[opt] ?? '')}
+                                disabled={hasComboVariantPricing}
                                 onChange={(e) => {
                                   const v = e.target.value
                                   setForm(prev => {
@@ -975,7 +981,7 @@ export default function NewProduct() {
                                   setHasChanges(true)
                                 }}
                                 placeholder="例如：49.99"
-                                className="px-2 py-1 border border-gray-300 rounded-md text-sm w-40"
+                                className="px-2 py-1 border border-gray-300 rounded-md text-sm w-40 disabled:bg-gray-100 disabled:cursor-not-allowed"
                               />
                             </div>
 
@@ -1029,6 +1035,7 @@ export default function NewProduct() {
                 <h2 className="text-lg font-semibold text-gray-900">组合链接（可选）</h2>
                 <button
                   type="button"
+                  disabled={hasOptionVariantPricing}
                   onClick={() => {
                     const key = getFirstMissingComboKey(form.variants, form.variantOptionLinks?.[COMBO_KEY])
                     if (!key) return
@@ -1049,12 +1056,14 @@ export default function NewProduct() {
                     })
                     setHasChanges(true)
                   }}
-                  className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center"
+                  className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Plus className="h-4 w-4 mr-1" /> 添加组合链接
                 </button>
               </div>
               <p className="text-xs text-gray-500 mb-2">当所有维度均选择且存在匹配的组合链接时，将优先跳转该链接；否则回退到选项链接或主链接。</p>
+              {hasOptionVariantPricing && <p className="text-xs text-amber-600 mb-2">已填写选项价格/原价，组合价格输入已禁用。</p>}
+              {hasComboVariantPricing && <p className="text-xs text-amber-600 mb-2">已填写组合价格/原价，选项价格输入已禁用。</p>}
 
               {comboKeys.length === 0 ? (
                 <p className="text-sm text-gray-500">尚未添加组合链接。</p>
@@ -1131,6 +1140,7 @@ export default function NewProduct() {
                               type="number"
                               step="0.01"
                               value={price}
+                              disabled={hasOptionVariantPricing}
                               onChange={(e) => {
                                 const v = e.target.value
                                 setForm(prev => {
@@ -1143,12 +1153,13 @@ export default function NewProduct() {
                                 setHasChanges(true)
                               }}
                               placeholder="组合价格"
-                              className="px-2 py-1 border border-gray-300 rounded-md text-sm w-40"
+                              className="px-2 py-1 border border-gray-300 rounded-md text-sm w-40 disabled:bg-gray-100 disabled:cursor-not-allowed"
                             />
                             <input
                               type="number"
                               step="0.01"
                               value={originalPrice}
+                              disabled={hasOptionVariantPricing}
                               onChange={(e) => {
                                 const v = e.target.value
                                 setForm(prev => {
@@ -1161,7 +1172,7 @@ export default function NewProduct() {
                                 setHasChanges(true)
                               }}
                               placeholder="组合原价"
-                              className="px-2 py-1 border border-gray-300 rounded-md text-sm w-40"
+                              className="px-2 py-1 border border-gray-300 rounded-md text-sm w-40 disabled:bg-gray-100 disabled:cursor-not-allowed"
                             />
                             <button
                               type="button"

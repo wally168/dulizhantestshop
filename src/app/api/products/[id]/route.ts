@@ -254,15 +254,37 @@ export async function PUT(
       showAddToCart: showAddToCart !== false,
     }
 
-    const product = await db.product.update({
-      where: {
-        id,
-      },
-      data: updateData,
-      include: {
-        category: true,
-      },
-    })
+    const isVariantOriginalPriceFieldError = (e: any) =>
+      e?.code === 'P2022' ||
+      e?.code === 'P2009' ||
+      e?.code === 'P2010' ||
+      String(e?.message || '').includes('variantOptionOriginalPrices')
+
+    let product: any
+    try {
+      product = await db.product.update({
+        where: {
+          id,
+        },
+        data: updateData,
+        include: {
+          category: true,
+        },
+      })
+    } catch (innerError: any) {
+      if (!isVariantOriginalPriceFieldError(innerError)) throw innerError
+      const fallbackData = { ...updateData }
+      delete fallbackData.variantOptionOriginalPrices
+      product = await db.product.update({
+        where: {
+          id,
+        },
+        data: fallbackData,
+        include: {
+          category: true,
+        },
+      })
+    }
 
     const parseArr = (s: string | null | undefined) => {
       try { return s ? JSON.parse(s) : [] } catch { return [] }
@@ -284,10 +306,12 @@ export async function PUT(
       variantOptionOriginalPrices: parseObj((product as any).variantOptionOriginalPrices),
     }
     return NextResponse.json(normalized)
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error updating product:', error)
+    if (error?.code) console.error('Error code:', error.code)
+    if (error?.meta) console.error('Error meta:', error.meta)
     return NextResponse.json(
-      { error: 'Failed to update product' },
+      { error: `Failed to update product: ${error?.message || 'Unknown error'}` },
       { status: 500 }
     )
   }

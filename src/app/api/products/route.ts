@@ -348,9 +348,25 @@ export async function POST(request: NextRequest) {
       showAddToCart: showAddToCart !== false,
     }
 
-    const product = await db.product.create({
-      data: createData,
-    })
+    const isVariantOriginalPriceFieldError = (e: any) =>
+      e?.code === 'P2022' ||
+      e?.code === 'P2009' ||
+      e?.code === 'P2010' ||
+      String(e?.message || '').includes('variantOptionOriginalPrices')
+
+    let product: any
+    try {
+      product = await db.product.create({
+        data: createData,
+      })
+    } catch (innerError: any) {
+      if (!isVariantOriginalPriceFieldError(innerError)) throw innerError
+      const fallbackData = { ...createData }
+      delete fallbackData.variantOptionOriginalPrices
+      product = await db.product.create({
+        data: fallbackData,
+      })
+    }
 
     const parseArr = (s: string | null | undefined) => {
       try { return s ? JSON.parse(s) : [] } catch { return [] }
