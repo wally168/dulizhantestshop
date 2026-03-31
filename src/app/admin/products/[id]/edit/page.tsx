@@ -1722,6 +1722,7 @@ export default function EditProduct() {
                             />
                           </div>
                           <div className="flex items-center gap-2 w-full">
+                            <label className="text-sm text-gray-700">标题</label>
                             <input
                               type="text"
                               value={dynamicTitle}
