@@ -112,15 +112,24 @@ export default async function ProductDetail({ params }: { params: Promise<{ slug
       const raw = (product as { variantOptionPrices?: string | null }).variantOptionPrices
       if (!raw) return null
       const obj = JSON.parse(raw)
+      if (obj && typeof obj === 'object' && (obj as any).__original_price_map__) {
+        delete (obj as any).__original_price_map__
+      }
       return obj && typeof obj === 'object' ? obj : null
     } catch { return null }
   })()
   const variantOptionOriginalPrices = (() => {
     try {
       const raw = (product as { variantOptionOriginalPrices?: string | null }).variantOptionOriginalPrices
-      if (!raw) return null
-      const obj = JSON.parse(raw)
-      return obj && typeof obj === 'object' ? obj : null
+      if (raw) {
+        const obj = JSON.parse(raw)
+        return obj && typeof obj === 'object' ? obj : null
+      }
+      const pricesRaw = (product as { variantOptionPrices?: string | null }).variantOptionPrices
+      if (!pricesRaw) return null
+      const pricesObj = JSON.parse(pricesRaw)
+      const fallback = pricesObj?.__original_price_map__
+      return fallback && typeof fallback === 'object' ? fallback : null
     } catch { return null }
   })()
 

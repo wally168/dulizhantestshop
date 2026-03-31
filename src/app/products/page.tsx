@@ -67,6 +67,40 @@ export default async function ProductsPage({ searchParams }: { searchParams?: Pr
     return 'https://placehold.co/600x600?text=No+Image'
   }
 
+  const resolveListPrices = (p: Product): { price: number; originalPrice: number | null } => {
+    const basePrice = Number(p?.price ?? 0)
+    const baseOriginal = typeof p?.originalPrice === 'number' ? Number(p.originalPrice) : null
+    try {
+      const pricesObj = p?.variantOptionPrices ? JSON.parse(p.variantOptionPrices) : null
+      const originalObj = p?.variantOptionOriginalPrices
+        ? JSON.parse(p.variantOptionOriginalPrices)
+        : (pricesObj?.__original_price_map__ ?? null)
+      const pickFirstNumber = (obj: any): number | null => {
+        if (!obj || typeof obj !== 'object') return null
+        const combo = obj.__combo__
+        if (combo && typeof combo === 'object') {
+          const comboValue = Object.values(combo).find((v) => Number.isFinite(Number(v)))
+          if (comboValue !== undefined) return Number(comboValue)
+        }
+        for (const [k, group] of Object.entries(obj)) {
+          if (k === '__combo__' || k === '__original_price_map__') continue
+          if (!group || typeof group !== 'object') continue
+          const v = Object.values(group).find((x) => Number.isFinite(Number(x)))
+          if (v !== undefined) return Number(v)
+        }
+        return null
+      }
+      const variantPrice = pickFirstNumber(pricesObj)
+      const variantOriginal = pickFirstNumber(originalObj)
+      return {
+        price: variantPrice ?? basePrice,
+        originalPrice: variantOriginal ?? (variantPrice === null ? baseOriginal : null),
+      }
+    } catch {
+      return { price: basePrice, originalPrice: baseOriginal }
+    }
+  }
+
   return (
     <Layout>
       <div className="bg-white">
@@ -98,8 +132,9 @@ export default async function ProductsPage({ searchParams }: { searchParams?: Pr
             {products.map((product) => {
               const productPath = `/products/${getProductUrlSegment(product as Product & { asin?: string | null })}`
               const displayImage = resolveImage(product)
-              const price = Number(product?.price ?? 0)
-              const hasOriginal = typeof product?.originalPrice === 'number' && Number(product.originalPrice) > price
+              const resolvedPrice = resolveListPrices(product)
+              const price = resolvedPrice.price
+              const hasOriginal = typeof resolvedPrice.originalPrice === 'number' && Number(resolvedPrice.originalPrice) > price
               const amazonUrl = typeof product?.amazonUrl === 'string' ? product.amazonUrl : ''
               const showBuy = product.showBuyOnAmazon !== false && !!amazonUrl
               const showAdd = product.showAddToCart !== false
@@ -140,7 +175,7 @@ export default async function ProductsPage({ searchParams }: { searchParams?: Pr
                         </p>
                         {hasOriginal && (
                           <p className="text-sm text-gray-500 line-through">
-                            {formatPrice(Number(product.originalPrice))}
+                            {formatPrice(Number(resolvedPrice.originalPrice))}
                           </p>
                         )}
                       </div>

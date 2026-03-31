@@ -3,6 +3,54 @@ import { db } from '@/lib/db'
 import { isSameOrigin, requireAdminSession } from '@/lib/auth'
 import { normalizeAsin } from '@/lib/utils'
 
+const ORIGINAL_PRICE_FALLBACK_KEY = '__original_price_map__'
+
+function parseJsonObj(input: string | null | undefined): any {
+  try {
+    return input ? JSON.parse(input) : null
+  } catch {
+    return null
+  }
+}
+
+function splitVariantPriceMaps(
+  variantOptionPricesRaw: string | null | undefined,
+  variantOptionOriginalPricesRaw: string | null | undefined
+): { variantOptionPrices: any; variantOptionOriginalPrices: any } {
+  const pricesObj = parseJsonObj(variantOptionPricesRaw)
+  const originalObj = parseJsonObj(variantOptionOriginalPricesRaw)
+  if (originalObj && typeof originalObj === 'object') {
+    if (pricesObj && typeof pricesObj === 'object' && pricesObj[ORIGINAL_PRICE_FALLBACK_KEY]) {
+      delete pricesObj[ORIGINAL_PRICE_FALLBACK_KEY]
+    }
+    return {
+      variantOptionPrices: pricesObj && typeof pricesObj === 'object' ? pricesObj : null,
+      variantOptionOriginalPrices: originalObj,
+    }
+  }
+  const fallbackOriginal = pricesObj?.[ORIGINAL_PRICE_FALLBACK_KEY]
+  if (pricesObj && typeof pricesObj === 'object' && pricesObj[ORIGINAL_PRICE_FALLBACK_KEY]) {
+    delete pricesObj[ORIGINAL_PRICE_FALLBACK_KEY]
+  }
+  return {
+    variantOptionPrices: pricesObj && typeof pricesObj === 'object' ? pricesObj : null,
+    variantOptionOriginalPrices: fallbackOriginal && typeof fallbackOriginal === 'object' ? fallbackOriginal : null,
+  }
+}
+
+function mergeVariantPricesWithOriginal(
+  variantOptionPricesRaw: string | null | undefined,
+  variantOptionOriginalPricesRaw: string | null | undefined
+): string | undefined {
+  const pricesObj = parseJsonObj(variantOptionPricesRaw) || {}
+  const originalObj = parseJsonObj(variantOptionOriginalPricesRaw)
+  if (!originalObj || typeof originalObj !== 'object') {
+    return variantOptionPricesRaw ?? undefined
+  }
+  pricesObj[ORIGINAL_PRICE_FALLBACK_KEY] = originalObj
+  return JSON.stringify(pricesObj)
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -36,6 +84,10 @@ export async function GET(
     const parseObj = (s: string | null | undefined) => {
       try { return s ? JSON.parse(s) : null } catch { return null }
     }
+    const priceMaps = splitVariantPriceMaps(
+      (product as any).variantOptionPrices,
+      (product as any).variantOptionOriginalPrices
+    )
     const normalized = {
       ...(product as any),
       name: (product as any).title,
@@ -46,8 +98,8 @@ export async function GET(
       variantImageMap: parseObj((product as any).variantImageMap),
       variantOptionImages: parseObj((product as any).variantOptionImages),
       variantOptionLinks: parseObj((product as any).variantOptionLinks),
-      variantOptionPrices: parseObj((product as any).variantOptionPrices),
-      variantOptionOriginalPrices: parseObj((product as any).variantOptionOriginalPrices),
+      variantOptionPrices: priceMaps.variantOptionPrices,
+      variantOptionOriginalPrices: priceMaps.variantOptionOriginalPrices,
     }
     return NextResponse.json(normalized)
   } catch (error) {
@@ -274,6 +326,10 @@ export async function PUT(
     } catch (innerError: any) {
       if (!isVariantOriginalPriceFieldError(innerError)) throw innerError
       const fallbackData = { ...updateData }
+      fallbackData.variantOptionPrices = mergeVariantPricesWithOriginal(
+        updateData.variantOptionPrices,
+        updateData.variantOptionOriginalPrices
+      )
       delete fallbackData.variantOptionOriginalPrices
       product = await db.product.update({
         where: {
@@ -292,7 +348,11 @@ export async function PUT(
     const parseObj = (s: string | null | undefined) => {
       try { return s ? JSON.parse(s) : null } catch { return null }
     }
-    const normalized = { 
+    const priceMaps = splitVariantPriceMaps(
+      (product as any).variantOptionPrices,
+      (product as any).variantOptionOriginalPrices
+    )
+    const normalized = {
       ...(product as any), 
       name: (product as any).title, 
       inStock: (product as any).active,
@@ -302,8 +362,8 @@ export async function PUT(
       variantImageMap: parseObj((product as any).variantImageMap),
       variantOptionImages: parseObj((product as any).variantOptionImages),
       variantOptionLinks: parseObj((product as any).variantOptionLinks),
-      variantOptionPrices: parseObj((product as any).variantOptionPrices),
-      variantOptionOriginalPrices: parseObj((product as any).variantOptionOriginalPrices),
+      variantOptionPrices: priceMaps.variantOptionPrices,
+      variantOptionOriginalPrices: priceMaps.variantOptionOriginalPrices,
     }
     return NextResponse.json(normalized)
   } catch (error: any) {

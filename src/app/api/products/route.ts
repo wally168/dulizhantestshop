@@ -3,6 +3,54 @@ import { db } from '@/lib/db'
 import { isSameOrigin, requireAdminSession } from '@/lib/auth'
 import { normalizeAsin } from '@/lib/utils'
 
+const ORIGINAL_PRICE_FALLBACK_KEY = '__original_price_map__'
+
+function parseJsonObj(input: string | null | undefined): any {
+  try {
+    return input ? JSON.parse(input) : null
+  } catch {
+    return null
+  }
+}
+
+function splitVariantPriceMaps(
+  variantOptionPricesRaw: string | null | undefined,
+  variantOptionOriginalPricesRaw: string | null | undefined
+): { variantOptionPrices: any; variantOptionOriginalPrices: any } {
+  const pricesObj = parseJsonObj(variantOptionPricesRaw)
+  const originalObj = parseJsonObj(variantOptionOriginalPricesRaw)
+  if (originalObj && typeof originalObj === 'object') {
+    if (pricesObj && typeof pricesObj === 'object' && pricesObj[ORIGINAL_PRICE_FALLBACK_KEY]) {
+      delete pricesObj[ORIGINAL_PRICE_FALLBACK_KEY]
+    }
+    return {
+      variantOptionPrices: pricesObj && typeof pricesObj === 'object' ? pricesObj : null,
+      variantOptionOriginalPrices: originalObj,
+    }
+  }
+  const fallbackOriginal = pricesObj?.[ORIGINAL_PRICE_FALLBACK_KEY]
+  if (pricesObj && typeof pricesObj === 'object' && pricesObj[ORIGINAL_PRICE_FALLBACK_KEY]) {
+    delete pricesObj[ORIGINAL_PRICE_FALLBACK_KEY]
+  }
+  return {
+    variantOptionPrices: pricesObj && typeof pricesObj === 'object' ? pricesObj : null,
+    variantOptionOriginalPrices: fallbackOriginal && typeof fallbackOriginal === 'object' ? fallbackOriginal : null,
+  }
+}
+
+function mergeVariantPricesWithOriginal(
+  variantOptionPricesRaw: string | null | undefined,
+  variantOptionOriginalPricesRaw: string | null | undefined
+): string | undefined {
+  const pricesObj = parseJsonObj(variantOptionPricesRaw) || {}
+  const originalObj = parseJsonObj(variantOptionOriginalPricesRaw)
+  if (!originalObj || typeof originalObj !== 'object') {
+    return variantOptionPricesRaw ?? undefined
+  }
+  pricesObj[ORIGINAL_PRICE_FALLBACK_KEY] = originalObj
+  return JSON.stringify(pricesObj)
+}
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
@@ -74,7 +122,9 @@ export async function GET(request: NextRequest) {
     }
 
     // 映射数据库字段到前端期望的字段
-    const normalized = products.map((p: any) => ({
+    const normalized = products.map((p: any) => {
+      const priceMaps = splitVariantPriceMaps(p.variantOptionPrices, p.variantOptionOriginalPrices)
+      return ({
       ...p,
       name: p.title,
       inStock: p.active,
@@ -84,11 +134,11 @@ export async function GET(request: NextRequest) {
       variantImageMap: (() => { try { return p.variantImageMap ? JSON.parse(p.variantImageMap) : null } catch { return null } })(),
       variantOptionImages: (() => { try { return p.variantOptionImages ? JSON.parse(p.variantOptionImages) : null } catch { return null } })(),
       variantOptionLinks: (() => { try { return p.variantOptionLinks ? JSON.parse(p.variantOptionLinks) : null } catch { return null } })(),
-      variantOptionPrices: (() => { try { return p.variantOptionPrices ? JSON.parse(p.variantOptionPrices) : null } catch { return null } })(),
-      variantOptionOriginalPrices: (() => { try { return p.variantOptionOriginalPrices ? JSON.parse(p.variantOptionOriginalPrices) : null } catch { return null } })(),
+      variantOptionPrices: priceMaps.variantOptionPrices,
+      variantOptionOriginalPrices: priceMaps.variantOptionOriginalPrices,
       avgRating: (aggMap[p.id]?.avgRating ?? 0),
       reviewCount: (aggMap[p.id]?.reviewCount ?? 0),
-    }))
+    })})
 
     const res = NextResponse.json(normalized)
     if (!includeInactive) {
@@ -362,6 +412,10 @@ export async function POST(request: NextRequest) {
     } catch (innerError: any) {
       if (!isVariantOriginalPriceFieldError(innerError)) throw innerError
       const fallbackData = { ...createData }
+      fallbackData.variantOptionPrices = mergeVariantPricesWithOriginal(
+        variantOptionPricesJson,
+        variantOptionOriginalPricesJson
+      )
       delete fallbackData.variantOptionOriginalPrices
       product = await db.product.create({
         data: fallbackData,
@@ -375,7 +429,11 @@ export async function POST(request: NextRequest) {
       try { return s ? JSON.parse(s) : null } catch { return null }
     }
     // 返回映射后的字段
-    const normalized = { 
+    const priceMaps = splitVariantPriceMaps(
+      (product as any).variantOptionPrices,
+      (product as any).variantOptionOriginalPrices
+    )
+    const normalized = {
       ...(product as any), 
       name: (product as any).title, 
       inStock: (product as any).active,
@@ -385,8 +443,8 @@ export async function POST(request: NextRequest) {
       variantImageMap: parseObj((product as any).variantImageMap),
       variantOptionImages: parseObj((product as any).variantOptionImages),
       variantOptionLinks: parseObj((product as any).variantOptionLinks),
-      variantOptionPrices: parseObj((product as any).variantOptionPrices),
-      variantOptionOriginalPrices: parseObj((product as any).variantOptionOriginalPrices),
+      variantOptionPrices: priceMaps.variantOptionPrices,
+      variantOptionOriginalPrices: priceMaps.variantOptionOriginalPrices,
     }
     return NextResponse.json(normalized, { status: 201 })
   } catch (error: any) {
