@@ -6,11 +6,16 @@ import AddToCartButton from '@/components/AddToCartButton'
 import FallbackImage from '@/components/FallbackImage'
 import type { Product } from '@prisma/client'
 
+type ProductWithVariantPrice = Product & {
+  variantOptionPrices?: string | null
+  variantOptionOriginalPrices?: string | null
+}
+
 export default async function ProductsPage({ searchParams }: { searchParams?: Promise<{ categoryId?: string; q?: string }> }) {
   const resolvedParams = searchParams ? await searchParams : {}
   const selectedCategoryId = resolvedParams?.categoryId || ''
   const q = resolvedParams?.q || ''
-  let products: Product[] = []
+  let products: ProductWithVariantPrice[] = []
   try {
     const where: any = { active: true }
     if (selectedCategoryId) where.categoryId = selectedCategoryId
@@ -54,7 +59,7 @@ export default async function ProductsPage({ searchParams }: { searchParams?: Pr
     console.error('Failed to aggregate reviews:', e)
   }
 
-  const resolveImage = (p: Product): string => {
+  const resolveImage = (p: ProductWithVariantPrice): string => {
     const main = (p?.mainImage ?? '').trim()
     if (main) return main
     try {
@@ -67,7 +72,7 @@ export default async function ProductsPage({ searchParams }: { searchParams?: Pr
     return 'https://placehold.co/600x600?text=No+Image'
   }
 
-  const resolveListPrices = (p: Product): { price: number; originalPrice: number | null } => {
+  const resolveListPrices = (p: ProductWithVariantPrice): { price: number; originalPrice: number | null } => {
     const basePrice = Number(p?.price ?? 0)
     const baseOriginal = typeof p?.originalPrice === 'number' ? Number(p.originalPrice) : null
     try {
