@@ -1,13 +1,98 @@
 export const revalidate = 3600;
 
+import type { Metadata } from 'next'
 import Layout from '@/components/Layout'
 import ProductDetailClient from '@/components/ProductDetailClient'
 import { db } from '@/lib/db'
 import Link from 'next/link'
 import { getProductUrlSegment, normalizeAsin } from '@/lib/utils'
+import { headers } from 'next/headers'
 
 function parseJson<T>(s: string | null | undefined, fallback: T): T {
   try { return s ? JSON.parse(s) as T : fallback } catch { return fallback }
+}
+
+async function getBaseUrl(): Promise<string> {
+  try {
+    const h = await headers()
+    const host = h.get('host')
+    const proto = h.get('x-forwarded-proto') || 'http'
+    if (host) return `${proto}://${host}`
+  } catch {}
+  return process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3005'
+}
+
+function normalizeImageUrl(url: string, baseUrl: string): string {
+  if (!url) return ''
+  if (url.startsWith('http')) return url
+  return `${baseUrl}${url.startsWith('/') ? url : `/${url}`}`
+}
+
+async function findProductBySlug(slug: string) {
+  const normalizedSlugAsin = normalizeAsin(slug)
+  const byAsin = normalizedSlugAsin
+    ? await db.product.findUnique({
+        where: { asin: normalizedSlugAsin },
+        include: {
+          category: true,
+          brandRelation: true
+        },
+      })
+    : null
+  if (byAsin) return byAsin
+  return db.product.findUnique({
+    where: { slug },
+    include: {
+      category: true,
+      brandRelation: true
+    },
+  })
+}
+
+export async function generateMetadata({ params }: { params: Promise<{ slug?: string | string[] }> }): Promise<Metadata> {
+  const resolvedParams = await params
+  const slugParam = Array.isArray(resolvedParams?.slug) ? resolvedParams.slug[0] : resolvedParams?.slug
+  const slug = typeof slugParam === 'string' ? slugParam : undefined
+  if (!slug) return {}
+
+  try {
+    const product = await findProductBySlug(slug)
+    if (!product || !product.active) return {}
+
+    const baseUrl = await getBaseUrl()
+    const productPath = `/products/${getProductUrlSegment(product)}`
+    const productUrl = `${baseUrl}${productPath}`
+    const title = product.title || 'Product'
+    const description = (product.description || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 160)
+    const parsedImages = parseJson<string[]>(product.images, [product.mainImage])
+    const images = (Array.isArray(parsedImages) ? parsedImages : [product.mainImage])
+      .filter(Boolean)
+      .slice(0, 5)
+      .map((u) => normalizeImageUrl(u, baseUrl))
+
+    return {
+      title,
+      description,
+      alternates: {
+        canonical: productUrl,
+      },
+      openGraph: {
+        title,
+        description,
+        type: 'website',
+        url: productUrl,
+        images: images.map((u) => ({ url: u, alt: title })),
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title,
+        description,
+        images,
+      },
+    }
+  } catch {
+    return {}
+  }
 }
 
 export default async function ProductDetail({ params }: { params: Promise<{ slug?: string | string[] }> }) {
@@ -31,24 +116,7 @@ export default async function ProductDetail({ params }: { params: Promise<{ slug
   // Safely attempt to fetch product; fall back to null if DB is misconfigured
   const product = await (async () => {
     try {
-      const normalizedSlugAsin = normalizeAsin(slug)
-      const byAsin = normalizedSlugAsin
-        ? await db.product.findUnique({
-            where: { asin: normalizedSlugAsin },
-            include: {
-              category: true,
-              brandRelation: true
-            },
-          })
-        : null
-      if (byAsin) return byAsin
-      return await db.product.findUnique({
-        where: { slug },
-        include: {
-          category: true,
-          brandRelation: true
-        },
-      })
+      return await findProductBySlug(slug)
     } catch (e) {
       console.error('Failed to load product:', e)
       return null
@@ -169,8 +237,39 @@ export default async function ProductDetail({ params }: { params: Promise<{ slug
     } catch { return [] }
   })()
 
+  const baseUrl = await getBaseUrl()
+  const productPath = `/products/${getProductUrlSegment(product)}`
+  const productUrl = `${baseUrl}${productPath}`
+  const imageUrls = images
+    .filter(Boolean)
+    .slice(0, 10)
+    .map((u) => normalizeImageUrl(u, baseUrl))
+  const plainDescription = (product.description || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
+  const productJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: product.title,
+    description: plainDescription,
+    image: imageUrls,
+    sku: product.slug,
+    ...(asin ? { gtin: asin } : {}),
+    ...(brand ? { brand: { '@type': 'Brand', name: brand } } : {}),
+    offers: {
+      '@type': 'Offer',
+      url: productUrl,
+      priceCurrency: 'USD',
+      price: String(product.price),
+      availability: 'https://schema.org/InStock',
+      itemCondition: 'https://schema.org/NewCondition',
+    },
+  }
+
   return (
     <Layout>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }}
+      />
       <div className="bg-white">
         <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-24 lg:px-8">
           <ProductDetailClient

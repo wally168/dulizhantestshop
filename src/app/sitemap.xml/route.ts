@@ -28,6 +28,15 @@ async function getSettings(): Promise<Record<string, string>> {
   return defaults
 }
 
+function escapeXml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;')
+}
+
 export async function GET() {
   const settings = await getSettings()
   if (settings.sitemapEnabled !== 'true') {
@@ -35,14 +44,21 @@ export async function GET() {
   }
 
   const baseUrl = await getBaseUrl()
-  const urls: Array<{ loc: string; lastmod?: string; changefreq?: string; priority?: string }> = []
+  const urls: Array<{
+    loc: string
+    lastmod?: string
+    changefreq?: string
+    priority?: string
+    images?: Array<{ loc: string; title?: string }>
+  }> = []
 
-  const add = (path: string, lastmod?: Date) => {
+  const add = (path: string, lastmod?: Date, images?: Array<{ loc: string; title?: string }>) => {
     urls.push({
       loc: `${baseUrl}${path}`,
       lastmod: lastmod ? lastmod.toISOString() : undefined,
       changefreq: settings.sitemapChangefreq,
       priority: settings.sitemapPriority,
+      images,
     })
   }
 
@@ -60,20 +76,44 @@ export async function GET() {
 
   if (settings.sitemapIncludeProducts === 'true') {
     try {
-      const products = await db.product.findMany({ where: { active: true }, select: { slug: true, asin: true, updatedAt: true } })
-      for (const p of products) add(`/products/${getProductUrlSegment(p)}`, p.updatedAt)
+      const products = await db.product.findMany({
+        where: { active: true },
+        select: { slug: true, asin: true, title: true, mainImage: true, images: true, updatedAt: true }
+      })
+      for (const p of products) {
+        const rawImages = (() => {
+          try {
+            return p.images ? JSON.parse(p.images) : []
+          } catch {
+            return []
+          }
+        })()
+        const allImages = [p.mainImage, ...(Array.isArray(rawImages) ? rawImages : [])]
+          .filter((u, idx, arr) => typeof u === 'string' && u.trim() && arr.indexOf(u) === idx)
+          .slice(0, 10)
+          .map((u) => ({
+            loc: u.startsWith('http') ? u : `${baseUrl}${u.startsWith('/') ? u : `/${u}`}`,
+            title: p.title,
+          }))
+        add(`/products/${getProductUrlSegment(p)}`, p.updatedAt, allImages)
+      }
     } catch {}
   }
 
   const xmlItems = urls.map(u => {
-    return `  <url>\n    <loc>${u.loc}</loc>`
-      + (u.lastmod ? `\n    <lastmod>${u.lastmod}</lastmod>` : '')
+    return `  <url>\n    <loc>${escapeXml(u.loc)}</loc>`
+      + (u.lastmod ? `\n    <lastmod>${escapeXml(u.lastmod)}</lastmod>` : '')
       + (u.changefreq ? `\n    <changefreq>${u.changefreq}</changefreq>` : '')
       + (u.priority ? `\n    <priority>${u.priority}</priority>` : '')
+      + (u.images && u.images.length > 0
+        ? `\n${u.images.map((img) => {
+            return `    <image:image>\n      <image:loc>${escapeXml(img.loc)}</image:loc>${img.title ? `\n      <image:title>${escapeXml(img.title)}</image:title>` : ''}\n    </image:image>`
+          }).join('\n')}`
+        : '')
       + `\n  </url>`
   }).join('\n')
 
-  const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${xmlItems}\n</urlset>`
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">\n${xmlItems}\n</urlset>`
   return new NextResponse(xml, {
     headers: { 'Content-Type': 'application/xml; charset=utf-8' }
   })

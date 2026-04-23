@@ -15,6 +15,7 @@ async function getBaseUrl(): Promise<string> {
 async function getSettings(): Promise<Record<string, string>> {
   const defaults: Record<string, string> = {
     robotsAllowAll: 'true',
+    robotsAllowApiImages: 'true',
     robotsDisallowAdmin: 'true',
     robotsDisallowApi: 'true',
     robotsDisallowCart: 'true',
@@ -33,10 +34,12 @@ async function getSettings(): Promise<Record<string, string>> {
 export async function GET() {
   const settings = await getSettings()
   const allowAll = settings.robotsAllowAll === 'true'
+  const allowApiImages = settings.robotsAllowApiImages !== 'false'
   const disallow = (k: string, path: string) => (settings[k] === 'true' ? `Disallow: ${path}` : '')
   const lines: string[] = []
   lines.push('User-agent: *')
   if (allowAll) lines.push('Allow: /')
+  if (allowApiImages) lines.push('Allow: /api/images/')
   const rules = [
     disallow('robotsDisallowAdmin', '/admin'),
     disallow('robotsDisallowApi', '/api'),
@@ -58,4 +61,3 @@ export async function GET() {
     headers: { 'Content-Type': 'text/plain; charset=utf-8' }
   })
 }
-
