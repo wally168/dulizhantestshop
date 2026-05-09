@@ -48,6 +48,7 @@ interface SiteSettings {
   whyChooseUs: string
   privacyPolicy: string
   termsOfService: string
+  afterSalesPolicy: string
 }
 
 export default function SettingsPage() {
@@ -82,7 +83,8 @@ export default function SettingsPage() {
     ourMission: '',
     whyChooseUs: '',
     privacyPolicy: '',
-    termsOfService: ''
+    termsOfService: '',
+    afterSalesPolicy: ''
   })
 
   useEffect(() => {
@@ -627,6 +629,18 @@ export default function SettingsPage() {
                   onChange={(e) => handleInputChange('termsOfService', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="填写服务条款内容，支持多行文本"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  售后政策 (After-Sales Policy)
+                </label>
+                <textarea
+                  rows={8}
+                  value={settings.afterSalesPolicy}
+                  onChange={(e) => handleInputChange('afterSalesPolicy', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="填写售后政策内容，支持多行文本"
                 />
               </div>
             </div>

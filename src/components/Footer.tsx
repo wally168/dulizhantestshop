@@ -164,6 +164,11 @@ export default function Footer({ initialNavItems = [] }: { initialNavItems?: Nav
                           Terms of Service
                         </Link>
                       </li>
+                      <li>
+                        <Link href="/after-sales" className="text-sm text-gray-600 hover:text-gray-900">
+                          After-Sales Policy
+                        </Link>
+                      </li>
                     </ul>
                   </div>
                   <div className="md:table-cell md:w-1/3">
