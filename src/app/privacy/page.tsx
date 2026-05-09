@@ -38,5 +38,5 @@ export default function PrivacyPolicyPage() {
 }
 
 function defaultPrivacy() {
-  return 'We value your privacy. This policy explains what data we collect, how we use it, and your rights. We collect basic information needed to operate our services, never sell personal data, and provide ways to access, correct, or delete your information.'
+  return 'Overview\n\nWe value your privacy. This policy explains what data we collect, how we use it, and your rights. We collect basic information needed to operate our services, never sell personal data, and provide ways to access, correct, or delete your information.\n\nData We Collect\n\n- Account information such as name and email.\n- Order and payment details processed securely.\n- Website usage analytics to improve experience.\n\nYour Rights\n\n- Access, correct, or delete your personal data.\n- Opt-out of marketing communications anytime.\n- Contact us for privacy-related questions.\n\nContact\n\nFor privacy inquiries, email us at contact@yourbrand.com.'
 }

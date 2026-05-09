@@ -7,6 +7,29 @@ import { headers } from "next/headers";
 import Script from "next/script";
 import { cache } from "react";
 
+const LEGAL_DEFAULTS = {
+  privacyPolicy: 'Overview\n\nWe value your privacy. This policy explains what data we collect, how we use it, and your rights. We collect basic information needed to operate our services, never sell personal data, and provide ways to access, correct, or delete your information.\n\nData We Collect\n\n- Account information such as name and email.\n- Order and payment details processed securely.\n- Website usage analytics to improve experience.\n\nYour Rights\n\n- Access, correct, or delete your personal data.\n- Opt-out of marketing communications anytime.\n- Contact us for privacy-related questions.\n\nContact\n\nFor privacy inquiries, email us at contact@yourbrand.com.',
+  privacyPolicyLegacy: 'We value your privacy. This policy explains what data we collect, how we use it, and your rights. We collect basic information needed to operate our services, never sell personal data, and provide ways to access, correct, or delete your information.',
+  termsOfService: 'Agreement to Terms\n\nBy using our site, you agree to our terms. This includes acceptable use, product information, pricing, shipping, returns, disclaimers, and limitations of liability. Please review carefully and contact us with any questions.\n\nUse of the Service\n\n- Do not misuse or attempt to disrupt the site.\n- Product details, pricing, shipping, and returns are subject to change.\n- We may update these terms; continued use constitutes acceptance.\n\nLimitation of Liability\n\nTo the fullest extent permitted by law, we are not liable for indirect or incidental damages arising from your use of the site.\n\nContact\n\nQuestions about these terms? Email contact@yourbrand.com.',
+  termsOfServiceLegacy: 'By using our site, you agree to our terms. This includes acceptable use, product information, pricing, shipping, returns, disclaimers, and limitations of liability. Please review carefully and contact us with any questions.',
+  afterSalesPolicy: 'Support Scope\n\nWe are committed to providing dependable after-sales support. If you receive a damaged, defective, or incorrect item, please contact us within 7 days of delivery with your order details and photos when applicable.\n\nEligible issues may be resolved through troubleshooting guidance, replacement parts, a product exchange, or a refund depending on the situation and product condition.\n\nItems returned for inspection should be sent back in their original packaging whenever possible. Products that show misuse, unauthorized modification, or damage caused after delivery may not qualify for after-sales service.\n\nFor warranty-related requests, please include your order number, a description of the issue, and any supporting images or videos so our team can review and assist promptly.\n\nHow To Request Service\n\n- Contact our support team with your order number and product details.\n- Share photos or videos if the product arrives damaged or develops a fault.\n- Keep original packaging and accessories if a return or exchange is required.\n\nPossible Resolutions\n\n- Troubleshooting guidance for setup or usage issues.\n- Replacement parts, product exchange, or refund when approved.\n- Warranty review based on product condition and order verification.\n\nContact\n\nFor after-sales assistance, email us at contact@yourbrand.com.',
+  afterSalesPolicyLegacy: 'We are committed to providing dependable after-sales support. If you receive a damaged, defective, or incorrect item, please contact us within 7 days of delivery with your order details and photos when applicable.\n\nEligible issues may be resolved through troubleshooting guidance, replacement parts, a product exchange, or a refund depending on the situation and product condition.\n\nItems returned for inspection should be sent back in their original packaging whenever possible. Products that show misuse, unauthorized modification, or damage caused after delivery may not qualify for after-sales service.\n\nFor warranty-related requests, please include your order number, a description of the issue, and any supporting images or videos so our team can review and assist promptly.',
+} as const
+
+function upgradeLegacyLegalContent<T extends Record<string, unknown>>(settings: T): T {
+  const next = { ...settings }
+  if (!next.privacyPolicy || next.privacyPolicy === LEGAL_DEFAULTS.privacyPolicyLegacy) {
+    next.privacyPolicy = LEGAL_DEFAULTS.privacyPolicy
+  }
+  if (!next.termsOfService || next.termsOfService === LEGAL_DEFAULTS.termsOfServiceLegacy) {
+    next.termsOfService = LEGAL_DEFAULTS.termsOfService
+  }
+  if (!next.afterSalesPolicy || next.afterSalesPolicy === LEGAL_DEFAULTS.afterSalesPolicyLegacy) {
+    next.afterSalesPolicy = LEGAL_DEFAULTS.afterSalesPolicy
+  }
+  return next as T
+}
+
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
@@ -52,9 +75,9 @@ const defaultSettings = {
   ourStory: 'Founded with a vision to make premium products accessible to everyone, Your Brand has been dedicated to curating exceptional items that enhance your daily life. We believe that quality shouldn\'t be compromised, and every product in our collection reflects this commitment.',
   ourMission: 'To provide our customers with carefully selected, high-quality products that offer both functionality and style. We work directly with trusted manufacturers and suppliers to ensure that every item meets our rigorous standards.',
   whyChooseUs: 'Rigorous quality control and product testing\nCompetitive pricing with transparent policies\nExcellent customer service and support\nFast and reliable shipping\nSatisfaction guarantee on all products',
-  privacyPolicy: 'We value your privacy. This policy explains what data we collect, how we use it, and your rights. We collect basic information needed to operate our services, never sell personal data, and provide ways to access, correct, or delete your information.',
-  termsOfService: 'By using our site, you agree to our terms. This includes acceptable use, product information, pricing, shipping, returns, disclaimers, and limitations of liability. Please review carefully and contact us with any questions.',
-  afterSalesPolicy: 'We are committed to providing dependable after-sales support. If you receive a damaged, defective, or incorrect item, please contact us within 7 days of delivery with your order details and photos when applicable.\n\nEligible issues may be resolved through troubleshooting guidance, replacement parts, a product exchange, or a refund depending on the situation and product condition.\n\nItems returned for inspection should be sent back in their original packaging whenever possible. Products that show misuse, unauthorized modification, or damage caused after delivery may not qualify for after-sales service.\n\nFor warranty-related requests, please include your order number, a description of the issue, and any supporting images or videos so our team can review and assist promptly.',
+  privacyPolicy: LEGAL_DEFAULTS.privacyPolicy,
+  termsOfService: LEGAL_DEFAULTS.termsOfService,
+  afterSalesPolicy: LEGAL_DEFAULTS.afterSalesPolicy,
   analyticsHeadHtml: '',
   analyticsBodyHtml: '',
   analyticsGoogleHtml: '',
@@ -82,11 +105,11 @@ const getSettings = cache(async (): Promise<SiteSettings> => {
       settingsObject[setting.key] = setting.value
     })
 
-    return settingsObject as SiteSettings
+    return upgradeLegacyLegalContent(settingsObject as SiteSettings)
   } catch (error) {
     console.error('Failed to fetch settings from DB:', error);
   }
-  return defaultSettings as SiteSettings;
+  return upgradeLegacyLegalContent(defaultSettings as SiteSettings);
 })
 
 // 服务器端预取导航（首屏初始数据）
