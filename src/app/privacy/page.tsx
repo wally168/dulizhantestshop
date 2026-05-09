@@ -19,9 +19,6 @@ export default function PrivacyPolicyPage() {
               <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl">
                 Privacy Policy
               </h1>
-              <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-gray-600">
-                Learn how we collect, use, and protect your data.
-              </p>
             </div>
           </div>
         </div>
@@ -29,29 +26,9 @@ export default function PrivacyPolicyPage() {
         <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-3xl">
             <div className="prose prose-lg prose-blue mx-auto">
-              <h2>Overview</h2>
               {paragraphs.map((p, i) => (
                 <p key={i}>{p}</p>
               ))}
-
-              <h2>Data We Collect</h2>
-              <ul>
-                <li>Account information such as name and email.</li>
-                <li>Order and payment details processed securely.</li>
-                <li>Website usage analytics to improve experience.</li>
-              </ul>
-
-              <h2>Your Rights</h2>
-              <ul>
-                <li>Access, correct, or delete your personal data.</li>
-                <li>Opt-out of marketing communications anytime.</li>
-                <li>Contact us for privacy-related questions.</li>
-              </ul>
-
-              <h2>Contact</h2>
-              <p>
-                For privacy inquiries, email us at {loading ? 'contact@yourbrand.com' : settings.contactEmail}.
-              </p>
             </div>
           </div>
         </div>

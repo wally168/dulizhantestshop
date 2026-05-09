@@ -18,9 +18,6 @@ export default function AfterSalesPolicyPage() {
               <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl">
                 After-Sales Policy
               </h1>
-              <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-gray-600">
-                Review our standard support, returns, and warranty assistance process.
-              </p>
             </div>
           </div>
         </div>
@@ -28,29 +25,9 @@ export default function AfterSalesPolicyPage() {
         <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-3xl">
             <div className="prose prose-lg prose-blue mx-auto">
-              <h2>Support Scope</h2>
               {paragraphs.map((paragraph, index) => (
                 <p key={index}>{paragraph}</p>
               ))}
-
-              <h2>How To Request Service</h2>
-              <ul>
-                <li>Contact our support team with your order number and product details.</li>
-                <li>Share photos or videos if the product arrives damaged or develops a fault.</li>
-                <li>Keep original packaging and accessories if a return or exchange is required.</li>
-              </ul>
-
-              <h2>Possible Resolutions</h2>
-              <ul>
-                <li>Troubleshooting guidance for setup or usage issues.</li>
-                <li>Replacement parts, product exchange, or refund when approved.</li>
-                <li>Warranty review based on product condition and order verification.</li>
-              </ul>
-
-              <h2>Contact</h2>
-              <p>
-                For after-sales assistance, email us at {loading ? 'contact@yourbrand.com' : settings.contactEmail}.
-              </p>
             </div>
           </div>
         </div>
