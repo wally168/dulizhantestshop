@@ -439,19 +439,11 @@ function replaceYoutubeLinks(input: string): string {
         {publishedAt && (
           <p className="mt-1 text-gray-500 text-sm">Date First Available : {formatPublishedAt(publishedAt)}</p>
         )}
-        {specItems.length > 0 && (
-          <div className="mt-4 rounded-lg border border-gray-200 bg-gray-50 p-4">
-            <h2 className="text-sm font-semibold text-gray-900">Additional Details</h2>
-            <dl className="mt-3 grid grid-cols-1 gap-x-6 gap-y-2 sm:grid-cols-2">
-              {specItems.map((item) => (
-                <div key={item.label}>
-                  <dt className="text-xs uppercase tracking-wide text-gray-500">{item.label}</dt>
-                  <dd className="mt-1 text-sm text-gray-800">{item.value}</dd>
-                </div>
-              ))}
-            </dl>
-          </div>
-        )}
+        {specItems.map((item) => (
+          <p key={item.label} className="mt-1 text-gray-600">
+            {item.label}: {item.value}
+          </p>
+        ))}
 
         {/* 变体选项挪到价格上方，优先图片显示 */}
         {Array.isArray(variantGroups) && variantGroups.length > 0 && (
