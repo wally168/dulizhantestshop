@@ -16,7 +16,7 @@ const LEGAL_DEFAULTS = {
   afterSalesPolicyLegacy: 'We are committed to providing dependable after-sales support. If you receive a damaged, defective, or incorrect item, please contact us within 7 days of delivery with your order details and photos when applicable.\n\nEligible issues may be resolved through troubleshooting guidance, replacement parts, a product exchange, or a refund depending on the situation and product condition.\n\nItems returned for inspection should be sent back in their original packaging whenever possible. Products that show misuse, unauthorized modification, or damage caused after delivery may not qualify for after-sales service.\n\nFor warranty-related requests, please include your order number, a description of the issue, and any supporting images or videos so our team can review and assist promptly.',
 } as const
 
-function upgradeLegacyLegalContent<T extends Record<string, unknown>>(settings: T): T {
+function upgradeLegacyLegalContent(settings: SiteSettings): SiteSettings {
   const next = { ...settings }
   if (!next.privacyPolicy || next.privacyPolicy === LEGAL_DEFAULTS.privacyPolicyLegacy) {
     next.privacyPolicy = LEGAL_DEFAULTS.privacyPolicy
@@ -27,7 +27,7 @@ function upgradeLegacyLegalContent<T extends Record<string, unknown>>(settings: 
   if (!next.afterSalesPolicy || next.afterSalesPolicy === LEGAL_DEFAULTS.afterSalesPolicyLegacy) {
     next.afterSalesPolicy = LEGAL_DEFAULTS.afterSalesPolicy
   }
-  return next as T
+  return next
 }
 
 export const viewport: Viewport = {
