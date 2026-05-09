@@ -220,6 +220,17 @@ export async function POST(request: NextRequest) {
       brand,
       brandId,
       upc,
+      material,
+      itemDimensions,
+      color,
+      style,
+      itemWeight,
+      modelNumber,
+      modelName,
+      itemTypeName,
+      manufacturer,
+      pattern,
+      size,
       publishedAt,
       variants,
       variantImageMap,
@@ -290,6 +301,11 @@ export async function POST(request: NextRequest) {
     })()
 
     const normalizedAsin = normalizeAsin(asin)
+    const optionalText = (value: unknown) => {
+      if (typeof value !== 'string') return null
+      const trimmed = value.trim()
+      return trimmed || null
+    }
 
     if (normalizedAsin) {
       const asinConflict = await db.product.findUnique({ where: { asin: normalizedAsin } })
@@ -440,9 +456,20 @@ export async function POST(request: NextRequest) {
       categoryId: categoryId,
       featured: featured || false,
       active: inStock !== false,
-      brand: brand || null,
+      brand: optionalText(brand),
       brandId: brandId || null,
-      upc: upc || null,
+      upc: optionalText(upc),
+      material: optionalText(material),
+      itemDimensions: optionalText(itemDimensions),
+      color: optionalText(color),
+      style: optionalText(style),
+      itemWeight: optionalText(itemWeight),
+      modelNumber: optionalText(modelNumber),
+      modelName: optionalText(modelName),
+      itemTypeName: optionalText(itemTypeName),
+      manufacturer: optionalText(manufacturer),
+      pattern: optionalText(pattern),
+      size: optionalText(size),
       publishedAt: publishedAtDate,
       variants: variantsJson,
       variantImageMap: variantImageMapJson,

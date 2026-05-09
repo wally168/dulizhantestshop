@@ -40,6 +40,17 @@ interface Product {
   inStock: boolean
   brand?: string
   upc?: string
+  material?: string
+  itemDimensions?: string
+  color?: string
+  style?: string
+  itemWeight?: string
+  modelNumber?: string
+  modelName?: string
+  itemTypeName?: string
+  manufacturer?: string
+  pattern?: string
+  size?: string
   publishedAt?: string | Date | null
   variants?: VariantGroup[]
   variantImageMap?: Record<string, Record<string, number>>
@@ -70,6 +81,17 @@ interface ProductForm {
   showAddToCart: boolean
   brand?: string
   upc?: string
+  material?: string
+  itemDimensions?: string
+  color?: string
+  style?: string
+  itemWeight?: string
+  modelNumber?: string
+  modelName?: string
+  itemTypeName?: string
+  manufacturer?: string
+  pattern?: string
+  size?: string
   publishedAt?: string
   variants?: VariantGroup[]
   variantImageMap?: Record<string, Record<string, number>>
@@ -85,6 +107,20 @@ interface VariantGroup { name: string; options: string[] }
 // 新增：分类类型
 interface Category { id: string; name: string; slug: string }
 interface Brand { id: string; name: string; slug: string }
+
+const OPTIONAL_PRODUCT_FIELDS = [
+  { key: 'material', label: 'Material', placeholder: '例如：Stainless Steel' },
+  { key: 'itemDimensions', label: 'Item dimensions', placeholder: '例如：12 x 8 x 4 in' },
+  { key: 'color', label: 'Color', placeholder: '例如：Black' },
+  { key: 'style', label: 'Style', placeholder: '例如：Modern' },
+  { key: 'itemWeight', label: 'Item Weight', placeholder: '例如：1.2 lb' },
+  { key: 'modelNumber', label: 'Model Number', placeholder: '例如：AB-1234' },
+  { key: 'modelName', label: 'Model Name', placeholder: '例如：Pro Max' },
+  { key: 'itemTypeName', label: 'Item Type Name', placeholder: '例如：Coffee Maker' },
+  { key: 'manufacturer', label: 'Manufacturer', placeholder: '例如：Acme' },
+  { key: 'pattern', label: 'Pattern', placeholder: '例如：Solid' },
+  { key: 'size', label: 'Size', placeholder: '例如：Large' },
+] as const
 
 interface Review {
   id: string
@@ -202,6 +238,17 @@ export default function EditProduct() {
     showAddToCart: true,
     brand: '',
     upc: '',
+    material: '',
+    itemDimensions: '',
+    color: '',
+    style: '',
+    itemWeight: '',
+    modelNumber: '',
+    modelName: '',
+    itemTypeName: '',
+    manufacturer: '',
+    pattern: '',
+    size: '',
     publishedAt: '',
     variants: [{ name: '', options: [''] }],
     variantImageMap: {},
@@ -491,6 +538,17 @@ export default function EditProduct() {
           showAddToCart: data.showAddToCart !== false,
           brand: (data.brand ?? '') || '',
           upc: (data.upc ?? '') || '',
+          material: (data.material ?? '') || '',
+          itemDimensions: (data.itemDimensions ?? '') || '',
+          color: (data.color ?? '') || '',
+          style: (data.style ?? '') || '',
+          itemWeight: (data.itemWeight ?? '') || '',
+          modelNumber: (data.modelNumber ?? '') || '',
+          modelName: (data.modelName ?? '') || '',
+          itemTypeName: (data.itemTypeName ?? '') || '',
+          manufacturer: (data.manufacturer ?? '') || '',
+          pattern: (data.pattern ?? '') || '',
+          size: (data.size ?? '') || '',
           publishedAt: toLocalInput(data.publishedAt ?? null),
           variants: Array.isArray(data.variants) && data.variants.length > 0 ? data.variants : [{ name: '', options: [''] }],
           variantImageMap: (data.variantImageMap ?? {}) as Record<string, Record<string, number>>, 
@@ -863,6 +921,17 @@ export default function EditProduct() {
           bulletPoints: Array.from({ length: 8 }, (_, i) => ((Array.isArray(form.bulletPoints) ? form.bulletPoints[i] : '') ?? '').trim()),
           brand: (form.brand ?? '').trim() || null,
           upc: (form.upc ?? '').trim() || null,
+          material: (form.material ?? '').trim() || null,
+          itemDimensions: (form.itemDimensions ?? '').trim() || null,
+          color: (form.color ?? '').trim() || null,
+          style: (form.style ?? '').trim() || null,
+          itemWeight: (form.itemWeight ?? '').trim() || null,
+          modelNumber: (form.modelNumber ?? '').trim() || null,
+          modelName: (form.modelName ?? '').trim() || null,
+          itemTypeName: (form.itemTypeName ?? '').trim() || null,
+          manufacturer: (form.manufacturer ?? '').trim() || null,
+          pattern: (form.pattern ?? '').trim() || null,
+          size: (form.size ?? '').trim() || null,
           publishedAt: form.publishedAt ? new Date(form.publishedAt).toISOString() : null,
           variants: (form.variants || [])
             .map(g => ({
@@ -1252,6 +1321,26 @@ export default function EditProduct() {
                 />
                 <span className="ml-2 text-sm text-gray-700">显示“加入购物车”按钮</span>
               </label>
+            </div>
+          </div>
+
+          <div className="bg-white p-6 rounded-xl shadow-sm border">
+            <h2 className="text-lg font-semibold text-gray-900 mb-6">更多产品参数</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {OPTIONAL_PRODUCT_FIELDS.map((field) => (
+                <div key={field.key}>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    {field.label} <span className="text-gray-400 font-normal">(可选)</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={form[field.key] || ''}
+                    onChange={(e) => setForm(prev => ({ ...prev, [field.key]: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder={field.placeholder}
+                  />
+                </div>
+              ))}
             </div>
           </div>
 

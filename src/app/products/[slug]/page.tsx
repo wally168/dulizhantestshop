@@ -146,6 +146,17 @@ export default async function ProductDetail({ params }: { params: Promise<{ slug
   const brand = (product as any).brandRelation?.name ?? product.brand ?? null
   const upc = product.upc ?? null
   const asin = (product as { asin?: string | null }).asin ?? null
+  const material = product.material ?? null
+  const itemDimensions = product.itemDimensions ?? null
+  const color = product.color ?? null
+  const style = product.style ?? null
+  const itemWeight = product.itemWeight ?? null
+  const modelNumber = product.modelNumber ?? null
+  const modelName = product.modelName ?? null
+  const itemTypeName = product.itemTypeName ?? null
+  const manufacturer = product.manufacturer ?? null
+  const pattern = product.pattern ?? null
+  const size = product.size ?? null
   const showAsinOnFrontend = (product as { showAsinOnFrontend?: boolean | null }).showAsinOnFrontend === true
   const publishedAt = product.publishedAt ?? null
   const youtubeUrl = (product as { youtubeUrl?: string | null }).youtubeUrl ?? null
@@ -280,6 +291,17 @@ export default async function ProductDetail({ params }: { params: Promise<{ slug
             brand={brand ?? null}
             upc={upc ?? null}
             asin={showAsinOnFrontend ? asin : null}
+            material={material}
+            itemDimensions={itemDimensions}
+            color={color}
+            style={style}
+            itemWeight={itemWeight}
+            modelNumber={modelNumber}
+            modelName={modelName}
+            itemTypeName={itemTypeName}
+            manufacturer={manufacturer}
+            pattern={pattern}
+            size={size}
             publishedAt={publishedAt ?? null}
             description={product.description}
             amazonUrl={product.amazonUrl}

@@ -184,6 +184,17 @@ export async function PUT(
       brand,
       brandId,
       upc,
+      material,
+      itemDimensions,
+      color,
+      style,
+      itemWeight,
+      modelNumber,
+      modelName,
+      itemTypeName,
+      manufacturer,
+      pattern,
+      size,
       publishedAt,
       variants,
       variantImageMap,
@@ -216,6 +227,11 @@ export async function PUT(
     })()
 
     const normalizedAsin = normalizeAsin(asin)
+    const optionalText = (value: unknown) => {
+      if (typeof value !== 'string') return null
+      const trimmed = value.trim()
+      return trimmed || null
+    }
     if (normalizedAsin) {
       const asinConflict = await db.product.findFirst({
         where: {
@@ -260,9 +276,20 @@ export async function PUT(
       categoryId: categoryId || undefined,
       featured: featured || false,
       active: inStock !== false,
-      brand: brand === '' ? null : brand,
+      brand: optionalText(brand),
       brandId: brandId === '' ? null : brandId,
-      upc: upc === '' ? null : upc,
+      upc: optionalText(upc),
+      material: optionalText(material),
+      itemDimensions: optionalText(itemDimensions),
+      color: optionalText(color),
+      style: optionalText(style),
+      itemWeight: optionalText(itemWeight),
+      modelNumber: optionalText(modelNumber),
+      modelName: optionalText(modelName),
+      itemTypeName: optionalText(itemTypeName),
+      manufacturer: optionalText(manufacturer),
+      pattern: optionalText(pattern),
+      size: optionalText(size),
       publishedAt: publishedAt ? new Date(publishedAt) : undefined,
       variants: (() => {
         try {

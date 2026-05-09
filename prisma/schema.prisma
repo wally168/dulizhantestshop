@@ -65,6 +65,17 @@ model Product {
   active          Boolean  @default(true)
   brand           String?
   upc             String?
+  material        String?
+  itemDimensions  String?
+  color           String?
+  style           String?
+  itemWeight      String?
+  modelNumber     String?
+  modelName       String?
+  itemTypeName    String?
+  manufacturer    String?
+  pattern         String?
+  size            String?
   publishedAt     DateTime?
   variants        String?   // JSON string of variant groups: [{name, options[]}]
   variantImageMap String?   // JSON: { [groupName]: { [option]: imageIndex } }

@@ -77,6 +77,17 @@ function replaceYoutubeLinks(input: string): string {
    brand,
    upc,
   asin,
+  material,
+  itemDimensions,
+  color,
+  style,
+  itemWeight,
+  modelNumber,
+  modelName,
+  itemTypeName,
+  manufacturer,
+  pattern,
+  size,
    publishedAt,
    description,
    amazonUrl,
@@ -105,6 +116,17 @@ function replaceYoutubeLinks(input: string): string {
   brand?: string | null
   upc?: string | null
   asin?: string | null
+  material?: string | null
+  itemDimensions?: string | null
+  color?: string | null
+  style?: string | null
+  itemWeight?: string | null
+  modelNumber?: string | null
+  modelName?: string | null
+  itemTypeName?: string | null
+  manufacturer?: string | null
+  pattern?: string | null
+  size?: string | null
   publishedAt?: string | Date | null
   description: string
   amazonUrl: string
@@ -369,6 +391,19 @@ function replaceYoutubeLinks(input: string): string {
   const displayPrice = currentVariantPrice ?? price
   const displayOriginalPrice = currentVariantOriginalPrice ?? (currentVariantPrice === null ? (originalPrice ?? null) : null)
   const displayTitle = currentVariantTitle ?? title
+  const specItems = [
+    { label: 'Material', value: material },
+    { label: 'Item dimensions', value: itemDimensions },
+    { label: 'Color', value: color },
+    { label: 'Style', value: style },
+    { label: 'Item Weight', value: itemWeight },
+    { label: 'Model Number', value: modelNumber },
+    { label: 'Model Name', value: modelName },
+    { label: 'Item Type Name', value: itemTypeName },
+    { label: 'Manufacturer', value: manufacturer },
+    { label: 'Pattern', value: pattern },
+    { label: 'Size', value: size },
+  ].filter(item => item.value && String(item.value).trim() !== '')
 
   return (
     <>
@@ -403,6 +438,19 @@ function replaceYoutubeLinks(input: string): string {
         )}
         {publishedAt && (
           <p className="mt-1 text-gray-500 text-sm">Date First Available : {formatPublishedAt(publishedAt)}</p>
+        )}
+        {specItems.length > 0 && (
+          <div className="mt-4 rounded-lg border border-gray-200 bg-gray-50 p-4">
+            <h2 className="text-sm font-semibold text-gray-900">Additional Details</h2>
+            <dl className="mt-3 grid grid-cols-1 gap-x-6 gap-y-2 sm:grid-cols-2">
+              {specItems.map((item) => (
+                <div key={item.label}>
+                  <dt className="text-xs uppercase tracking-wide text-gray-500">{item.label}</dt>
+                  <dd className="mt-1 text-sm text-gray-800">{item.value}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
         )}
 
         {/* 变体选项挪到价格上方，优先图片显示 */}
