@@ -106,6 +106,61 @@ export default function ContactPage() {
           </div>
         </div>
 
+        {/* Contact Information */}
+        <div className="bg-gray-50 py-16 sm:py-24">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="mx-auto max-w-2xl text-center">
+              <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+                Get in Touch
+              </h2>
+              <p className="mt-6 text-lg leading-8 text-gray-600">
+                We're here to help and answer any questions you might have.
+              </p>
+            </div>
+
+            {/* Contact Details - Single Row */}
+            <div className="mx-auto mt-16 max-w-4xl">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
+                <div className="flex items-start sm:items-center gap-3 rounded-xl bg-white p-4 border border-gray-200 shadow-sm">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 flex-shrink-0">
+                    <Mail className="h-5 w-5 text-blue-600" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-gray-900">Email</p>
+                    <p className="text-sm text-gray-600 break-words">
+                      {loading ? 'contact@yourstore.com' : settings.contactEmail || 'contact@yourstore.com'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start sm:items-center gap-3 rounded-xl bg-white p-4 border border-gray-200 shadow-sm">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 flex-shrink-0">
+                    <Phone className="h-5 w-5 text-blue-600" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-gray-900">Phone</p>
+                    <p className="text-sm text-gray-600 break-words">
+                      {loading ? '+1 (555) 123-4567' : settings.contactPhone || '+1 (555) 123-4567'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start sm:items-center gap-3 rounded-xl bg-white p-4 border border-gray-200 shadow-sm">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 flex-shrink-0">
+                    <MapPin className="h-5 w-5 text-blue-600" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-gray-900">Address</p>
+                    <p className="text-sm text-gray-600 break-words">
+                      {loading ? '123 Business St, City, State 12345' : settings.contactAddress || '123 Business St, City, State 12345'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Contact Form */}
         <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-2xl text-center">
@@ -252,61 +307,6 @@ export default function ContactPage() {
                 </div>
               )}
             </form>
-          </div>
-        </div>
-
-        {/* Contact Information */}
-        <div className="bg-gray-50 py-16 sm:py-24">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="mx-auto max-w-2xl text-center">
-              <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-                Get in Touch
-              </h2>
-              <p className="mt-6 text-lg leading-8 text-gray-600">
-                We're here to help and answer any questions you might have.
-              </p>
-            </div>
-
-            {/* Contact Details - Single Row */}
-            <div className="mx-auto mt-16 max-w-4xl">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
-                <div className="flex items-start sm:items-center gap-3 rounded-xl bg-white p-4 border border-gray-200 shadow-sm">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 flex-shrink-0">
-                    <Mail className="h-5 w-5 text-blue-600" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-gray-900">Email</p>
-                    <p className="text-sm text-gray-600 break-words">
-                      {loading ? 'contact@yourstore.com' : settings.contactEmail || 'contact@yourstore.com'}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-start sm:items-center gap-3 rounded-xl bg-white p-4 border border-gray-200 shadow-sm">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 flex-shrink-0">
-                    <Phone className="h-5 w-5 text-blue-600" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-gray-900">Phone</p>
-                    <p className="text-sm text-gray-600 break-words">
-                      {loading ? '+1 (555) 123-4567' : settings.contactPhone || '+1 (555) 123-4567'}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-start sm:items-center gap-3 rounded-xl bg-white p-4 border border-gray-200 shadow-sm">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 flex-shrink-0">
-                    <MapPin className="h-5 w-5 text-blue-600" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-gray-900">Address</p>
-                    <p className="text-sm text-gray-600 break-words">
-                      {loading ? '123 Business St, City, State 12345' : settings.contactAddress || '123 Business St, City, State 12345'}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </div>
