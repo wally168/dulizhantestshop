@@ -600,8 +600,8 @@ export default function NewProduct() {
                     }}
                     onBlur={() => {}}
                     className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
-                    placeholder="https://www.amazon.com/dp/ASIN 或包含 /dp/ASIN 的链接"
-                    title={(form.variants || []).length > 0 ? '已添加变体：主链接不可编辑但作为兜底；若某些选项未填购买链接，将跳转此主链接' : '示例：https://www.amazon.com/dp/B0CJZMP7L1 或 https://www.amazon.com/.../dp/B0CJZMP7L1'}
+                    placeholder="https://www.amazon.de/dp/ASIN 或任意站点的完整商品链接"
+                    title={(form.variants || []).length > 0 ? '已添加变体：主链接不可编辑但作为兜底；若某些选项未填购买链接，将跳转此主链接' : '示例：https://www.amazon.de/dp/B0CJZMP7L1、https://www.amazon.co.uk/dp/B0CJZMP7L1 或其他站点完整商品链接'}
                   />
                   <ExternalLink className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 </div>

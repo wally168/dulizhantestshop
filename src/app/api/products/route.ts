@@ -248,24 +248,6 @@ export async function POST(request: NextRequest) {
       showAddToCart,
     } = body
 
-    // 简单规范化 Amazon 链接：提取 ASIN 并转换为标准 dp 链接
-    const extractAsin = (url: string): string | null => {
-      try {
-        const patterns = [
-          /\/(?:dp|product)\/([A-Z0-9]{10})/i,
-          /\/gp\/product\/([A-Z0-9]{10})/i,
-          /[?&]ASIN=([A-Z0-9]{10})/i,
-        ]
-        for (const re of patterns) {
-          const m = url.match(re)
-          if (m && m[1]) return m[1].toUpperCase()
-        }
-        return null
-      } catch { return null }
-    }
-    const amazonAsin = typeof amazonUrl === 'string' ? extractAsin(amazonUrl) : null
-    const normalizedAmazonUrl = amazonAsin ? `https://www.amazon.com/dp/${amazonAsin}` : amazonUrl
-
     // Validate required fields
     if (!name || !description || !price || !amazonUrl) {
       return NextResponse.json(
@@ -451,7 +433,7 @@ export async function POST(request: NextRequest) {
       youtubeUrl: normalizedYoutubeUrl,
       youtubeIndex: normalizedYoutubeIndex,
       bulletPoints: JSON.stringify(Array.isArray(bulletPoints) ? bulletPoints : []),
-      amazonUrl: normalizedAmazonUrl,
+      amazonUrl,
       // 直接使用 categoryId 赋值，与 import 接口保持一致
       categoryId: categoryId,
       featured: featured || false,
