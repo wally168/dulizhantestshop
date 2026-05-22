@@ -20,13 +20,52 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
     const { id } = await context.params
     const url = new URL(request.url)
     const visibleOnly = url.searchParams.get('visibleOnly') !== '0'
+    const rawPage = Number(url.searchParams.get('page') || '1')
+    const rawPageSize = Number(url.searchParams.get('pageSize') || '20')
+    const pageSize = Number.isFinite(rawPageSize) ? Math.max(1, Math.min(rawPageSize, 100)) : 20
     if (!visibleOnly) {
       const { response } = await requireAdminSession(request)
       if (response) return response
     }
 
+    const where = { productId: id, ...(visibleOnly ? { isVisible: true } : {}) }
+
+    if (!visibleOnly) {
+      const total = await db.productReview.count({ where })
+      const totalPages = Math.max(1, Math.ceil(total / pageSize))
+      const page = Number.isFinite(rawPage) ? Math.min(Math.max(1, rawPage), totalPages) : 1
+      const reviews = await db.productReview.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      })
+
+      const items = reviews.map((r: ReviewRecord) => ({
+        id: r.id,
+        productId: r.productId,
+        isVisible: r.isVisible,
+        country: r.country || '',
+        name: r.name || '',
+        title: r.title || '',
+        content: r.content,
+        rating: r.rating,
+        images: (() => { try { return r.images ? JSON.parse(r.images) : [] } catch { return [] } })(),
+        createdAt: r.createdAt,
+        updatedAt: r.updatedAt,
+      }))
+
+      return NextResponse.json({
+        items,
+        total,
+        page,
+        pageSize,
+        totalPages,
+      })
+    }
+
     const reviews = await db.productReview.findMany({
-      where: { productId: id, ...(visibleOnly ? { isVisible: true } : {}) },
+      where,
       orderBy: { createdAt: 'desc' },
     })
 
@@ -52,6 +91,43 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
   } catch (error) {
     console.error('获取评论失败:', error)
     return NextResponse.json({ error: '获取评论失败' }, { status: 500 })
+  }
+}
+
+export async function DELETE(request: NextRequest, context: { params: Promise<{ id: string }> }) {
+  try {
+    if (!isSameOrigin(request)) {
+      return NextResponse.json({ error: '非法来源' }, { status: 403 })
+    }
+    const { response } = await requireAdminSession(request)
+    if (response) return response
+
+    const { id: productId } = await context.params
+    const body = await request.json().catch(() => ({}))
+    const mode = body?.mode === 'all' ? 'all' : 'selected'
+    const ids = Array.isArray(body?.ids) ? body.ids.map((item: unknown) => String(item)).filter(Boolean) : []
+
+    let result
+    if (mode === 'all') {
+      result = await db.productReview.deleteMany({
+        where: { productId },
+      })
+    } else {
+      if (ids.length === 0) {
+        return NextResponse.json({ error: '请选择要删除的评论' }, { status: 400 })
+      }
+      result = await db.productReview.deleteMany({
+        where: {
+          productId,
+          id: { in: ids },
+        },
+      })
+    }
+
+    return NextResponse.json({ ok: true, deletedCount: result.count })
+  } catch (error) {
+    console.error('批量删除评论失败:', error)
+    return NextResponse.json({ error: '批量删除评论失败' }, { status: 500 })
   }
 }
 

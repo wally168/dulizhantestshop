@@ -136,6 +136,8 @@ interface Review {
   updatedAt?: string
 }
 
+const REVIEW_PAGE_SIZE = 20
+
 // 链接校验（仅校验为有效 http/https URL，不自动改写）
 function isValidAmazonUrl(url: string): boolean {
   try {
@@ -330,6 +332,11 @@ export default function EditProduct() {
 
   const [reviews, setReviews] = useState<Review[]>([])
   const [loadingReviews, setLoadingReviews] = useState(true)
+  const [reviewPage, setReviewPage] = useState(1)
+  const [reviewTotal, setReviewTotal] = useState(0)
+  const [reviewTotalPages, setReviewTotalPages] = useState(1)
+  const [selectedReviewIds, setSelectedReviewIds] = useState<string[]>([])
+  const [deletingReviews, setDeletingReviews] = useState(false)
   const [editingReview, setEditingReview] = useState<Review | null>(null)
   const [reviewImportFile, setReviewImportFile] = useState<File | null>(null)
   const [reviewImporting, setReviewImporting] = useState(false)
@@ -575,12 +582,14 @@ export default function EditProduct() {
     fetchProduct()
   }, [fetchProduct])
 
-  const loadReviews = useCallback(async () => {
+  const loadReviews = useCallback(async (targetPage = 1) => {
+    setLoadingReviews(true)
     try {
-      const res = await fetch(`/api/products/${productId}/reviews?visibleOnly=0`, { cache: 'no-store' })
+      const res = await fetch(`/api/products/${productId}/reviews?visibleOnly=0&page=${targetPage}&pageSize=${REVIEW_PAGE_SIZE}`, { cache: 'no-store' })
       if (res.ok) {
         const data = await res.json()
-        const normalized = Array.isArray(data) ? data.map((r: any) => ({
+        const items = Array.isArray(data?.items) ? data.items : []
+        const normalized = items.map((r: any) => ({
           id: String(r.id),
           productId: String(r.productId),
           isVisible: Boolean(r.isVisible),
@@ -598,8 +607,11 @@ export default function EditProduct() {
               return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
             } catch { return '' }
           })()
-        })) : []
+        }))
         setReviews(normalized)
+        setReviewTotal(Number(data?.total || 0))
+        setReviewPage(Number(data?.page || targetPage || 1))
+        setReviewTotalPages(Math.max(1, Number(data?.totalPages || 1)))
       }
     } catch (e) {
       console.error('加载评论失败:', e)
@@ -609,7 +621,7 @@ export default function EditProduct() {
   }, [productId])
 
   useEffect(() => {
-    loadReviews()
+    loadReviews(1)
   }, [loadReviews])
 
   const parseExcelDateToIso = (value: any): string | undefined => {
@@ -744,7 +756,7 @@ export default function EditProduct() {
       }
 
       setReviewImportResult({ success, failed, skipped, errors })
-      await loadReviews()
+      await loadReviews(1)
     } catch (e) {
       setReviewImportResult({ success: 0, failed: 0, skipped: 0, errors: ['解析失败或文件损坏'] })
     } finally {
@@ -819,8 +831,8 @@ export default function EditProduct() {
         body: JSON.stringify(payload)
       })
       if (res.ok) {
-        const created = await res.json()
-        setReviews([created, ...reviews])
+        await loadReviews(1)
+        setSelectedReviewIds([])
         setNewReview({ id: '', productId, isVisible: true, country: '', name: '', title: '', content: '', rating: 5, images: [''], createdAt: '' })
       } else {
         const err = await res.json().catch(() => ({}))
@@ -871,13 +883,81 @@ export default function EditProduct() {
   const deleteReview = async (id: string) => {
     if (!confirm('确定删除该评论？')) return
     try {
-      const res = await fetch(`/api/reviews/${id}`, { method: 'DELETE' })
+      setDeletingReviews(true)
+      const res = await fetch(`/api/products/${productId}/reviews`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode: 'selected', ids: [id] })
+      })
       if (res.ok) {
-        setReviews(reviews.filter(r => r.id !== id))
+        setSelectedReviewIds(prev => prev.filter(reviewId => reviewId !== id))
+        await loadReviews(reviewPage)
       }
     } catch (e) {
       console.error('删除评论失败:', e)
       alert('删除失败')
+    } finally {
+      setDeletingReviews(false)
+    }
+  }
+
+  const toggleReviewSelection = (id: string, checked: boolean) => {
+    setSelectedReviewIds(prev => checked ? Array.from(new Set([...prev, id])) : prev.filter(item => item !== id))
+  }
+
+  const toggleSelectAllCurrentPage = (checked: boolean) => {
+    const currentPageIds = reviews.map(r => r.id)
+    setSelectedReviewIds(prev => {
+      if (checked) return Array.from(new Set([...prev, ...currentPageIds]))
+      return prev.filter(id => !currentPageIds.includes(id))
+    })
+  }
+
+  const deleteSelectedReviews = async () => {
+    if (selectedReviewIds.length === 0) return
+    if (!confirm(`确定删除已选中的 ${selectedReviewIds.length} 条评论？`)) return
+    try {
+      setDeletingReviews(true)
+      const res = await fetch(`/api/products/${productId}/reviews`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode: 'selected', ids: selectedReviewIds })
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err.error || '删除失败')
+      }
+      setSelectedReviewIds([])
+      await loadReviews(reviewPage)
+    } catch (e) {
+      console.error('批量删除评论失败:', e)
+      alert(e instanceof Error ? e.message : '批量删除失败')
+    } finally {
+      setDeletingReviews(false)
+    }
+  }
+
+  const deleteAllReviews = async () => {
+    if (reviewTotal === 0) return
+    if (!confirm(`确定删除该产品下全部 ${reviewTotal} 条评论？此操作不可撤销。`)) return
+    try {
+      setDeletingReviews(true)
+      const res = await fetch(`/api/products/${productId}/reviews`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode: 'all' })
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err.error || '删除失败')
+      }
+      setSelectedReviewIds([])
+      await loadReviews(1)
+    } catch (e) {
+      console.error('删除全部评论失败:', e)
+      alert(e instanceof Error ? e.message : '删除失败')
+    } finally {
+      setDeletingReviews(false)
     }
   }
 
@@ -2327,34 +2407,81 @@ export default function EditProduct() {
                 )}
 
                 <div className="mt-6">
-                  <h3 className="text-md font-semibold text-gray-900 mb-2">已有评论</h3>
+                  <div className="flex flex-col gap-3 mb-4">
+                    <div className="flex items-center justify-between gap-3 flex-wrap">
+                      <h3 className="text-md font-semibold text-gray-900">已有评论</h3>
+                      <div className="text-sm text-gray-600">
+                        共 {reviewTotal} 条，当前第 {reviewPage}/{reviewTotalPages} 页，每页 {REVIEW_PAGE_SIZE} 条
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between gap-3 flex-wrap border rounded-lg p-3 bg-gray-50">
+                      <label className="inline-flex items-center text-sm text-gray-700">
+                        <input
+                          type="checkbox"
+                          className="mr-2"
+                          checked={reviews.length > 0 && reviews.every(r => selectedReviewIds.includes(r.id))}
+                          onChange={(e) => toggleSelectAllCurrentPage(e.target.checked)}
+                          disabled={reviews.length === 0 || deletingReviews}
+                        />
+                        当前页全选
+                      </label>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-sm text-gray-600">已选 {selectedReviewIds.length} 条</span>
+                        <button
+                          type="button"
+                          onClick={deleteSelectedReviews}
+                          disabled={selectedReviewIds.length === 0 || deletingReviews}
+                          className="px-3 py-2 text-sm border border-red-200 text-red-600 rounded-lg hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          删除选中
+                        </button>
+                        <button
+                          type="button"
+                          onClick={deleteAllReviews}
+                          disabled={reviewTotal === 0 || deletingReviews}
+                          className="px-3 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          删除全部
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                   {reviews.length === 0 ? (
                     <p className="text-sm text-gray-600">暂无评论</p>
                   ) : (
                     <div className="space-y-3">
                       {reviews.map(r => (
                         <div key={r.id} className="border rounded-lg p-4 flex items-start justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2">
-                              {Array.from({ length: 5 }).map((_, i) => (
-                                <Star key={i} className={"h-4 w-4 " + (i < r.rating ? 'text-yellow-500' : 'text-gray-300')} />
-                              ))}
-                              <span className="text-sm text-gray-700">{r.title}</span>
-                            </div>
-                            <div className="text-sm text-gray-600 mt-1">{r.name} {r.country ? `(${r.country})` : ''}</div>
-                            <div className="text-sm text-gray-700 mt-2">{r.content}</div>
-                            {Array.isArray(r.images) && r.images.length > 0 && (
-                              <div className="mt-2 grid grid-cols-3 gap-2">
-                                {r.images.map((img, idx) => (
-                                  <img key={idx} src={img.startsWith('http') ? img : (img.startsWith('/') ? img : `/${img}`)} alt="" className="w-full h-20 object-cover rounded" />
+                          <div className="flex items-start gap-3 flex-1">
+                            <input
+                              type="checkbox"
+                              className="mt-1"
+                              checked={selectedReviewIds.includes(r.id)}
+                              onChange={(e) => toggleReviewSelection(r.id, e.target.checked)}
+                              disabled={deletingReviews}
+                            />
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2">
+                                {Array.from({ length: 5 }).map((_, i) => (
+                                  <Star key={i} className={"h-4 w-4 " + (i < r.rating ? 'text-yellow-500' : 'text-gray-300')} />
                                 ))}
+                                <span className="text-sm text-gray-700">{r.title}</span>
                               </div>
-                            )}
-                            <div className="mt-2">
-                              <label className="inline-flex items-center">
-                                <input type="checkbox" checked={r.isVisible} onChange={async (e) => { const res = await fetch(`/api/reviews/${r.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ isVisible: e.target.checked }) }); if (res.ok) { const updated = await res.json(); setReviews(reviews.map(rr => rr.id === updated.id ? updated : rr)) } }} />
-                                <span className="ml-2 text-sm text-gray-700">显示在前台</span>
-                              </label>
+                              <div className="text-sm text-gray-600 mt-1">{r.name} {r.country ? `(${r.country})` : ''}</div>
+                              <div className="text-sm text-gray-700 mt-2">{r.content}</div>
+                              {Array.isArray(r.images) && r.images.length > 0 && (
+                                <div className="mt-2 grid grid-cols-3 gap-2">
+                                  {r.images.map((img, idx) => (
+                                    <img key={idx} src={img.startsWith('http') ? img : (img.startsWith('/') ? img : `/${img}`)} alt="" className="w-full h-20 object-cover rounded" />
+                                  ))}
+                                </div>
+                              )}
+                              <div className="mt-2">
+                                <label className="inline-flex items-center">
+                                  <input type="checkbox" checked={r.isVisible} onChange={async (e) => { const res = await fetch(`/api/reviews/${r.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ isVisible: e.target.checked }) }); if (res.ok) { const updated = await res.json(); setReviews(reviews.map(rr => rr.id === updated.id ? updated : rr)) } }} />
+                                  <span className="ml-2 text-sm text-gray-700">显示在前台</span>
+                                </label>
+                              </div>
                             </div>
                           </div>
                           <div className="flex items-center gap-2 ml-4">
@@ -2363,6 +2490,38 @@ export default function EditProduct() {
                           </div>
                         </div>
                       ))}
+                    </div>
+                  )}
+                  {reviewTotalPages > 1 && (
+                    <div className="mt-4 flex items-center justify-between gap-3 flex-wrap">
+                      <button
+                        type="button"
+                        onClick={() => loadReviews(Math.max(1, reviewPage - 1))}
+                        disabled={reviewPage <= 1 || loadingReviews}
+                        className="px-3 py-2 border rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        上一页
+                      </button>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {Array.from({ length: reviewTotalPages }, (_, index) => index + 1).map((page) => (
+                          <button
+                            key={page}
+                            type="button"
+                            onClick={() => loadReviews(page)}
+                            className={`px-3 py-2 rounded-lg text-sm border ${page === reviewPage ? 'bg-blue-600 text-white border-blue-600' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`}
+                          >
+                            {page}
+                          </button>
+                        ))}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => loadReviews(Math.min(reviewTotalPages, reviewPage + 1))}
+                        disabled={reviewPage >= reviewTotalPages || loadingReviews}
+                        className="px-3 py-2 border rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        下一页
+                      </button>
                     </div>
                   )}
                 </div>
