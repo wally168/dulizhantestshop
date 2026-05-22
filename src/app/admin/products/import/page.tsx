@@ -150,7 +150,7 @@ export default function ImportProducts() {
             <h1 className="text-2xl font-bold text-gray-900">上传 Excel 表格</h1>
             <p className="text-gray-600 mt-2">
               请上传包含产品信息的 Excel 文件 (.xlsx)。
-              必填字段: title, price, url。可选字段: images, release_date, description, bullet_point_1-5。
+              必填字段: title, price, url。可选字段如表格中存在会自动导入，包括 images、release_date、description、bullet_point_1-8、ASIN、原价，以及部分现有产品参数字段。
             </p>
           </div>
 
