@@ -319,6 +319,7 @@ export default async function ProductDetail({ params }: { params: Promise<{ slug
             variantOptionPrices={variantOptionPrices}
             variantOptionOriginalPrices={variantOptionOriginalPrices}
             variantOptionTitles={variantOptionTitles}
+            buyButtonText={product.buyButtonText}
             showBuyOnAmazon={(product.showBuyOnAmazon !== false)}
             showAddToCart={(product.showAddToCart !== false)}
             reviews={reviews}

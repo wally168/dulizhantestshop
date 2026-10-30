@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { isSameOrigin, requireAdminSession } from '@/lib/auth'
 import { normalizeAsin } from '@/lib/utils'
+import { MAX_BUY_BUTTON_TEXT_LENGTH, normalizeBuyButtonText } from '@/lib/purchase-button'
 
 const ORIGINAL_PRICE_FALLBACK_KEY = '__original_price_map__'
 const TITLE_FALLBACK_KEY = '__title_map__'
@@ -244,14 +245,22 @@ export async function POST(request: NextRequest) {
       asin,
       showAsinOnFrontend,
       // 新增字段：前台按钮显示控制
+      buyButtonText,
       showBuyOnAmazon,
       showAddToCart,
     } = body
 
+    if (buyButtonText !== undefined && typeof buyButtonText !== 'string') {
+      return NextResponse.json({ error: '购买按钮文案必须是文本' }, { status: 400 })
+    }
+    if (normalizeBuyButtonText(buyButtonText).length > MAX_BUY_BUTTON_TEXT_LENGTH) {
+      return NextResponse.json({ error: `购买按钮文案最多 ${MAX_BUY_BUTTON_TEXT_LENGTH} 个字符` }, { status: 400 })
+    }
+
     // Validate required fields
     if (!name || !description || !price || !amazonUrl) {
       return NextResponse.json(
-        { error: 'Name, description, price, and Amazon URL are required' },
+        { error: 'Name, description, price, and purchase URL are required' },
         { status: 400 }
       )
     }
@@ -461,6 +470,7 @@ export async function POST(request: NextRequest) {
       variantOptionOriginalPrices: variantOptionOriginalPricesJson,
       variantOptionTitles: variantOptionTitlesJson,
       // 新增：按钮显示控制
+      buyButtonText: normalizeBuyButtonText(buyButtonText),
       showBuyOnAmazon: showBuyOnAmazon !== false,
       showAddToCart: showAddToCart !== false,
     }

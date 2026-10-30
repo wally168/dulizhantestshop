@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
+import BuyButtonTextField from '@/components/BuyButtonTextField'
+import { DEFAULT_BUY_BUTTON_TEXT, normalizeBuyButtonText } from '@/lib/purchase-button'
 import { useRouter } from 'next/navigation'
 import useUnsavedChangesPrompt from '../../../../hooks/useUnsavedChangesPrompt'
 import { 
@@ -32,6 +34,7 @@ interface ProductForm {
   categoryId: string
   featured: boolean
   inStock: boolean
+  buyButtonText: string
   showBuyOnAmazon: boolean
   showAddToCart: boolean
   brandId: string
@@ -79,7 +82,7 @@ const OPTIONAL_PRODUCT_FIELDS = [
 ] as const
 
 // 链接校验（仅校验为有效 http/https URL，不自动改写）
-function isValidAmazonUrl(url: string): boolean {
+function isValidPurchaseUrl(url: string): boolean {
   try {
     const u = new URL(url)
     return u.protocol === 'http:' || u.protocol === 'https:'
@@ -192,6 +195,7 @@ export default function NewProduct() {
     variantOptionPrices: {},
     variantOptionOriginalPrices: {},
     variantOptionTitles: {},
+    buyButtonText: DEFAULT_BUY_BUTTON_TEXT,
     showBuyOnAmazon: true,
     showAddToCart: true,
   })
@@ -390,7 +394,7 @@ export default function NewProduct() {
     setLoading(true)
 
     // 链接最终校验
-    if (!isValidAmazonUrl(form.amazonUrl)) {
+    if (!isValidPurchaseUrl(form.amazonUrl)) {
       setUrlError('请输入有效链接（http/https）')
       setLoading(false)
       return
@@ -415,6 +419,7 @@ export default function NewProduct() {
         body: JSON.stringify({
           ...form,
           amazonUrl: form.amazonUrl,
+          buyButtonText: normalizeBuyButtonText(form.buyButtonText),
           asin: (form.asin ?? '').trim().toUpperCase() || null,
           showAsinOnFrontend: form.showAsinOnFrontend === true,
           youtubeUrl: (form.youtubeUrl ?? '').trim() || null,
@@ -577,7 +582,7 @@ export default function NewProduct() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  亚马逊链接 *
+                  购买跳转链接 *
                 </label>
                 <div className="relative">
                   <input
@@ -592,7 +597,7 @@ export default function NewProduct() {
                         setUrlError('')
                       } else if (v.trim() === '') {
                         setUrlError('请输入有效链接')
-                      } else if (!isValidAmazonUrl(v)) {
+                      } else if (!isValidPurchaseUrl(v)) {
                         setUrlError('链接格式不正确，请输入以 http/https 开头的链接')
                       } else {
                         setUrlError('')
@@ -786,7 +791,7 @@ export default function NewProduct() {
                   onChange={(e) => setForm(prev => ({ ...prev, showBuyOnAmazon: e.target.checked }))}
                   className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                 />
-                <span className="ml-2 text-sm text-gray-700">显示“前往亚马逊”按钮</span>
+                <span className="ml-2 text-sm text-gray-700">显示“外部购买”按钮</span>
               </label>
               <label className="inline-flex items-center">
                 <input
@@ -798,6 +803,10 @@ export default function NewProduct() {
                 <span className="ml-2 text-sm text-gray-700">显示“加入购物车”按钮</span>
               </label>
             </div>
+            <BuyButtonTextField
+              value={form.buyButtonText}
+              onChange={(value) => setForm(prev => ({ ...prev, buyButtonText: value }))}
+            />
           </div>
 
           <div className="bg-white p-6 rounded-xl shadow-sm border">

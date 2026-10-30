@@ -1,5 +1,11 @@
 # AMZSHOP 部署指南
 
+## 自定义购买按钮文案
+
+产品新建、编辑页均支持设置“购买按钮文案”和“购买跳转链接”。文案留空时使用 `Buy on Amazon`，链接可指向任意平台的 HTTP/HTTPS 商品地址。产品列表和详情页使用同一文案，变体购买链接继续按原有规则生效。
+
+此功能新增 `Product.buyButtonText` 字段，数据库默认值为 `Buy on Amazon`，现有产品同步字段后会保持原来的按钮文案。Vercel 现有的 `npm run vercel-build` 会通过 `prisma db push` 同步字段，请确认部署日志中数据库同步成功。其他部署方式需在启动新版应用前执行 `npm run db:push`，再运行 `npm run build`。数据库连接失败时，需先恢复连接并完成字段同步。
+
 ## 项目概述
 AMZSHOP 是一个基于 Next.js 的现代化电商系统，使用 TypeScript、Prisma、SQLite 和 Tailwind CSS 构建。
 

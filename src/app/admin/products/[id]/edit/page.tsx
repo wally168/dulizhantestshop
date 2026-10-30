@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
+import BuyButtonTextField from '@/components/BuyButtonTextField'
+import { DEFAULT_BUY_BUTTON_TEXT, normalizeBuyButtonText } from '@/lib/purchase-button'
 import { useRouter, useParams } from 'next/navigation'
 import useUnsavedChangesPrompt from '../../../../../hooks/useUnsavedChangesPrompt'
 import * as XLSX from 'xlsx'
@@ -57,6 +59,7 @@ interface Product {
   variantOptionPrices?: Record<string, Record<string, string>>
   variantOptionOriginalPrices?: Record<string, Record<string, string>>
   variantOptionTitles?: Record<string, Record<string, string>>
+  buyButtonText?: string
   showBuyOnAmazon?: boolean
   showAddToCart?: boolean
 }
@@ -77,6 +80,7 @@ interface ProductForm {
   brandId: string
   featured: boolean
   inStock: boolean
+  buyButtonText: string
   showBuyOnAmazon: boolean
   showAddToCart: boolean
   brand?: string
@@ -139,7 +143,7 @@ interface Review {
 const REVIEW_PAGE_SIZE = 20
 
 // 链接校验（仅校验为有效 http/https URL，不自动改写）
-function isValidAmazonUrl(url: string): boolean {
+function isValidPurchaseUrl(url: string): boolean {
   try {
     const u = new URL(url)
     return u.protocol === 'http:' || u.protocol === 'https:'
@@ -236,6 +240,7 @@ export default function EditProduct() {
     brandId: '',
     featured: false,
     inStock: true,
+    buyButtonText: DEFAULT_BUY_BUTTON_TEXT,
     showBuyOnAmazon: true,
     showAddToCart: true,
     brand: '',
@@ -541,6 +546,7 @@ export default function EditProduct() {
           brandId: toId(data.brandId || data.brandRelation?.id),
           featured: data.featured || false,
           inStock: data.inStock !== false,
+          buyButtonText: normalizeBuyButtonText(data.buyButtonText),
           showBuyOnAmazon: data.showBuyOnAmazon !== false,
           showAddToCart: data.showAddToCart !== false,
           brand: (data.brand ?? '') || '',
@@ -966,8 +972,8 @@ export default function EditProduct() {
     setLoading(true)
 
     // 链接最终校验
-    if (!isValidAmazonUrl(form.amazonUrl)) {
-      setUrlError('请粘贴正确的亚马逊产品链接（需包含 /dp/ASIN）')
+    if (!isValidPurchaseUrl(form.amazonUrl)) {
+      setUrlError('请输入有效的购买跳转链接（http/https）')
       setLoading(false)
       return
     }
@@ -991,6 +997,7 @@ export default function EditProduct() {
         body: JSON.stringify({
           ...form,
           amazonUrl: form.amazonUrl,
+          buyButtonText: normalizeBuyButtonText(form.buyButtonText),
           asin: (form.asin ?? '').trim().toUpperCase() || null,
           showAsinOnFrontend: form.showAsinOnFrontend === true,
           youtubeUrl: (form.youtubeUrl ?? '').trim() || null,
@@ -1259,7 +1266,7 @@ export default function EditProduct() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  亚马逊链接 *
+                  购买跳转链接 *
                 </label>
                 <div className="relative">
                   <input
@@ -1274,7 +1281,7 @@ export default function EditProduct() {
                         setUrlError('')
                       } else if (v.trim() === '') {
                         setUrlError('请输入有效链接')
-                      } else if (!isValidAmazonUrl(v)) {
+                      } else if (!isValidPurchaseUrl(v)) {
                         setUrlError('链接格式不正确，请输入以 http/https 开头的链接')
                       } else {
                         setUrlError('')
@@ -1389,7 +1396,7 @@ export default function EditProduct() {
                   onChange={(e) => setForm(prev => ({ ...prev, showBuyOnAmazon: e.target.checked }))}
                   className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                 />
-                <span className="ml-2 text-sm text-gray-700">显示“去亚马逊购买”按钮</span>
+                <span className="ml-2 text-sm text-gray-700">显示“外部购买”按钮</span>
               </label>
 
               <label className="flex items-center">
@@ -1402,6 +1409,10 @@ export default function EditProduct() {
                 <span className="ml-2 text-sm text-gray-700">显示“加入购物车”按钮</span>
               </label>
             </div>
+            <BuyButtonTextField
+              value={form.buyButtonText}
+              onChange={(value) => setForm(prev => ({ ...prev, buyButtonText: value }))}
+            />
           </div>
 
           <div className="bg-white p-6 rounded-xl shadow-sm border">

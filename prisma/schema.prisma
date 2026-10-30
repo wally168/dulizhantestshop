@@ -87,6 +87,7 @@ model Product {
   
   // 新增：按钮显示控制
   showBuyOnAmazon   Boolean  @default(true)
+  buyButtonText     String   @default("Buy on Amazon")
   showAddToCart     Boolean  @default(true)
   sortOrder         Int      @default(0)
 

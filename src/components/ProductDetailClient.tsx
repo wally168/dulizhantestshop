@@ -5,6 +5,7 @@ import type { ReactElement } from 'react'
 import ProductImageGallery from './ProductImageGallery'
 import { formatPrice } from '@/lib/utils'
 import AddToCartButton from './AddToCartButton'
+import { normalizeBuyButtonText } from '@/lib/purchase-button'
 
   type VariantGroup = { name: string; options: string[] }
 
@@ -105,6 +106,7 @@ function replaceYoutubeLinks(input: string): string {
   variantOptionPrices,
   variantOptionOriginalPrices,
   variantOptionTitles,
+  buyButtonText,
   showBuyOnAmazon = true,
   showAddToCart = true,
   reviews = [],
@@ -144,6 +146,7 @@ function replaceYoutubeLinks(input: string): string {
   variantOptionPrices?: Record<string, Record<string, string | number>> | null
   variantOptionOriginalPrices?: Record<string, Record<string, string | number>> | null
   variantOptionTitles?: Record<string, Record<string, string>> | null
+  buyButtonText?: string
   showBuyOnAmazon?: boolean
   showAddToCart?: boolean
   reviews?: Array<{ id: string; name: string; country: string; title: string; content: string; rating: number; images: string[]; createdAt?: string | Date }>
@@ -503,7 +506,7 @@ function replaceYoutubeLinks(input: string): string {
         rel="noopener noreferrer"
         className="inline-flex items-center px-4 py-2 rounded-md bg-blue-600 text-white font-semibold hover:bg-blue-500"
         >
-        Buy on Amazon
+        {normalizeBuyButtonText(buyButtonText)}
         </a>
         )}
         {showAddToCart && (

@@ -5,6 +5,7 @@ import { formatPrice, getProductUrlSegment } from '@/lib/utils'
 import AddToCartButton from '@/components/AddToCartButton'
 import FallbackImage from '@/components/FallbackImage'
 import type { Product } from '@prisma/client'
+import { normalizeBuyButtonText } from '@/lib/purchase-button'
 
 type ProductWithVariantPrice = Product & {
   variantOptionPrices?: string | null
@@ -228,7 +229,7 @@ export default async function ProductsPage({ searchParams }: { searchParams?: Pr
                             rel="noopener noreferrer"
                             className="inline-flex items-center justify-center px-3 py-2 rounded-md bg-blue-600 text-white text-sm font-semibold leading-tight text-center hover:bg-blue-500"
                           >
-                            Buy on Amazon
+                            {normalizeBuyButtonText(product.buyButtonText)}
                           </a>
                         )}
                         {showAdd && (

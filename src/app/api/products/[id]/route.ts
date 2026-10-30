@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { isSameOrigin, requireAdminSession } from '@/lib/auth'
 import { normalizeAsin } from '@/lib/utils'
+import { MAX_BUY_BUTTON_TEXT_LENGTH, normalizeBuyButtonText } from '@/lib/purchase-button'
 
 const ORIGINAL_PRICE_FALLBACK_KEY = '__original_price_map__'
 const TITLE_FALLBACK_KEY = '__title_map__'
@@ -208,9 +209,17 @@ export async function PUT(
       asin,
       showAsinOnFrontend,
       // 新增字段：前台按钮显示控制
+      buyButtonText,
       showBuyOnAmazon,
       showAddToCart,
     } = body
+
+    if (buyButtonText !== undefined && typeof buyButtonText !== 'string') {
+      return NextResponse.json({ error: '购买按钮文案必须是文本' }, { status: 400 })
+    }
+    if (normalizeBuyButtonText(buyButtonText).length > MAX_BUY_BUTTON_TEXT_LENGTH) {
+      return NextResponse.json({ error: `购买按钮文案最多 ${MAX_BUY_BUTTON_TEXT_LENGTH} 个字符` }, { status: 400 })
+    }
 
     const normalizedYoutubeUrl = typeof youtubeUrl === 'string' && youtubeUrl.trim() ? youtubeUrl.trim() : null
     const imageList = Array.isArray(images) ? images.filter((s: string) => s && s.trim() !== '') : []
@@ -388,6 +397,7 @@ export async function PUT(
         } catch { return undefined }
       })(),
       // 新增：按钮显示控制
+      buyButtonText: buyButtonText === undefined ? undefined : normalizeBuyButtonText(buyButtonText),
       showBuyOnAmazon: showBuyOnAmazon !== false,
       showAddToCart: showAddToCart !== false,
     }
