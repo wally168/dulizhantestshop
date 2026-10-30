@@ -49,7 +49,7 @@ export default function ImportProducts() {
       setLoading(true)
       const [catRes, brandRes] = await Promise.all([
         fetch('/api/categories'),
-        fetch('/api/brands')
+        fetch('/api/brands', { cache: 'no-store' })
       ])
       
       if (catRes.ok) {

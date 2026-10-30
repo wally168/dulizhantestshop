@@ -1,7 +1,7 @@
 "use client"
 
 import Link from 'next/link'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Plus, Tag, ArrowLeft, Trash2, Edit3, Layers } from 'lucide-react'
 
 interface Category {
@@ -34,10 +34,12 @@ export default function CategoriesPage() {
   const [loadingBrands, setLoadingBrands] = useState(false)
   const [brandError, setBrandError] = useState<string | null>(null)
   const [deletingBrandId, setDeletingBrandId] = useState<string | null>(null)
+  const brandRequestId = useRef(0)
   
   // Brand Form State (Simple inline or modal simulation)
   const [isAddingBrand, setIsAddingBrand] = useState(false)
   const [newBrandName, setNewBrandName] = useState('')
+  const [savingBrand, setSavingBrand] = useState(false)
 
   useEffect(() => {
     loadCategories()
@@ -62,17 +64,18 @@ export default function CategoriesPage() {
   }
 
   const loadBrands = async () => {
+    const requestId = ++brandRequestId.current
     setLoadingBrands(true)
     setBrandError(null)
     try {
       const res = await fetch('/api/brands', { cache: 'no-store' })
       if (!res.ok) throw new Error('加载品牌失败')
       const data = await res.json()
-      setBrands(data)
+      if (requestId === brandRequestId.current) setBrands(data)
     } catch (e: any) {
-      setBrandError(e.message || '加载品牌失败')
+      if (requestId === brandRequestId.current) setBrandError(e.message || '加载品牌失败')
     } finally {
-      setLoadingBrands(false)
+      if (requestId === brandRequestId.current) setLoadingBrands(false)
     }
   }
 
@@ -94,6 +97,7 @@ export default function CategoriesPage() {
   }
 
   const handleDeleteBrand = async (id: string) => {
+    if (loadingBrands || savingBrand || deletingBrandId) return
     if (!confirm('确定要删除该品牌吗？')) return
     setDeletingBrandId(id)
     try {
@@ -102,7 +106,11 @@ export default function CategoriesPage() {
         const err = await res.json().catch(() => ({}))
         throw new Error(err.error || '删除品牌失败')
       }
-      await loadBrands()
+      // 忽略操作完成前发出的列表请求，防止旧响应覆盖刚保存的结果。
+      ++brandRequestId.current
+      setLoadingBrands(false)
+      setBrandError(null)
+      setBrands(prev => prev.filter(brand => brand.id !== id))
     } catch (e: any) {
       alert(e.message || '删除失败')
     } finally {
@@ -112,8 +120,9 @@ export default function CategoriesPage() {
 
   const handleCreateBrand = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!newBrandName.trim()) return
+    if (!newBrandName.trim() || loadingBrands || savingBrand || deletingBrandId) return
 
+    setSavingBrand(true)
     try {
       const res = await fetch('/api/brands', {
         method: 'POST',
@@ -124,11 +133,18 @@ export default function CategoriesPage() {
         const err = await res.json()
         throw new Error(err.error || '创建失败')
       }
+      const created: Brand = await res.json()
+      ++brandRequestId.current
+      setLoadingBrands(false)
+      setBrandError(null)
+      setBrands(prev => [...prev.filter(brand => brand.id !== created.id), created]
+        .sort((a, b) => a.name.localeCompare(b.name)))
       setNewBrandName('')
       setIsAddingBrand(false)
-      loadBrands()
     } catch (e: any) {
       alert(e.message)
+    } finally {
+      setSavingBrand(false)
     }
   }
 
@@ -275,6 +291,7 @@ export default function CategoriesPage() {
                      <input 
                        type="text" 
                        value={newBrandName}
+                       disabled={savingBrand}
                        onChange={e => setNewBrandName(e.target.value)}
                        placeholder="输入品牌名称"
                        className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
@@ -282,12 +299,14 @@ export default function CategoriesPage() {
                      />
                      <button 
                        type="submit"
-                       className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+                       disabled={loadingBrands || savingBrand || !!deletingBrandId || !newBrandName.trim()}
+                       className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                      >
-                       保存
+                       {savingBrand ? '保存中...' : '保存'}
                      </button>
                      <button 
                        type="button"
+                       disabled={savingBrand}
                        onClick={() => setIsAddingBrand(false)}
                        className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300"
                      >
@@ -324,7 +343,7 @@ export default function CategoriesPage() {
                             <button
                               onClick={() => handleDeleteBrand(b.id)}
                               className="inline-flex items-center px-3 py-2 text-sm font-medium text-red-600 hover:text-red-700 disabled:opacity-50"
-                              disabled={deletingBrandId === b.id}
+                              disabled={savingBrand || !!deletingBrandId}
                             >
                               <Trash2 className="h-4 w-4 mr-1" /> {deletingBrandId === b.id ? '删除中...' : '删除'}
                             </button>

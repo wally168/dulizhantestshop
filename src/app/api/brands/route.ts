@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { isSameOrigin, requireAdminSession } from '@/lib/auth'
 
+export const dynamic = 'force-dynamic'
+
 // GET - 获取所有品牌
 export async function GET() {
   try {
@@ -20,7 +22,10 @@ export async function GET() {
     const res = NextResponse.json(result, {
       headers: { 'Content-Type': 'application/json; charset=utf-8' },
     })
-    res.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=600')
+    // 后台管理和产品表单必须立即看到品牌变更，不能返回浏览器或 CDN 的旧列表。
+    res.headers.set('Cache-Control', 'no-store, max-age=0')
+    res.headers.set('CDN-Cache-Control', 'no-store')
+    res.headers.set('Vercel-CDN-Cache-Control', 'no-store')
     return res
   } catch (error) {
     console.error('获取品牌失败:', error)
