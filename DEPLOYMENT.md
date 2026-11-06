@@ -8,7 +8,7 @@
 
 币种保存在现有 SiteSettings 表的 displayCurrency 键中，无需迁移。前台通过禁用缓存的 /api/storefront-currency 每 3 秒同步，切回页面时也会同步；隐藏页面停止轮询读取。设置需通过管理员鉴权后保存。
 
-`/api/exchange-rates` 从 [Frankfurter](https://frankfurter.dev/) 获取每日更新的公开汇率，无需 API Key。部署环境需能访问 `https://api.frankfurter.dev`。成功汇率在服务端缓存一小时并显示日期；汇率不可用时显示 USD 并自动重试。非美元价格仅供参考，最终成交价以购买平台为准。
+`/api/exchange-rates` 从 [Frankfurter](https://frankfurter.dev/) 获取每日更新的公开汇率，无需 API Key。部署环境需能访问 `https://api.frankfurter.dev`。成功汇率在服务端缓存一小时；汇率不可用时显示 USD 并自动重试。非美元价格仅供参考，最终成交价以购买平台为准。
 
 运行 `npm run test:currency` 验证金额、日元精度、后台设置持久化与鉴权、前台自动同步和错误回退。
 
