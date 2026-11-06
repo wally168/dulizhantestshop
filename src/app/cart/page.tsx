@@ -4,7 +4,7 @@ import Layout from '@/components/Layout'
 import { loadCart, removeItem, clearCart, CartItem } from '@/lib/cart'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { formatPrice } from '@/lib/utils'
+import Price from '@/components/Price'
 
 export default function CartPage() {
   const [items, setItems] = useState<CartItem[]>([])
@@ -46,7 +46,7 @@ export default function CartPage() {
                     <div className="text-sm text-gray-600">Options: {Object.entries(i.selectedOptions).map(([k,v]) => `${k}: ${v}`).join(', ')}</div>
                   )}
                 </div>
-                <div className="text-gray-900 font-semibold">{formatPrice(i.price * i.quantity)}</div>
+                <div className="text-gray-900 font-semibold"><Price amount={i.price * i.quantity} /></div>
                 <button
                   type="button"
                   onClick={() => handleRemove(i.id, i.selectedOptions)}
@@ -57,7 +57,7 @@ export default function CartPage() {
               </div>
             ))}
             <div className="flex items-center justify-between border-t pt-4 mt-4">
-              <div className="text-xl font-semibold">Total: {formatPrice(total)}</div>
+              <div className="text-xl font-semibold">Total: <Price amount={total} /></div>
               <div className="flex items-center gap-3">
                 <Link href="/products" className="px-4 py-2 rounded-md border hover:bg-gray-50">Continue shopping</Link>
                 <button type="button" onClick={handleClear} className="px-4 py-2 rounded-md bg-red-600 text-white hover:bg-red-500">Clear cart</button>

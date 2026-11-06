@@ -1,7 +1,8 @@
 import Link from 'next/link'
 import Layout from '@/components/Layout'
 import { db } from '@/lib/db'
-import { formatPrice, getProductUrlSegment } from '@/lib/utils'
+import { getProductUrlSegment } from '@/lib/utils'
+import Price from '@/components/Price'
 import AddToCartButton from '@/components/AddToCartButton'
 import FallbackImage from '@/components/FallbackImage'
 import type { Product } from '@prisma/client'
@@ -207,11 +208,11 @@ export default async function ProductsPage({ searchParams }: { searchParams?: Pr
                       )}
                       <div className="mt-2 flex items-center gap-2">
                         <p className="text-lg font-medium text-gray-900">
-                          {formatPrice(price)}
+                          <Price amount={price} />
                         </p>
                         {hasOriginal && (
                           <p className="text-sm text-gray-500 line-through">
-                            {formatPrice(Number(resolvedPrice.originalPrice))}
+                            <Price amount={Number(resolvedPrice.originalPrice)} />
                           </p>
                         )}
                       </div>

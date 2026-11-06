@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { ArrowRight, Shield, Star, Zap, Package } from 'lucide-react'
 import Layout from '@/components/Layout'
 import Carousel from '@/components/Carousel'
+import Price from '@/components/Price'
 import { db } from '@/lib/db'
 import { getProductUrlSegment } from '@/lib/utils'
 
@@ -351,11 +352,11 @@ function ProductCard({ product }: { product: Product }) {
           )}
           <div className="flex items-center space-x-2">
             <span className="text-2xl font-bold text-gray-900">
-              ${resolvedPrice.price}
+              <Price amount={resolvedPrice.price} />
             </span>
             {typeof resolvedPrice.originalPrice === 'number' && resolvedPrice.originalPrice > resolvedPrice.price && (
               <span className="text-lg text-gray-500 line-through">
-                ${resolvedPrice.originalPrice}
+                <Price amount={resolvedPrice.originalPrice} />
               </span>
             )}
           </div>

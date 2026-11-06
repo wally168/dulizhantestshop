@@ -4,6 +4,8 @@ import React from 'react'
 import { usePathname } from 'next/navigation'
 import Navigation from '@/components/Navigation'
 import Footer from '@/components/Footer'
+import CurrencyProvider from '@/components/CurrencyProvider'
+import { CurrencyNotice } from '@/components/CurrencySelector'
 
 interface NavItem {
   id: string
@@ -40,12 +42,15 @@ export default function AppShell({
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <Navigation initialNavItems={initialNavItems} />
-      <main className="flex-1 pt-16">
-        {children}
-      </main>
-      <Footer initialNavItems={initialNavItems} />
-    </div>
+    <CurrencyProvider>
+      <div className="min-h-screen flex flex-col">
+        <Navigation initialNavItems={initialNavItems} />
+        <main className="flex-1 pt-16">
+          <CurrencyNotice />
+          {children}
+        </main>
+        <Footer initialNavItems={initialNavItems} />
+      </div>
+    </CurrencyProvider>
   )
 }

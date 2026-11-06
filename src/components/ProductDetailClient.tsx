@@ -3,7 +3,7 @@
 import { useMemo, useState, useEffect, useRef } from 'react'
 import type { ReactElement } from 'react'
 import ProductImageGallery from './ProductImageGallery'
-import { formatPrice } from '@/lib/utils'
+import Price from '@/components/Price'
 import AddToCartButton from './AddToCartButton'
 import { normalizeBuyButtonText } from '@/lib/purchase-button'
 
@@ -524,9 +524,9 @@ function replaceYoutubeLinks(input: string): string {
 
          {/* 价格模块放在选项之后 */}
          <div className="mt-4 flex items-center gap-3">
-           <span className="text-2xl font-semibold text-gray-900">{formatPrice(displayPrice)}</span>
+           <span className="text-2xl font-semibold text-gray-900"><Price amount={displayPrice} /></span>
            {(typeof displayOriginalPrice === 'number' && displayOriginalPrice > displayPrice) ? (
-             <span className="text-gray-500 line-through">{formatPrice(displayOriginalPrice)}</span>
+             <span className="text-gray-500 line-through"><Price amount={displayOriginalPrice} /></span>
            ) : null}
         </div>
 
