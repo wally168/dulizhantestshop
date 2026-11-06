@@ -72,9 +72,9 @@ test('rate API caches successful validated data and never caches provider failur
   assert.equal(failed.headers['Cache-Control'], 'no-store')
 })
 
-function providerHarness(saved = 'AUD', storageBlocked = false) {
+function providerHarness(initialCurrency = 'USD') {
   const slots = [], effects = [], events = new Map()
-  let cursor = 0, fail = false
+  let cursor = 0, configuredCurrency = initialCurrency, failRates = false, failSettings = false, rateRequests = 0
   const hooks = {
     ...React,
     useState(initial) {
@@ -100,47 +100,86 @@ function providerHarness(saved = 'AUD', storageBlocked = false) {
   const component = load('src/components/CurrencyProvider.tsx', {
     react: hooks, '@/lib/currencies': currency,
   }, {
-    localStorage: {
-      getItem: () => { if (storageBlocked) throw new Error('blocked'); return saved },
-      setItem: (_, value) => { if (storageBlocked) throw new Error('blocked'); saved = value },
+    localStorage: { getItem() { throw new Error('Visitor preferences must not be read') } },
+    document: { visibilityState: 'visible', addEventListener: (key, fn) => events.set(key, fn), removeEventListener: key => events.delete(key) },
+    window: {
+      setInterval(fn, ms) { assert.equal(ms, 3000); events.set('poll', fn) }, clearInterval() {},
+      addEventListener: (key, fn) => events.set(key, fn), removeEventListener: key => events.delete(key),
     },
-    window: { setInterval() {}, clearInterval() {}, addEventListener: (key, fn) => events.set(key, fn), removeEventListener: key => events.delete(key) },
-    fetch: async () => ({ ok: !fail, json: async () => snapshot }),
+    fetch: async (url, options) => {
+      if (url === '/api/storefront-currency') {
+        assert.equal(options.cache, 'no-store')
+        return { ok: !failSettings, json: async () => ({ currency: configuredCurrency }) }
+      }
+      rateRequests++
+      return { ok: !failRates, json: async () => snapshot }
+    },
   }).default
   return {
     render() { cursor = 0; return component({ children: null }).props.value },
     async mount() { effects.splice(0).forEach(fn => fn()); await new Promise(resolve => setImmediate(resolve)) },
-    fail() { fail = true }, recover() { fail = false },
-    stored: () => saved, events,
+    async poll() { events.get('poll')(); await new Promise(resolve => setImmediate(resolve)) },
+    configure(value) { configuredCurrency = value },
+    failRates() { failRates = true }, recover() { failRates = false },
+    failSettings() { failSettings = true },
+    rateRequests: () => rateRequests,
   }
 }
 
-test('SSR starts in USD, restores choice, switches repeatedly without compounding, and survives reload', async () => {
+test('all visitors follow admin changes via polling without reloading or reading local preferences', async () => {
   const app = providerHarness()
   assert.equal(app.render().currency, 'USD')
   await app.mount()
-  let state = app.render()
-  assert.equal(state.currency, 'AUD')
-  assert.equal(state.formatPrice(10).replace(/\s/g, ''), 'AUD15.00')
-  state.setCurrency('JPY'); state = app.render()
-  assert.equal(state.formatPrice(10).replace(/\s/g, ''), 'JPY1,500')
-  state.setCurrency('USD'); state = app.render()
-  assert.equal(state.formatPrice(10).replace(/\s/g, ''), 'USD10.00')
-  state.setCurrency('GBP')
-  const reloaded = providerHarness(app.stored()); reloaded.render(); await reloaded.mount()
-  assert.equal(reloaded.render().currency, 'GBP')
+  assert.equal(app.render().currency, 'USD')
+  assert.equal(app.rateRequests(), 0)
+  app.configure('AUD'); await app.poll()
+  assert.equal(app.render().formatPrice(10).replace(/\s/g, ''), 'AUD15.00')
+  app.configure('JPY'); await app.poll()
+  assert.equal(app.render().formatPrice(10).replace(/\s/g, ''), 'JPY1,500')
+  assert.equal(app.rateRequests(), 1)
+  app.configure('USD'); await app.poll()
+  assert.equal(app.render().formatPrice(10).replace(/\s/g, ''), 'USD10.00')
+  const anotherVisitor = providerHarness('JPY'); anotherVisitor.render(); await anotherVisitor.mount()
+  assert.equal(anotherVisitor.render().currency, 'JPY')
+  assert.equal(app.render().setCurrency, undefined)
 })
 
-test('failed refresh falls back to USD, retry restores preference and blocked storage stays usable', async () => {
-  const app = providerHarness(); app.render(); await app.mount()
-  app.fail(); await app.render().refresh()
-  let state = app.render()
-  assert.equal(state.currency, 'USD'); assert.equal(state.error, true)
-  assert.equal(state.formatPrice(10).replace(/\s/g, ''), 'USD10.00')
-  state.setCurrency('AUD'); assert.equal(app.render().currency, 'USD')
-  app.recover(); await app.render().refresh()
+test('unavailable rates fall back to USD and auto-retry; config outages keep confirmed currency', async () => {
+  const app = providerHarness('AUD'); app.failRates(); app.render(); await app.mount()
+  assert.equal(app.render().currency, 'USD'); assert.equal(app.render().error, true)
+  app.recover(); await app.poll()
   assert.equal(app.render().currency, 'AUD')
-  const blocked = providerHarness('AUD', true); blocked.render(); await blocked.mount()
-  blocked.render().setCurrency('EUR')
-  assert.equal(blocked.render().currency, 'EUR')
+  app.failSettings(); await app.poll()
+  assert.equal(app.render().currency, 'AUD')
+  assert.equal(app.render().formatPrice(10).replace(/\s/g, ''), 'AUD15.00')
+})
+
+test('admin settings persist globally, reject invalid currencies and require authentication', async () => {
+  const values = new Map()
+  let authenticated = true
+  const mocks = {
+    '@/lib/currencies': currency,
+    '@/lib/db': { db: {
+      siteSettings: {
+        findUnique: async ({ where }) => values.has(where.key) ? { value: values.get(where.key) } : null,
+        upsert: async ({ where, update }) => { values.set(where.key, update.value) },
+      },
+      $transaction: async ops => Promise.all(ops),
+    } },
+    '@/lib/auth': { isSameOrigin: () => true, requireAdminSession: async () => authenticated ? {} : { response: { status: 401 } } },
+    'next/server': { NextResponse: { json: (data, options) => ({ data, status: 200, ...options }) } },
+  }
+  const admin = load('src/app/api/settings/route.ts', mocks)
+  const storefront = load('src/app/api/storefront-currency/route.ts', mocks)
+  assert.equal((await storefront.GET()).data.currency, 'USD')
+  const put = code => admin.PUT({ json: async () => ({ displayCurrency: code }) })
+  assert.equal((await put('AUD')).status, 200)
+  const result = await storefront.GET()
+  assert.equal(result.data.currency, 'AUD')
+  assert.ok(result.headers['Cache-Control'].includes('no-store'))
+  assert.equal((await put('INVALID')).status, 400)
+  assert.equal((await storefront.GET()).data.currency, 'AUD')
+  authenticated = false
+  assert.equal((await put('JPY')).status, 401)
+  assert.equal((await storefront.GET()).data.currency, 'AUD')
 })

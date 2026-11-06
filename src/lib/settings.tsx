@@ -28,6 +28,7 @@ function upgradeLegacyLegalContent(settings: SiteSettings): SiteSettings {
 }
 
 export interface SiteSettings {
+  displayCurrency?: string
   siteName: string
   logoUrl: string
   logoWidth: string
@@ -91,6 +92,7 @@ interface SettingsContextType {
 }
 
 const defaultSettings: SiteSettings = {
+  displayCurrency: 'USD',
   siteName: 'Your Brand',
   logoUrl: '',
   logoWidth: '',

@@ -2,11 +2,15 @@
 
 ## 前台多币种显示
 
-导航栏货币选择支持 USD、AUD、EUR、GBP、JPY、CAD、NZD、CHF、SGD、HKD、CNY，访客的选择保存在浏览器中。首页、产品列表、详情（含变体和划线原价）、购物车金额均从原始美元价格换算；后台价格录入、数据库和购物车存储继续使用 USD，SEO 结构化价格也保持 USD。
+管理员在“后台 → 网站设置 → 前台展示货币”选择币种并保存，全站访客统一显示，默认 USD。支持 USD、AUD、EUR、GBP、JPY、CAD、NZD、CHF、SGD、HKD、CNY。前台不提供访客切换，也不读取旧版浏览器货币偏好。
 
-`/api/exchange-rates` 从 [Frankfurter](https://frankfurter.dev/) 获取每日更新的公开汇率，无需 API Key 或新增数据库字段。部署环境需能访问 `https://api.frankfurter.dev`。成功结果在服务端缓存一小时，并显示汇率日期；接口超时或数据不完整时回退显示 USD，并提供重试。非美元显示为参考换算价，最终成交价格和币种以购买平台为准。
+首页、产品列表、详情（含变体和划线原价）、购物车金额均从原始美元价格换算；后台价格录入、数据库和购物车存储继续使用 USD，SEO 结构化价格也保持 USD。
 
-运行 `npm run test:currency` 验证换算、日元精度、购物车合计、偏好恢复和错误回退。
+币种保存在现有 SiteSettings 表的 displayCurrency 键中，无需迁移。前台通过禁用缓存的 /api/storefront-currency 每 3 秒同步，切回页面时也会同步；隐藏页面停止轮询读取。设置需通过管理员鉴权后保存。
+
+`/api/exchange-rates` 从 [Frankfurter](https://frankfurter.dev/) 获取每日更新的公开汇率，无需 API Key。部署环境需能访问 `https://api.frankfurter.dev`。成功汇率在服务端缓存一小时并显示日期；汇率不可用时显示 USD 并自动重试。非美元价格仅供参考，最终成交价以购买平台为准。
+
+运行 `npm run test:currency` 验证金额、日元精度、后台设置持久化与鉴权、前台自动同步和错误回退。
 
 ## 自定义购买按钮文案
 

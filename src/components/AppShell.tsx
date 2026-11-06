@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import Navigation from '@/components/Navigation'
 import Footer from '@/components/Footer'
 import CurrencyProvider from '@/components/CurrencyProvider'
-import { CurrencyNotice } from '@/components/CurrencySelector'
+import { CurrencyNotice } from '@/components/CurrencyNotice'
 
 interface NavItem {
   id: string

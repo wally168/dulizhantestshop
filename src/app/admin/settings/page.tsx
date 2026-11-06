@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { CURRENCIES } from '@/lib/currencies'
 import { 
   Settings, 
   Save, 
@@ -20,6 +21,7 @@ import {
 } from 'lucide-react'
 
 interface SiteSettings {
+  displayCurrency: string
   siteName: string
   logoUrl: string
   logoWidth: string
@@ -56,6 +58,7 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true)
   const [uploadingLogo, setUploadingLogo] = useState(false)
   const [settings, setSettings] = useState<SiteSettings>({
+    displayCurrency: 'USD',
     siteName: '',
     logoUrl: '',
     logoWidth: '',
@@ -91,10 +94,10 @@ export default function SettingsPage() {
     const fetchSettings = async () => {
       setLoading(true)
       try {
-        const response = await fetch('/api/settings')
+        const response = await fetch('/api/settings', { cache: 'no-store' })
         if (response.ok) {
           const data = await response.json()
-          setSettings(data)
+          setSettings({ ...data, displayCurrency: data.displayCurrency || 'USD' })
         }
       } catch (error) {
         console.error('获取设置失败:', error)
@@ -203,6 +206,20 @@ export default function SettingsPage() {
           </div>
         ) : (
         <form onSubmit={handleSubmit} className="space-y-8">
+          <div className="bg-white p-6 rounded-xl shadow-sm border">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">前台展示货币</h2>
+            <label htmlFor="displayCurrency" className="block text-sm font-medium text-gray-700 mb-2">全站统一币种</label>
+            <select
+              id="displayCurrency"
+              value={settings.displayCurrency}
+              onChange={e => handleInputChange('displayCurrency', e.target.value)}
+              className="w-full max-w-md px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            >
+              {CURRENCIES.map(({ code, name }) => <option key={code} value={code}>{code} — {name}</option>)}
+            </select>
+            <p className="mt-2 text-sm text-gray-500">默认 USD（美元）。保存设置后，所有访客的商品、变体和购物车价格统一换算为所选币种；已打开的前台页面约 3 秒内自动同步，返回页面时也会更新。</p>
+            <p className="mt-1 text-sm text-gray-500">商品价格仍按美元录入。换算使用公开参考汇率，最终成交价以购买平台为准；汇率暂不可用时显示美元。</p>
+          </div>
           {/* 基本信息 */}
           <div className="bg-white p-6 rounded-xl shadow-sm border">
             <div className="flex items-center mb-6">

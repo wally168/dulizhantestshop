@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { isSameOrigin, requireAdminSession } from '@/lib/auth'
 import { Prisma } from '@prisma/client'
+import { isCurrencyCode } from '@/lib/currencies'
 
 const LEGAL_DEFAULTS = {
   privacyPolicy: 'Overview\n\nWe value your privacy. This policy explains what data we collect, how we use it, and your rights. We collect basic information needed to operate our services, never sell personal data, and provide ways to access, correct, or delete your information.\n\nData We Collect\n\n- Account information such as name and email.\n- Order and payment details processed securely.\n- Website usage analytics to improve experience.\n\nYour Rights\n\n- Access, correct, or delete your personal data.\n- Opt-out of marketing communications anytime.\n- Contact us for privacy-related questions.\n\nContact\n\nFor privacy inquiries, email us at contact@yourbrand.com.',
@@ -28,6 +29,7 @@ function upgradeLegacyLegalContent(settings: Record<string, string>) {
 
 // 默认设置
 const defaultSettings = {
+  displayCurrency: 'USD',
   siteName: 'Your Brand',
   logoUrl: '',
   logoWidth: '',
@@ -104,7 +106,8 @@ export async function GET() {
 
     return NextResponse.json(upgradeLegacyLegalContent(settingsObject), {
       headers: {
-        'Content-Type': 'application/json; charset=utf-8'
+        'Content-Type': 'application/json; charset=utf-8',
+        'Cache-Control': 'no-store'
       }
     })
   } catch (error) {
@@ -128,6 +131,9 @@ export async function PUT(request: NextRequest) {
 
   try {
     const body = await request.json()
+    if (body.displayCurrency !== undefined && !isCurrencyCode(body.displayCurrency)) {
+      return NextResponse.json({ error: '不支持的展示货币' }, { status: 400 })
+    }
     
     // 使用批量事务更新设置，兼容 Data Proxy（避免交互式事务）
     const ops: Prisma.PrismaPromise<any>[] = []

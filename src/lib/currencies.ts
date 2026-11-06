@@ -20,7 +20,6 @@ export interface ExchangeRateSnapshot {
   rates: ExchangeRates
 }
 
-export const CURRENCY_STORAGE_KEY = 'amzshop_display_currency'
 export const RATE_REFRESH_MS = 60 * 60 * 1000
 
 export function isCurrencyCode(value: unknown): value is CurrencyCode {

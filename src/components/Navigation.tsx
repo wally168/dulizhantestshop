@@ -5,7 +5,6 @@ import Link from 'next/link'
 import { Menu, X, ShoppingBag, ShoppingCart } from 'lucide-react'
 import { useSettings } from '@/lib/settings'
 import { getCount, onCartChange } from '@/lib/cart'
-import CurrencySelector from '@/components/CurrencySelector'
 
 // 新增：动态导航项类型
 interface NavItem {
@@ -126,7 +125,7 @@ export default function Navigation({ initialNavItems = [] }: { initialNavItems?:
         ? 'bg-white/80 backdrop-blur-xl border-b border-gray-200/50 shadow-sm' 
         : 'bg-white/95 backdrop-blur-md border-b border-gray-200'
     }`}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
         <div className="flex items-center min-h-[4rem]">
           {/* 左侧：Logo 保持不变，占用等比空间 */}
           <div className="flex-1 min-w-0">
@@ -138,7 +137,7 @@ export default function Navigation({ initialNavItems = [] }: { initialNavItems?:
             <img
               src={settings.logoUrl}
               alt={settings.siteName || 'Site Logo'}
-              className={`lg:hidden object-contain shrink-0 transition-transform group-hover:scale-105 ${
+              className={`md:hidden object-contain shrink-0 transition-transform group-hover:scale-105 ${
                 hasCustomLogoSize ? 'w-auto max-w-[180px]' : 'h-10 w-auto max-w-[180px]'
               }`}
               style={
@@ -155,7 +154,7 @@ export default function Navigation({ initialNavItems = [] }: { initialNavItems?:
             <img
               src={settings.logoUrl}
               alt={settings.siteName || 'Site Logo'}
-              className={`hidden lg:block object-contain shrink-0 transition-transform group-hover:scale-105 ${
+              className={`hidden md:block object-contain shrink-0 transition-transform group-hover:scale-105 ${
                 hasCustomLogoSize ? 'max-w-full' : 'h-8 w-auto max-w-full'
               }`}
               style={
@@ -183,7 +182,7 @@ export default function Navigation({ initialNavItems = [] }: { initialNavItems?:
           </div>
 
           {/* 中间：桌面导航 居中显示 + Products 下拉 */}
-          <div className="hidden lg:flex items-center justify-center space-x-1">
+          <div className="hidden md:flex items-center justify-center space-x-1">
             {showSkeleton ? (
               <div className="flex items-center space-x-1">
                 <SkeletonPill />
@@ -219,22 +218,21 @@ export default function Navigation({ initialNavItems = [] }: { initialNavItems?:
           </div>
 
           {/* 右侧：搜索框、购物车入口与移动端菜单按钮 */}
-          <div className="flex lg:flex-1 justify-end items-center gap-2">
-            <CurrencySelector />
+          <div className="flex md:flex-1 justify-end items-center gap-2">
             {/* Search */}
-            <form action="/products" method="get" className="hidden xl:flex items-center gap-2 bg-gray-100 rounded-lg px-2 py-1">
+            <form action="/products" method="get" className="hidden md:flex items-center gap-2 bg-gray-100 rounded-lg px-2 py-1">
               <input
                 type="text"
                 name="q"
                 placeholder="Search Products"
-                className="bg-transparent px-2 py-1 text-sm focus:outline-none w-40 lg:w-48"
+                className="bg-transparent px-2 py-1 text-sm focus:outline-none w-40 md:w-48"
               />
               <button type="submit" className="text-sm px-2 py-1 rounded-md bg-gray-200 text-gray-700 hover:bg-gray-300">Search</button>
             </form>
             {/* Cart link always visible */}
             <Link
               href="/cart"
-              className="hidden lg:inline-flex items-center px-3 py-2 text-gray-700 hover:text-blue-600 hover:bg-gray-100/50 rounded-lg transition-all duration-200"
+              className="hidden md:inline-flex items-center px-3 py-2 text-gray-700 hover:text-blue-600 hover:bg-gray-100/50 rounded-lg transition-all duration-200"
               aria-label="Cart"
             >
               <span className="relative inline-flex">
@@ -249,7 +247,7 @@ export default function Navigation({ initialNavItems = [] }: { initialNavItems?:
             {/* Mobile menu button */}
             <button
               onClick={toggleMenu}
-              className="lg:hidden p-2 text-gray-700 hover:text-blue-600 hover:bg-gray-100/50 rounded-lg transition-all duration-200"
+              className="md:hidden p-2 text-gray-700 hover:text-blue-600 hover:bg-gray-100/50 rounded-lg transition-all duration-200"
               aria-label="Toggle menu"
             >
               {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
@@ -257,7 +255,7 @@ export default function Navigation({ initialNavItems = [] }: { initialNavItems?:
             {/* Mobile cart icon */}
             <Link
               href="/cart"
-              className="lg:hidden p-2 text-gray-700 hover:text-blue-600 hover:bg-gray-100/50 rounded-lg transition-all duration-200"
+              className="md:hidden p-2 text-gray-700 hover:text-blue-600 hover:bg-gray-100/50 rounded-lg transition-all duration-200"
               aria-label="Cart"
             >
               <span className="relative inline-flex">
@@ -272,7 +270,7 @@ export default function Navigation({ initialNavItems = [] }: { initialNavItems?:
 
         {/* Mobile Navigation + 搜索与分类 */}
         <div 
-          className={`lg:hidden transition-all duration-300 ease-in-out ${
+          className={`md:hidden transition-all duration-300 ease-in-out ${
             isMenuOpen 
               ? 'max-h-64 opacity-100' 
               : 'max-h-0 opacity-0 overflow-hidden'
