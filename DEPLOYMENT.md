@@ -88,6 +88,9 @@ NEXTAUTH_SECRET=你的安全密钥
 ```
 
 #### 推荐的数据库选项
+
+使用新版 Vercel Prisma Postgres 集成时，保留集成提供的 `DATABASE_URL_POOLED`（应用查询）和 `DATABASE_URL`（`prisma db push` 等 CLI 操作的直连）。如已单独配置 `DIRECT_URL`，CLI 优先使用它。已有部署仍可使用 `PRISMA_DATABASE_URL` 和 `POSTGRES_URL`。
+
 1. **Vercel Postgres** (推荐)
    - 在 Vercel 仪表板中创建 Postgres 数据库
    - 自动获取连接字符串
